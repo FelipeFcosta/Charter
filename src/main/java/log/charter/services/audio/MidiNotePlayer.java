@@ -72,13 +72,20 @@ public class MidiNotePlayer {
 			synthesizer = MidiSystem.getSynthesizer();
 			synthesizer.open();
 
-			final Instrument defaultInstrument = synthesizer.getAvailableInstruments()[0];
+			final Instrument[] availableInstruments = synthesizer.getAvailableInstruments();
+			if (availableInstruments.length == 0) {
+				available = false;
+				Logger.error("No MIDI instruments available");
+				return;
+			}
+
+			final Instrument defaultInstrument = availableInstruments[0];
 			instruments.clear();
 			for (final GuitarSoundType guitarSoundType : GuitarSoundType.values()) {
 				instruments.put(guitarSoundType, defaultInstrument);
 			}
 
-			for (final Instrument instrument : synthesizer.getAvailableInstruments()) {
+			for (final Instrument instrument : availableInstruments) {
 				for (final GuitarSoundType guitarSoundType : GuitarSoundType.values()) {
 					if (instrument.getName().startsWith(guitarSoundType.midiInstrumentName)) {
 						instruments.put(guitarSoundType, instrument);
