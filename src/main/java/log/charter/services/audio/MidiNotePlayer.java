@@ -52,6 +52,7 @@ public class MidiNotePlayer {
 	private boolean available = true;
 	private ChartData chartData;
 
+	private Synthesizer synthesizer;
 	private MidiChannel[] channels;
 	private int[] lastNotes;
 	private int[] lastActualNotes;
@@ -59,11 +60,20 @@ public class MidiNotePlayer {
 
 	public void init(final ChartData chartData) {
 		this.chartData = chartData;
+		initializeSynthesizer();
+	}
+
+	private void initializeSynthesizer() {
 		try {
-			final Synthesizer synthesizer = MidiSystem.getSynthesizer();
+			if (synthesizer != null && synthesizer.isOpen()) {
+				return;
+			}
+
+			synthesizer = MidiSystem.getSynthesizer();
 			synthesizer.open();
 
 			final Instrument defaultInstrument = synthesizer.getAvailableInstruments()[0];
+			instruments.clear();
 			for (final GuitarSoundType guitarSoundType : GuitarSoundType.values()) {
 				instruments.put(guitarSoundType, defaultInstrument);
 			}
@@ -84,9 +94,11 @@ public class MidiNotePlayer {
 				lastNotes[i] = -1;
 				lastActualNotes[i] = -1;
 			}
+
+			available = true;
 		} catch (final MidiUnavailableException e) {
 			available = false;
-			Logger.error("Midi unavailable");
+			Logger.error("Midi unavailable", e);
 		}
 	}
 
@@ -111,6 +123,11 @@ public class MidiNotePlayer {
 			return;
 		}
 
+		ensureSynthesizerAvailable();
+		if (!available || channels == null || string >= channels.length) {
+			return;
+		}
+
 		final MidiChannel channel = channels[string];
 		channel.allNotesOff();
 		channel.programChange(instruments.get(soundType).getPatch().getProgram());
@@ -126,8 +143,23 @@ public class MidiNotePlayer {
 		lastActualNotes[string] = actualNote;
 	}
 
+	private void ensureSynthesizerAvailable() {
+		if (!available) {
+			return;
+		}
+
+		if (synthesizer == null || !synthesizer.isOpen()) {
+			initializeSynthesizer();
+		}
+	}
+
 	public void updateBend(final int string, final int fret, double bendValue) {
-		if (lastNotes[string] == -1) {
+		if (!available || channels == null || string >= channels.length || lastNotes[string] == -1) {
+			return;
+		}
+
+		ensureSynthesizerAvailable();
+		if (!available || channels == null || string >= channels.length) {
 			return;
 		}
 
@@ -162,6 +194,15 @@ public class MidiNotePlayer {
 	}
 
 	public void updateVolume() {
+		if (!available || channels == null) {
+			return;
+		}
+
+		ensureSynthesizerAvailable();
+		if (!available || channels == null) {
+			return;
+		}
+
 		for (final MidiChannel channel : channels) {
 			channel.controlChange(7, (int) (AudioConfig.sfxVolume * 127.0));
 		}
@@ -239,6 +280,11 @@ public class MidiNotePlayer {
 			return;
 		}
 
+		ensureSynthesizerAvailable();
+		if (!available) {
+			return;
+		}
+
 		if (sound.isNote()) {
 			playNote(sound.note());
 		} else {
@@ -247,13 +293,17 @@ public class MidiNotePlayer {
 	}
 
 	public void stopSound(final int string) {
+		if (!available || channels == null || string >= channels.length) {
+			return;
+		}
+
 		channels[string].allNotesOff();
 		lastNotes[string] = -1;
 		lastActualNotes[string] = -1;
 	}
 
 	public void stopSound() {
-		if (!available) {
+		if (!available || channels == null) {
 			return;
 		}
 
