@@ -58,6 +58,30 @@ public class UpdateChecker {
 		return location.substring(slashPosition + 1);
 	}
 
+	private static boolean isNewerVersion(final String currentVersion, final String newVersion) {
+		try {
+			final String[] currentParts = currentVersion.split("\\.");
+			final String[] newParts = newVersion.split("\\.");
+			
+			final int length = Math.max(currentParts.length, newParts.length);
+			for (int i = 0; i < length; i++) {
+				final int current = i < currentParts.length ? Integer.parseInt(currentParts[i]) : 0;
+				final int newer = i < newParts.length ? Integer.parseInt(newParts[i]) : 0;
+				
+				if (newer > current) {
+					return true;
+				}
+				if (newer < current) {
+					return false;
+				}
+			}
+			return false; // versions are equal
+		} catch (final NumberFormatException e) {
+			Logger.error("Error comparing versions: " + currentVersion + " vs " + newVersion, e);
+			return false;
+		}
+	}
+
 	private CharterContext charterContext;
 	private CharterFrame charterFrame;
 
@@ -111,7 +135,7 @@ public class UpdateChecker {
 		}
 
 		final String version = getVersion(response);
-		if (version == null || CharterMain.VERSION.equals(version)) {
+		if (version == null || !isNewerVersion(CharterMain.VERSION, version)) {
 			return;
 		}
 
