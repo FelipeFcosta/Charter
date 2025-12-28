@@ -32,16 +32,16 @@ import log.charter.io.Logger;
 
 public class MidiNotePlayer {
 	private enum GuitarSoundType {
-		CLEAN("Clean Gt."), //
-		OVERDRIVE("Overdrive Gt."), //
-		DISTORTION("DistortionGt"), //
-		MUTE("Muted Gt."), //
-		HARMONIC("Gt.Harmonics");
+		CLEAN(27),        // Electric Guitar (clean) - GM program 28
+		OVERDRIVE(29),    // Overdriven Guitar - GM program 30
+		DISTORTION(30),   // Distortion Guitar - GM program 31
+		MUTE(28),         // Electric Guitar (muted) - GM program 29
+		HARMONIC(31);     // Guitar Harmonics - GM program 32
 
-		public final String midiInstrumentName;
+		public final int midiProgram;
 
-		private GuitarSoundType(final String midiInstrumentName) {
-			this.midiInstrumentName = midiInstrumentName;
+		private GuitarSoundType(final int midiProgram) {
+			this.midiProgram = midiProgram;
 		}
 	}
 
@@ -52,41 +52,50 @@ public class MidiNotePlayer {
 	private boolean available = true;
 	private ChartData chartData;
 
+	private Synthesizer synthesizer;
 	private MidiChannel[] channels;
 	private int[] lastNotes;
 	private int[] lastActualNotes;
-	private final Map<GuitarSoundType, Instrument> instruments = new HashMap<>();
 
 	public void init(final ChartData chartData) {
 		this.chartData = chartData;
+		initializeSynthesizer();
+	}
+
+	private void initializeSynthesizer() {
 		try {
-			final Synthesizer synthesizer = MidiSystem.getSynthesizer();
-			synthesizer.open();
-
-			final Instrument defaultInstrument = synthesizer.getAvailableInstruments()[0];
-			for (final GuitarSoundType guitarSoundType : GuitarSoundType.values()) {
-				instruments.put(guitarSoundType, defaultInstrument);
+			if (synthesizer != null && synthesizer.isOpen()) {
+				return;
 			}
 
-			for (final Instrument instrument : synthesizer.getAvailableInstruments()) {
-				for (final GuitarSoundType guitarSoundType : GuitarSoundType.values()) {
-					if (instrument.getName().startsWith(guitarSoundType.midiInstrumentName)) {
-						instruments.put(guitarSoundType, instrument);
-					}
-				}
-			}
+		synthesizer = MidiSystem.getSynthesizer();
+		synthesizer.open();
 
-			channels = synthesizer.getChannels();
-			lastNotes = new int[channels.length];
-			lastActualNotes = new int[channels.length];
+		channels = synthesizer.getChannels();
+		lastNotes = new int[channels.length];
+		lastActualNotes = new int[channels.length];
 			for (int i = 0; i < channels.length; i++) {
+				// Set volume to maximum
 				channels[i].controlChange(7, 127);
+				
+				// Configure pitch bend range to ±12 semitones (1 octave) using RPN
+				// RPN MSB (101) = 0, RPN LSB (100) = 0 selects pitch bend sensitivity
+				channels[i].controlChange(101, 0);  // RPN MSB
+				channels[i].controlChange(100, 0);  // RPN LSB
+				channels[i].controlChange(6, 12);   // Data Entry MSB - semitones (12 = 1 octave)
+				channels[i].controlChange(38, 0);   // Data Entry LSB - cents
+				// Reset RPN to null to avoid accidentally changing settings
+				channels[i].controlChange(101, 127);
+				channels[i].controlChange(100, 127);
+				
 				lastNotes[i] = -1;
 				lastActualNotes[i] = -1;
 			}
+
+			available = true;
 		} catch (final MidiUnavailableException e) {
 			available = false;
-			Logger.error("Midi unavailable");
+			Logger.error("Midi unavailable", e);
 		}
 	}
 
@@ -96,14 +105,15 @@ public class MidiNotePlayer {
 	}
 
 	private int getPitchBend(double bendStep) {
-		if (bendStep < -2) {
-			bendStep = -2;
+		// Clamp to ±12 semitones (1 octave) which we configured via RPN
+		if (bendStep < -12) {
+			bendStep = -12;
 		}
-		if (bendStep > 2) {
-			bendStep = 2;
+		if (bendStep > 12) {
+			bendStep = 12;
 		}
 
-		return pitchBendBaseValue + (int) (bendStep * pitchBendRange / 2);
+		return pitchBendBaseValue + (int) (bendStep * pitchBendRange / 12);
 	}
 
 	private void playMidiNote(final GuitarSoundType soundType, final int string, final int note, double bendValue) {
@@ -111,23 +121,39 @@ public class MidiNotePlayer {
 			return;
 		}
 
+		ensureSynthesizerAvailable();
+		if (!available || channels == null || string >= channels.length) {
+			return;
+		}
+
 		final MidiChannel channel = channels[string];
 		channel.allNotesOff();
-		channel.programChange(instruments.get(soundType).getPatch().getProgram());
+		channel.programChange(soundType.midiProgram);
 
-		int actualNote = note;
-		while (bendValue >= 2) {
-			bendValue -= 2;
-			actualNote += 2;
-		}
+		// Play the note at the initial bend position
 		channel.setPitchBend(getPitchBend(bendValue));
-		channel.noteOn(actualNote, 127);
+		channel.noteOn(note, 127);
 		lastNotes[string] = note;
-		lastActualNotes[string] = actualNote;
+		lastActualNotes[string] = note;
+	}
+
+	private void ensureSynthesizerAvailable() {
+		if (!available) {
+			return;
+		}
+
+		if (synthesizer == null || !synthesizer.isOpen()) {
+			initializeSynthesizer();
+		}
 	}
 
 	public void updateBend(final int string, final int fret, double bendValue) {
-		if (lastNotes[string] == -1) {
+		if (!available || channels == null || string >= channels.length || lastNotes[string] == -1) {
+			return;
+		}
+
+		ensureSynthesizerAvailable();
+		if (!available || channels == null || string >= channels.length) {
 			return;
 		}
 
@@ -138,30 +164,42 @@ public class MidiNotePlayer {
 				+ chartData.currentArrangement().tuning.getTuning()[string] - actualNote;
 		bendValue += chartData.currentArrangement().centOffset.multiply(new BigDecimal("0.01")).doubleValue();
 
-		int roundedValue = (int) Math.round(bendValue);
-		while (roundedValue > 0) {
-			roundedValue--;
-			bendValue--;
-			actualNote++;
+		// Simply apply pitch bend - no note switching to avoid clicks
+		// Clamp to configured pitch bend range (±12 semitones / 1 octave)
+		if (bendValue > 12.0) {
+			bendValue = 12.0;
 		}
-		while (bendValue < 0) {
-			roundedValue++;
-			bendValue++;
-			actualNote--;
+		if (bendValue < -12.0) {
+			bendValue = -12.0;
 		}
 
 		final int pitchBend = getPitchBend(bendValue);
-		if (lastActualNotes[string] != actualNote) {
-			channel.noteOff(lastActualNotes[string]);
-			channel.setPitchBend(pitchBend);
-			channel.noteOn(actualNote, 96);
-			lastActualNotes[string] = actualNote;
+		channel.setPitchBend(pitchBend);
+		
+		// Compensate for volume loss during pitch bends
+		// Many synthesizers reduce volume when pitch is bent
+		// Apply a slight volume boost proportional to bend amount
+		final double bendAmount = Math.abs(bendValue);
+		if (bendAmount > 0.1) {
+			// Boost expression (CC11) slightly during bends (5-15% boost depending on bend amount)
+			final int expressionBoost = (int) (127 + Math.min(bendAmount * 1.5, 15));
+			channel.controlChange(11, Math.min(expressionBoost, 127));
 		} else {
-			channel.setPitchBend(pitchBend);
+			// Reset to normal expression when not bending
+			channel.controlChange(11, 127);
 		}
 	}
 
 	public void updateVolume() {
+		if (!available || channels == null) {
+			return;
+		}
+
+		ensureSynthesizerAvailable();
+		if (!available || channels == null) {
+			return;
+		}
+
 		for (final MidiChannel channel : channels) {
 			channel.controlChange(7, (int) (AudioConfig.sfxVolume * 127.0));
 		}
@@ -174,7 +212,7 @@ public class MidiNotePlayer {
 			soundType = GuitarSoundType.MUTE;
 		} else if (harmonic) {
 			soundType = GuitarSoundType.HARMONIC;
-		} else if (toneName.contains("distortion")) {
+		} else if (toneName.contains("distortion") || toneName.contains("lead")) {
 			soundType = GuitarSoundType.DISTORTION;
 		} else if (toneName.contains("overdrive")) {
 			soundType = GuitarSoundType.OVERDRIVE;
@@ -239,6 +277,11 @@ public class MidiNotePlayer {
 			return;
 		}
 
+		ensureSynthesizerAvailable();
+		if (!available) {
+			return;
+		}
+
 		if (sound.isNote()) {
 			playNote(sound.note());
 		} else {
@@ -247,13 +290,17 @@ public class MidiNotePlayer {
 	}
 
 	public void stopSound(final int string) {
+		if (!available || channels == null || string >= channels.length) {
+			return;
+		}
+
 		channels[string].allNotesOff();
 		lastNotes[string] = -1;
 		lastActualNotes[string] = -1;
 	}
 
 	public void stopSound() {
-		if (!available) {
+		if (!available || channels == null) {
 			return;
 		}
 
