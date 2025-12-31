@@ -6,10 +6,8 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.Rectangle2D;
 
 import javax.swing.Icon;
 import javax.swing.JLabel;
@@ -122,18 +120,8 @@ public class FieldWithLabel<T extends Component> extends Container {
 			return 0;
 		}
 
-		final Graphics2D gs = (Graphics2D) label.getGraphics();
-
 		final FontMetrics fm = label.getFontMetrics(label.getFont());
-
-		if (gs == null) {
-			return fm.stringWidth(text);
-		}
-
-		final Rectangle2D rect = fm.getStringBounds(text, gs);
-		final double w = rect.getWidth();
-		gs.dispose();
-		return (int) w;
+		return fm.stringWidth(text) + 5;
 	}
 
 	private JLabel addLabel(final String label, final int x, final int w, final int h, final int labelAlignment) {

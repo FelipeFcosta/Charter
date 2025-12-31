@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.jcodec.common.logging.Logger;
 
 import log.charter.data.ChartData;
+import log.charter.data.config.values.AudioConfig;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.Level;
@@ -100,7 +101,40 @@ public class ChartTimeHandler {
 		}
 	}
 
+	/**
+	 * Navigate to a position so that it appears at the marker (display position).
+	 * Accounts for audio output delay compensation.
+	 */
+	private void nextDisplayTime(final double displayPosition) {
+		if (AudioConfig.audioOutputDelayEnabled) {
+			nextTime(displayPosition + AudioConfig.audioOutputDelay);
+		} else {
+			nextTime(displayPosition);
+		}
+	}
+
+	/**
+	 * Navigate to a fractional position so that it appears at the marker (display position).
+	 * Accounts for audio output delay compensation.
+	 */
+	private void nextDisplayFractionalTime(final IConstantFractionalPosition t) {
+		final double displayPosition = t.position().getPosition(chartData.beats());
+		nextDisplayTime(displayPosition);
+	}
+
 	public double time() {
+		return time;
+	}
+
+	/**
+	 * Returns the time adjusted for audio output delay compensation.
+	 * Use this for visual chart rendering only - not for logic, navigation, or audio timing.
+	 * This compensates for Bluetooth headphone latency.
+	 */
+	public double displayTime() {
+		if (AudioConfig.audioOutputDelayEnabled) {
+			return Math.max(0, time - AudioConfig.audioOutputDelay);
+		}
 		return time;
 	}
 
@@ -162,11 +196,11 @@ public class ChartTimeHandler {
 	}
 
 	public int positionToX(final double position) {
-		return ScalingUtils.positionToX(position, time());
+		return ScalingUtils.positionToX(position, displayTime());
 	}
 
 	public double xToPosition(final int x) {
-		return ScalingUtils.xToPosition(x, time());
+		return ScalingUtils.xToPosition(x, displayTime());
 	}
 
 	private List<? extends IVirtualConstantPosition> getCurrentItems() {
@@ -191,7 +225,7 @@ public class ChartTimeHandler {
 	}
 
 	private IConstantPosition getPrevious(final List<? extends IConstantPosition> positions) {
-		final IConstantPosition timePosition = new ConstantPosition(time());
+		final IConstantPosition timePosition = new ConstantPosition(displayTime());
 		final IConstantPosition position = lastBefore(positions, timePosition).find();
 		if (position == null) {
 			return timePosition;
@@ -202,7 +236,7 @@ public class ChartTimeHandler {
 
 	private IConstantFractionalPosition getPreviousFractional(
 			final List<? extends IConstantFractionalPosition> positions) {
-		final IConstantFractionalPosition timePosition = FractionalPosition.fromTime(chartData.beats(), time());
+		final IConstantFractionalPosition timePosition = FractionalPosition.fromTime(chartData.beats(), displayTime());
 		final IConstantFractionalPosition position = lastBefore(positions, timePosition).find();
 		if (position == null) {
 			return timePosition;
@@ -223,9 +257,9 @@ public class ChartTimeHandler {
 		}
 
 		if (currentItems.get(0).isFraction()) {
-			nextFractionalTime(getPreviousFractional((List<? extends IConstantFractionalPosition>) currentItems));
+			nextDisplayFractionalTime(getPreviousFractional((List<? extends IConstantFractionalPosition>) currentItems));
 		} else {
-			nextTime(getPrevious((List<? extends IConstantPosition>) currentItems));
+			nextDisplayTime(getPrevious((List<? extends IConstantPosition>) currentItems).position());
 		}
 	}
 
@@ -235,7 +269,7 @@ public class ChartTimeHandler {
 			return;
 		}
 
-		final Integer lastIdBefore = lastBefore(currentItems, new ConstantPosition(time()),
+		final Integer lastIdBefore = lastBefore(currentItems, new ConstantPosition(displayTime()),
 				comparator(chartData.beats())).findId();
 		if (lastIdBefore == null) {
 			return;
@@ -243,9 +277,9 @@ public class ChartTimeHandler {
 
 		final IVirtualConstantPosition position = currentItems.get(lastIdBefore);
 		if (position.isFraction()) {
-			nextFractionalTime(position.asConstantFraction());
+			nextDisplayFractionalTime(position.asConstantFraction());
 		} else {
-			nextTime(position.asConstantPosition());
+			nextDisplayTime(position.asConstantPosition().position());
 		}
 
 		selectionManager.clear();
@@ -267,16 +301,16 @@ public class ChartTimeHandler {
 	}
 
 	private double getNext(final List<? extends IConstantPosition> positions) {
-		final IConstantPosition position = firstAfter(positions, new Position(time())).find();
+		final IConstantPosition position = firstAfter(positions, new Position(displayTime())).find();
 		if (position == null) {
-			return time();
+			return displayTime();
 		}
 
 		return position.position();
 	}
 
 	private IConstantFractionalPosition getNextFractional(final List<? extends IConstantFractionalPosition> positions) {
-		final IConstantFractionalPosition timePosition = FractionalPosition.fromTime(chartData.beats(), time());
+		final IConstantFractionalPosition timePosition = FractionalPosition.fromTime(chartData.beats(), displayTime());
 		final IConstantFractionalPosition position = firstAfter(positions, timePosition).find();
 		if (position == null) {
 			return timePosition;
@@ -305,9 +339,9 @@ public class ChartTimeHandler {
 		}
 
 		if (currentItems.get(0).isFraction()) {
-			nextFractionalTime(getNextFractional((List<? extends IConstantFractionalPosition>) currentItems));
+			nextDisplayFractionalTime(getNextFractional((List<? extends IConstantFractionalPosition>) currentItems));
 		} else {
-			nextTime(getNext((List<? extends IConstantPosition>) currentItems));
+			nextDisplayTime(getNext((List<? extends IConstantPosition>) currentItems));
 		}
 	}
 
@@ -317,7 +351,7 @@ public class ChartTimeHandler {
 			return;
 		}
 
-		final Integer nextIdAfter = firstAfter(currentItems, new ConstantPosition(time()),
+		final Integer nextIdAfter = firstAfter(currentItems, new ConstantPosition(displayTime()),
 				comparator(chartData.beats())).findId();
 		if (nextIdAfter == null) {
 			return;
@@ -325,9 +359,9 @@ public class ChartTimeHandler {
 
 		final IVirtualConstantPosition position = currentItems.get(nextIdAfter);
 		if (position.isFraction()) {
-			nextFractionalTime(position.asConstantFraction());
+			nextDisplayFractionalTime(position.asConstantFraction());
 		} else {
-			nextTime(position.asConstantPosition());
+			nextDisplayTime(position.asConstantPosition().position());
 		}
 
 		selectionManager.clear();
