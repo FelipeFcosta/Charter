@@ -111,6 +111,9 @@ public class ChartToolbar extends JToolBar implements IChartToolbar, Initiable {
 	private JToggleButton highPassFilter;
 	private JToggleButton bandPassFilter;
 
+	private FieldWithLabel<TextInputWithValidation> audioDelay;
+	private JToggleButton audioDelayToggle;
+
 	private JButton playButton;
 
 	private int newSpeed = Config.stretchedMusicSpeed;
@@ -418,6 +421,29 @@ public class ChartToolbar extends JToolBar implements IChartToolbar, Initiable {
 		new BandPassSettings(charterFrame);
 	}
 
+	private void toggleAudioDelay() {
+		AudioConfig.audioOutputDelayEnabled = !AudioConfig.audioOutputDelayEnabled;
+		Config.markChanged();
+		updateValues();
+	}
+
+	private void changeAudioDelay(final int newDelay) {
+		AudioConfig.audioOutputDelay = newDelay;
+		Config.markChanged();
+	}
+
+	private void addAudioDelayControls(final AtomicInteger x) {
+		audioDelay = createNumberField(Label.TOOLBAR_AUDIO_DELAY, LabelPosition.LEFT_PACKED, 35, //
+				AudioConfig.audioOutputDelay, 0, 2000, false, this::changeAudioDelay);
+		add(x, 1, audioDelay);
+
+		audioDelayToggle = new JToggleButton("ON");
+		audioDelayToggle.addActionListener(a -> toggleAudioDelay());
+		audioDelayToggle.setFocusable(false);
+		audioDelayToggle.setBounds(x.get(), 0, 35, elementHeight);
+		add(x, audioDelayToggle);
+	}
+
 	@Override
 	public void init() {
 		final AtomicInteger x = new AtomicInteger(5);
@@ -464,6 +490,10 @@ public class ChartToolbar extends JToolBar implements IChartToolbar, Initiable {
 		highPassFilter = addToggleButton(x, 1, Label.HIGH_PASS, () -> audioHandler.toggleHighPassFilter(), 40);
 		addRightPressListener(highPassFilter, this::showHighPassSettings);
 
+		addSeparator(x);
+
+		addAudioDelayControls(x);
+
 		updateValues();
 		setSize(getWidth(), height);
 
@@ -501,6 +531,9 @@ public class ChartToolbar extends JToolBar implements IChartToolbar, Initiable {
 		lowPassFilter.setSelected(audioHandler.lowPassFilterEnabled);
 		bandPassFilter.setSelected(audioHandler.bandPassFilterEnabled);
 		highPassFilter.setSelected(audioHandler.highPassFilterEnabled);
+
+		audioDelay.field.setTextWithoutEvent(AudioConfig.audioOutputDelay + "");
+		audioDelayToggle.setSelected(AudioConfig.audioOutputDelayEnabled);
 	}
 
 	@Override

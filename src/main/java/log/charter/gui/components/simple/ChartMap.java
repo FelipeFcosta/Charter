@@ -220,7 +220,7 @@ public class ChartMap extends Component implements Initiable, MouseListener, Mou
 	}
 
 	private void drawMarkerAndViewArea(final Graphics g) {
-		final int markerPosition = timeToPosition(chartTimeHandler.time());
+		final int markerPosition = timeToPosition(chartTimeHandler.displayTime());
 
 		final int x0 = markerPosition - timeToPosition(xToTimeLength(GraphicalConfig.markerOffset));
 		final int x1 = markerPosition

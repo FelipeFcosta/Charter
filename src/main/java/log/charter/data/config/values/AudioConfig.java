@@ -1,5 +1,6 @@
 package log.charter.data.config.values;
 
+import static log.charter.data.config.values.accessors.BooleanValueAccessor.forBoolean;
 import static log.charter.data.config.values.accessors.DoubleValueAccessor.forDouble;
 import static log.charter.data.config.values.accessors.EnumValueAccessor.forEnum;
 import static log.charter.data.config.values.accessors.IntValueAccessor.forInteger;
@@ -32,6 +33,9 @@ public class AudioConfig {
 	public static double volume = 1;
 	public static double sfxVolume = 1;
 
+	public static int audioOutputDelay = 0;
+	public static boolean audioOutputDelayEnabled = false;
+
 	public static void init(final Map<String, ValueAccessor> valueAccessors, final String name) {
 		valueAccessors.put(name + ".outSystem",
 				forEnum(AudioSystemType.class, v -> outSystem = v, () -> outSystem, outSystem));
@@ -58,5 +62,10 @@ public class AudioConfig {
 
 		valueAccessors.put(name + ".volume", forDouble(v -> volume = v, () -> volume, volume));
 		valueAccessors.put(name + ".sfxVolume", forDouble(v -> sfxVolume = v, () -> sfxVolume, sfxVolume));
+
+		valueAccessors.put(name + ".audioOutputDelay",
+				forInteger(v -> audioOutputDelay = v, () -> audioOutputDelay, audioOutputDelay));
+		valueAccessors.put(name + ".audioOutputDelayEnabled",
+				forBoolean(v -> audioOutputDelayEnabled = v, () -> audioOutputDelayEnabled, audioOutputDelayEnabled));
 	}
 }

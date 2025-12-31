@@ -148,7 +148,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 	}
 
 	private void dragTempo(final MouseButtonPressReleaseData clickData) {
-		final double to = xToPosition(clickData.releasePosition.x, chartTimeHandler.time());
+		final double to = xToPosition(clickData.releasePosition.x, chartTimeHandler.displayTime());
 		beatsService.dragTempo(chartData.songChart.beatsMap, clickData.pressHighlight, to);
 	}
 
@@ -212,7 +212,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 	}
 
 	private IVirtualConstantPosition findGridPositionClosestToX(final int x) {
-		return chartData.beats().getPositionFromGridClosestTo(new Position(xToPosition(x, chartTimeHandler.time())));
+		return chartData.beats().getPositionFromGridClosestTo(new Position(xToPosition(x, chartTimeHandler.displayTime())));
 	}
 
 	private <T extends IVirtualPosition> void dragPositions(final PositionType type,

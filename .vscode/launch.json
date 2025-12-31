@@ -6,10 +6,11 @@
     "configurations": [
         {
             "type": "java",
-            "name": "LogCharterRSMain",
+            "name": "Launch Charter",
             "request": "launch",
-            "mainClass": "log.charter.main.LogCharterRSMain",
-            "projectName": "RS_Charter"
+            "mainClass": "log.charter.CharterMain",
+            "projectName": "Charter",
+            "vmArgs": "-Dlwjgl.natives=natives-windows"
         }
     ]
 }

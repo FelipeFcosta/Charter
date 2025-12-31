@@ -24,7 +24,7 @@ public class BaseUndoState extends UndoState {
 				throw new RuntimeException("wrong edit mode " + modeManager.getMode());
 		}
 
-		markerPosition = chartTimeHandler.timeFractional();
+		markerPosition = chartTimeHandler.displayTimeFractional();
 	}
 
 	private BaseUndoState(final FractionalPosition markerPosition, final UndoState internalUndoState) {
