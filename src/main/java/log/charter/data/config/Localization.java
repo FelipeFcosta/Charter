@@ -313,6 +313,7 @@ public class Localization {
 		TOGGLE_METRONOME("Toggle metronome"), //
 		TOGGLE_MIDI("Toggle midi notes"), //
 		TOGGLE_WAVEFORM_GRAPH("Toggle waveform drawing"), //
+		TOOLBAR_AUDIO_DELAY("Delay (ms)"), //
 		TOOLBAR_CLAPS("Claps"), //
 		TOOLBAR_GRID_SIZE("Grid Size: 1/"), //
 		TOOLBAR_METRONOME("Metronome"), //

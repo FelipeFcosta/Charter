@@ -201,8 +201,8 @@ public class ActionHandler implements Initiable {
 
 	private void toggleBookmark(final int number) {
 		final Double currentBookmark = chartData.songChart.bookmarks.get(number);
-		if (currentBookmark == null || currentBookmark != chartTimeHandler.time()) {
-			chartData.songChart.bookmarks.put(number, chartTimeHandler.time());
+		if (currentBookmark == null || currentBookmark != chartTimeHandler.displayTime()) {
+			chartData.songChart.bookmarks.put(number, chartTimeHandler.displayTime());
 		} else {
 			chartData.songChart.bookmarks.remove(number);
 		}

@@ -29,8 +29,8 @@ public class RepeatManager {
 	}
 
 	public void toggleRepeatStart() {
-		repeatStart = (repeatStart == null || repeatStart.intValue() != ((int) chartTimeHandler.time()))
-				? chartTimeHandler.time()
+		repeatStart = (repeatStart == null || repeatStart.intValue() != ((int) chartTimeHandler.displayTime()))
+				? chartTimeHandler.displayTime()
 				: null;
 	}
 
@@ -39,8 +39,8 @@ public class RepeatManager {
 	}
 
 	public void toggleRepeatEnd() {
-		repeatEnd = (repeatEnd == null || repeatEnd.intValue() != ((int) chartTimeHandler.time()))
-				? chartTimeHandler.time()
+		repeatEnd = (repeatEnd == null || repeatEnd.intValue() != ((int) chartTimeHandler.displayTime()))
+				? chartTimeHandler.displayTime()
 				: null;
 	}
 

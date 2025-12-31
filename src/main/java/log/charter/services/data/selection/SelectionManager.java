@@ -92,7 +92,7 @@ public class SelectionManager implements Initiable {
 	}
 
 	private PositionWithIdAndType findExisting(final int x, final List<PositionWithLink> positionsWithLinks) {
-		final double position = xToPosition(x, chartTimeHandler.time());
+		final double position = xToPosition(x, chartTimeHandler.displayTime());
 		final PositionWithLink closestLink = closest(positionsWithLinks, new ConstantPosition(position)).find();
 		if (closestLink == null) {
 			return null;
@@ -108,7 +108,7 @@ public class SelectionManager implements Initiable {
 	}
 
 	private PositionWithIdAndType findWithLengthExisting(final int x, final List<PositionWithLink> positionsWithLinks) {
-		final double position = xToPosition(x, chartTimeHandler.time());
+		final double position = xToPosition(x, chartTimeHandler.displayTime());
 		final PositionWithLink closestLink = closest(positionsWithLinks, new ConstantPosition(position)).find();
 		if (closestLink == null) {
 			return null;

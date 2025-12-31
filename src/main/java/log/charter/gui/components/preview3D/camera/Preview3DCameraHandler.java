@@ -110,11 +110,11 @@ public class Preview3DCameraHandler {
 		int minFret = InstrumentConfig.frets;
 		int maxFret = 1;
 
-		final IConstantFractionalPosition start = new Position(chartTimeHandler.time() + fretFocusWindowStartOffset)
+		final IConstantFractionalPosition start = new Position(chartTimeHandler.displayTime() + fretFocusWindowStartOffset)
 				.toFraction(chartData.beats());
 		final int fhpsFrom = lastBeforeEqual(fhps, start).findId(0);
 
-		final IConstantFractionalPosition end = new Position(chartTimeHandler.time() + fretFocusWindowEndOffset)
+		final IConstantFractionalPosition end = new Position(chartTimeHandler.displayTime() + fretFocusWindowEndOffset)
 				.toFraction(chartData.beats());
 		final Integer fhpsTo = lastBeforeEqual(fhps, end).findId();
 		if (fhpsTo == null) {

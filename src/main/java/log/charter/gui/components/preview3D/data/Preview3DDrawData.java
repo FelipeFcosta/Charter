@@ -41,7 +41,7 @@ public class Preview3DDrawData {
 		songBeats = chartData.beats();
 		this.repeatManager = repeatManager;
 
-		time = chartTimeHandler.time();
+		time = chartTimeHandler.displayTime();
 		capo = chartData.currentArrangement().capo;
 		levelFHPs = chartData.currentArrangementLevel().fhps;
 

@@ -260,7 +260,7 @@ public class CopyManager {
 
 		undoSystem.addUndo();
 		selectionManager.clear();
-		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.timeFractional(), true);
+		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.displayTimeFractional(), true);
 	}
 
 	private void pasteGuitar(final CopyData copyData) {
@@ -285,7 +285,7 @@ public class CopyManager {
 		undoSystem.addUndo();
 		selectionManager.clear();
 
-		final FractionalPosition currentTime = chartTimeHandler.timeFractional();
+		final FractionalPosition currentTime = chartTimeHandler.displayTimeFractional();
 		if (selectedCopy.type() == PositionType.GUITAR_NOTE) {
 			final FullCopyData fullCopy = copyData.fullCopy;
 			if (fullCopy instanceof FullGuitarCopyData) {
@@ -333,7 +333,7 @@ public class CopyManager {
 
 		undoSystem.addUndo();
 		selectionManager.clear();
-		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.timeFractional(), true);
+		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.displayTimeFractional(), true);
 	}
 
 	public void specialPaste() {
@@ -349,7 +349,7 @@ public class CopyManager {
 
 		if (fullCopy instanceof FullGuitarCopyData) {
 			new GuitarSpecialPastePane(chartData, charterFrame, chordTemplatesEditorTab, selectionManager, undoSystem,
-					chartTimeHandler.timeFractional(), (FullGuitarCopyData) fullCopy);
+					chartTimeHandler.displayTimeFractional(), (FullGuitarCopyData) fullCopy);
 			return;
 		}
 	}

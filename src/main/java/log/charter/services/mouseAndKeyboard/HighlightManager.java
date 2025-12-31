@@ -176,7 +176,7 @@ public class HighlightManager {
 		}
 
 		final ImmutableBeatsMap beats = chartData.beats();
-		final double mouseTime = xToPosition(x, chartTimeHandler.time());
+		final double mouseTime = xToPosition(x, chartTimeHandler.displayTime());
 		if (positionType == PositionType.BEAT) {
 			return PositionWithIdAndType.of(beats, mouseTime, positionType);
 		}
