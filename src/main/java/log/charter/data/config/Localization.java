@@ -468,6 +468,11 @@ public class Localization {
 
 		HAND_SHAPE_PANE("Hand shape edit"), //
 
+		CHORD_LIBRARY("Chord Library"), //
+		CHORD_LIBRARY_ADD("Add to Library"), //
+		CHORD_LIBRARY_EMPTY("No chords in library"), //
+		CHORD_LIBRARY_NO_MATCHES("No matching chords"), //
+
 		CHORD_NAME("Chord name"), //
 		CHORD_NAME_ADVICE("Chord name advice"), //
 		SET_TEMPLATE_ON_CHORDS("Set template on chords"), //

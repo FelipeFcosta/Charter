@@ -3,11 +3,13 @@ package log.charter.gui.components.tabs.chordEditor;
 import java.awt.Dimension;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.ScrollPaneConstants;
 
 import log.charter.data.ChartData;
+import log.charter.data.ChordLibrary;
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.config.values.InstrumentConfig;
@@ -33,6 +35,7 @@ public class ChordTemplatesEditorTab extends RowedPanel implements Initiable {
 
 	private JLabel arpeggioLabel;
 	private JCheckBox arpeggioCheckBox;
+	private JButton addToLibraryButton;
 	private final ChordTemplateEditor chordTemplateEditor;
 
 	private ChartData chartData;
@@ -81,6 +84,12 @@ public class ChordTemplatesEditorTab extends RowedPanel implements Initiable {
 		});
 		arpeggioLabel = (JLabel) getPart(-2);
 		arpeggioCheckBox = (JCheckBox) getPart(-1);
+		
+		addToLibraryButton = new JButton(Label.CHORD_LIBRARY_ADD.label());
+		addToLibraryButton.addActionListener(e -> addSelectedChordToLibrary());
+		addWithSettingSize(addToLibraryButton, listWidth + 200, sizes.getY(2), 120, 20);
+		addToLibraryButton.setVisible(false);
+		
 		chordTemplateEditor.addChordTemplateEditor(listWidth + 70, 4);
 
 		refreshTemplates();
@@ -129,11 +138,20 @@ public class ChordTemplatesEditorTab extends RowedPanel implements Initiable {
 	private void setEditFieldsVisibility(final boolean visible) {
 		arpeggioLabel.setVisible(visible);
 		arpeggioCheckBox.setVisible(visible);
+		addToLibraryButton.setVisible(visible);
 		if (visible) {
 			chordTemplateEditor.showFields();
 		} else {
 			chordTemplateEditor.hideFields();
 		}
+	}
+
+	private void addSelectedChordToLibrary() {
+		if (currentChordTemplateId == null || chordTemplate.frets.isEmpty()) {
+			return;
+		}
+
+		ChordLibrary.getInstance().addChord(chordTemplate);
 	}
 
 	private void setTemplate() {
