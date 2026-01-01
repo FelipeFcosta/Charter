@@ -117,7 +117,7 @@ public class ChartTimeHandler {
 	 * Navigate to a fractional position so that it appears at the marker (display position).
 	 * Accounts for audio output delay compensation.
 	 */
-	private void nextDisplayFractionalTime(final IConstantFractionalPosition t) {
+	public void nextDisplayFractionalTime(final IConstantFractionalPosition t) {
 		final double displayPosition = t.position().getPosition(chartData.beats());
 		nextDisplayTime(displayPosition);
 	}
