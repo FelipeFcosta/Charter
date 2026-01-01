@@ -103,7 +103,7 @@ public class GP5SoundsTransformer {
 
 		boolean linked = false;
 		if (gpNote.tied) {
-			note.linkNext = true;
+			// Tied notes should extend the previous note's duration, not create a linked note
 			linked = true;
 		}
 
@@ -289,6 +289,15 @@ public class GP5SoundsTransformer {
 		}
 
 		final boolean linked = checkPreviousNoteLink(gpNote);
+		
+		// If this is a tied note, extend the previous note's duration and skip creating a new note
+		if (linked && gpNote.tied) {
+			if (lastSound != null && lastSound.isNote()) {
+				final Note previousNote = lastSound.note();
+				previousNote.endPosition(endPosition.position());
+			}
+			return;
+		}
 
 		final FractionalPosition length = position.distance(endPosition);
 		final Note note = new Note(position.position(), gpNote.string - 1, gpNote.fret);
@@ -328,12 +337,8 @@ public class GP5SoundsTransformer {
 		}
 
 		final Chord chord = lastSound.chord();
-		for (final GPNote gpNote : gpBeat.notes) {
-			if (gpNote.tied) {
-				chord.chordNotes.values().forEach(n -> n.linkNext = true);
-				break;
-			}
-		}
+		// Note: tied chord notes should extend the previous chord's duration, not create linked notes
+		// The actual duration extension is handled in addChord method
 
 		for (final GPNote gpNote : gpBeat.notes) {
 			if (addSlideToLastSound) {
@@ -438,6 +443,22 @@ public class GP5SoundsTransformer {
 			chordTemplate.chordName = "";
 		}
 		checkPreviousSoundForChord(gpBeat);
+
+		// Check if all notes in this beat are tied (sustain from previous chord)
+		boolean allTied = true;
+		for (final GPNote gpNote : gpBeat.notes) {
+			if (!gpNote.tied) {
+				allTied = false;
+				break;
+			}
+		}
+		
+		// If all notes are tied, extend the previous chord's duration and skip creating a new chord
+		if (allTied && lastSound != null && lastSound.isChord()) {
+			final Chord previousChord = lastSound.chord();
+			previousChord.chordNotes.values().forEach(n -> n.endPosition(endPosition));
+			return;
+		}
 
 		final Chord chord = new Chord(position.position(), -1, chordTemplate);
 		final ChordAddingData chordAddingData = new ChordAddingData();
