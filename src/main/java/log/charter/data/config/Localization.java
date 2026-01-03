@@ -128,6 +128,8 @@ public class Localization {
 		FORCE_ARPEGGIO_IN_RS("in RS"), //
 		FPS("FPS"), //
 		FRET("Fret"), //
+		FRETS_DECREMENT("-"), //
+		FRETS_INCREMENT("+"), //
 		NAME_CANT_BE_EMPTY("Name can't be empty"), //
 		NUMBER_0("Number 0"), //
 		NUMBER_1("Number 1"), //

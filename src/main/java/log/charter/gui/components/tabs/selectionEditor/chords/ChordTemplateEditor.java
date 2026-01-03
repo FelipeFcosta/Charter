@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
@@ -183,6 +184,8 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 	private AutocompleteInput<ChordTemplate> chordNameInput;
 	private JLabel fretsLabel;
 	private JLabel fingersLabel;
+	private JButton fretsDecrementButton;
+	private JButton fretsIncrementButton;
 	private final ArrayList2<TextInputWithValidation> fretInputs = new ArrayList2<>();
 	private final ArrayList2<TextInputWithValidation> fingerInputs = new ArrayList2<>();
 	private ChordTemplatePreview chordTemplatePreview;
@@ -226,6 +229,11 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 			final TextInputWithValidation fingerInput = fingerInputs.get(i);
 			setComponentBounds(fingerInput, fingerInput.getX(), y, fingerInput.getWidth(), fingerInput.getHeight());
 		}
+
+		// Position increment/decrement buttons right after the last visible fret input
+		final int buttonsY = parent.sizes.getY(chordTemplateEditorRow + 1 + strings);
+		setComponentBounds(fretsDecrementButton, fretsDecrementButton.getX(), buttonsY, 20, 20);
+		setComponentBounds(fretsIncrementButton, fretsIncrementButton.getX(), buttonsY, 20, 20);
 	}
 
 	public void addChordNameSuggestionButton(final int x, final int row) {
@@ -398,10 +406,46 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 			fretInputPosition.newRow();
 		}
 
+		// Add increment/decrement buttons side by side below fret inputs
+		final int buttonY = fretInputPosition.y();
+		final int buttonX = fretInputPosition.x() - 10;
+		fretsDecrementButton = new JButton(Label.FRETS_DECREMENT.label());
+		fretsDecrementButton.addActionListener(e -> adjustAllFrets(-1));
+		parent.addWithSettingSize(fretsDecrementButton, buttonX, buttonY, 20, 20);
+
+		fretsIncrementButton = new JButton(Label.FRETS_INCREMENT.label());
+		fretsIncrementButton.addActionListener(e -> adjustAllFrets(1));
+		parent.addWithSettingSize(fretsIncrementButton, buttonX + 20, buttonY, 20, 20);
+
 		final int sizeDifference = fretInputPosition.x() - position.x();
 		if (sizeDifference > 0) {
 			position.addX(sizeDifference);
 		}
+	}
+
+	private void adjustAllFrets(final int adjustment) {
+		final ChordTemplate chordTemplate = chordTemplateSupplier.get();
+		if (chordTemplate.frets.isEmpty()) {
+			return;
+		}
+
+		// Check if adjustment is valid (no frets go below 0 or above max)
+		for (final Integer fret : chordTemplate.frets.values()) {
+			final int newFret = fret + adjustment;
+			if (newFret < 0 || newFret > InstrumentConfig.frets) {
+				return; // Invalid adjustment, do nothing
+			}
+		}
+
+		// Apply adjustment to all frets
+		for (final Entry<Integer, Integer> entry : chordTemplate.frets.entrySet()) {
+			chordTemplate.frets.put(entry.getKey(), entry.getValue() + adjustment);
+		}
+
+		// Update UI
+		setCurrentValuesInInputs();
+		onChange.run();
+		parent.repaint();
 	}
 
 	public void addChordTemplateEditor(final int baseX, final int row) {
@@ -536,6 +580,8 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 		chordNameInput.setVisible(true);
 		fretsLabel.setVisible(true);
 		fingersLabel.setVisible(true);
+		fretsDecrementButton.setVisible(true);
+		fretsIncrementButton.setVisible(true);
 
 		for (int i = 0; i < chartData.currentArrangement().tuning.strings(); i++) {
 			fretInputs.get(i).setVisible(true);
@@ -562,6 +608,8 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 		chordNameInput.removeLabels();
 		fretsLabel.setVisible(false);
 		fingersLabel.setVisible(false);
+		fretsDecrementButton.setVisible(false);
+		fretsIncrementButton.setVisible(false);
 
 		for (final TextInputWithValidation fretInput : fretInputs) {
 			fretInput.setVisible(false);
