@@ -158,7 +158,8 @@ public class GuitarModeHandler implements ModeHandler {
 		}
 
 		if (chordOrNote == null) {
-			addSound(new Note(position, string, 0));
+			final int defaultFret = chartData.currentArrangement().capo;
+			addSound(new Note(position, string, defaultFret));
 			return 1;
 		}
 
