@@ -101,7 +101,7 @@ public class Preview3DStringsFretsDrawer {
 			}
 
 			final double highlightValue = highlightTime - drawData.time + sound.position(beats);
-			if (sound.isNote() && sound.note().fret != 0) {
+			if (sound.isNote() && sound.note().fret != 0 && sound.note().fret > drawData.capo) {
 				highlightValues[sound.note().fret - 1] = highlightValue;
 				highlightValues[sound.note().fret] = highlightValue;
 			} else {
