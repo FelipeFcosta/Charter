@@ -22,6 +22,8 @@ import log.charter.data.song.position.virtual.IVirtualPositionWithEnd;
 import log.charter.data.types.PositionType;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.CharterFrame;
+import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
+import log.charter.gui.panes.songEdits.HandShapePane;
 import log.charter.gui.panes.songEdits.VocalPane;
 import log.charter.io.Logger;
 import log.charter.services.ActionHandler;
@@ -40,6 +42,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 	private ChartData chartData;
 	private CharterFrame charterFrame;
 	private ChartTimeHandler chartTimeHandler;
+	private ChordTemplatesEditorTab chordTemplatesEditorTab;
 	private KeyboardHandler keyboardHandler;
 	private ModeManager modeManager;
 	private MouseButtonPressReleaseHandler mouseButtonPressReleaseHandler;
@@ -106,26 +109,33 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		}
 	}
 
-	private void leftClickGuitar(final MouseButtonPressReleaseData clickData) {
+	private void leftClickGuitar(final MouseButtonPressReleaseData clickData, final boolean isDoubleClick) {
 		if (!clickData.isXDrag() || keyboardHandler.scrollLock()) {
 			selectionManager.click(clickData, keyboardHandler.ctrl(), keyboardHandler.shift());
-			return;
+		} else {
+			if (clickData.pressHighlight.type == PositionType.EVENT_POINT) {
+				dragPositions(PositionType.EVENT_POINT, clickData, chartData.currentEventPoints());
+			}
+			if (clickData.pressHighlight.type == PositionType.TONE_CHANGE) {
+				dragPositions(PositionType.TONE_CHANGE, clickData, chartData.currentToneChanges());
+			}
+			if (clickData.pressHighlight.type == PositionType.FHP) {
+				dragPositions(PositionType.FHP, clickData, chartData.currentFHPs());
+			}
+			if (clickData.pressHighlight.type == PositionType.GUITAR_NOTE) {
+				dragSounds(clickData, chartData.currentSounds());
+			}
+			if (clickData.pressHighlight.type == PositionType.HAND_SHAPE) {
+				dragPositionsWithLength(PositionType.HAND_SHAPE, clickData, chartData.currentHandShapes());
+			}
 		}
 
-		if (clickData.pressHighlight.type == PositionType.EVENT_POINT) {
-			dragPositions(PositionType.EVENT_POINT, clickData, chartData.currentEventPoints());
-		}
-		if (clickData.pressHighlight.type == PositionType.TONE_CHANGE) {
-			dragPositions(PositionType.TONE_CHANGE, clickData, chartData.currentToneChanges());
-		}
-		if (clickData.pressHighlight.type == PositionType.FHP) {
-			dragPositions(PositionType.FHP, clickData, chartData.currentFHPs());
-		}
-		if (clickData.pressHighlight.type == PositionType.GUITAR_NOTE) {
-			dragSounds(clickData, chartData.currentSounds());
-		}
-		if (clickData.pressHighlight.type == PositionType.HAND_SHAPE) {
-			dragPositionsWithLength(PositionType.HAND_SHAPE, clickData, chartData.currentHandShapes());
+		if (isDoubleClick && clickData.pressHighlight.handShape != null) {
+			new HandShapePane(chartData, charterFrame, chordTemplatesEditorTab, clickData.pressHighlight.handShape,
+					() -> {
+						undoSystem.undo();
+						undoSystem.removeRedo();
+					});
 		}
 	}
 
@@ -160,7 +170,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 				lastClickId = clickData.pressHighlight.id;
 
 				switch (modeManager.getMode()) {
-					case GUITAR -> leftClickGuitar(clickData);
+					case GUITAR -> leftClickGuitar(clickData, doubleClick);
 					case TEMPO_MAP -> dragTempo(clickData);
 					case VOCALS -> leftClickVocals(clickData, doubleClick);
 					default -> {}
