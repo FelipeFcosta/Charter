@@ -292,7 +292,7 @@ public class GuitarSoundsHandler {
 		chordTemplatesEditorTab.refreshTemplates();
 	}
 
-	public void moveFret(final int fretChange) {
+	private void moveFretForSounds(final int fretChange) {
 		final List<Selection<ChordOrNote>> selected = selectionManager.<ChordOrNote>accessor(PositionType.GUITAR_NOTE)
 				.getSelected();
 		if (selected.isEmpty()) {
@@ -309,6 +309,41 @@ public class GuitarSoundsHandler {
 				.updateLinkedNotes(selected.stream().map(s -> s.id).collect(Collectors.toCollection(ArrayList::new)));
 
 		currentSelectionEditor.selectionChanged(false);
+	}
+
+	private void moveFretForFHPs(final int fretChange) {
+		final List<Selection<FHP>> selected = selectionManager.getSelected(PositionType.FHP);
+		if (selected.isEmpty()) {
+			return;
+		}
+
+		for (final Selection<FHP> fhpSelection : selected) {
+			final int newFret = fhpSelection.selectable.fret + fretChange;
+			if (newFret < 1 || newFret > InstrumentConfig.frets) {
+				return;
+			}
+		}
+
+		undoSystem.addUndo();
+
+		for (final Selection<FHP> fhpSelection : selected) {
+			fhpSelection.selectable.fret += fretChange;
+		}
+
+		currentSelectionEditor.selectionChanged(false);
+	}
+
+	public void moveFret(final int fretChange) {
+		switch (selectionManager.selectedType()) {
+			case FHP:
+				moveFretForFHPs(fretChange);
+				break;
+			case GUITAR_NOTE:
+				moveFretForSounds(fretChange);
+				break;
+			default:
+				break;
+		}
 	}
 
 	private void setFretForFHPs(final int fret) {
