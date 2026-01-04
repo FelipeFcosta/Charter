@@ -239,6 +239,9 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 	public void addChordNameSuggestionButton(final int x, final int row) {
 		chordNameAdviceButton = new ChordNameAdviceButton(Label.CHORD_NAME_ADVICE, parent,
 				() -> chartData.currentArrangement().tuning, () -> chordTemplateSupplier.get().frets,
+				() -> chartData.currentArrangement().chordNameMadnessCapoRelative
+						? chartData.currentArrangement().capo
+						: 0,
 				this::onChordNameSelect);
 		parent.addWithSettingSize(chordNameAdviceButton, x, parent.sizes.getY(row), 150, 20);
 	}

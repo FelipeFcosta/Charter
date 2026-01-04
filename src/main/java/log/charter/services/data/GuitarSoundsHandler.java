@@ -220,8 +220,11 @@ public class GuitarSoundsHandler {
 			return;
 		}
 
+		final int capo = chartData.currentArrangement().chordNameMadnessCapoRelative
+				? chartData.currentArrangement().capo
+				: 0;
 		final List<String> suggestedNames = ChordNameSuggester.suggestChordNames(chartData.currentArrangement().tuning,
-				template.frets);
+				template.frets, capo);
 
 		if (!suggestedNames.isEmpty()) {
 			template.chordName = suggestedNames.get(0);

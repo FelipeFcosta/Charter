@@ -52,6 +52,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 	private final List<TextInputWithValidation> tuningInputs = new ArrayList<>();
 	private final List<JLabel> tuningLabels = new ArrayList<>();
 	private FieldWithLabel<JCheckBox> moveFrets;
+	private FieldWithLabel<JCheckBox> chordNameCapoRelativeField;
 
 	private ArrangementType arrangementType;
 	private ArrangementSubtype arrangementSubtype;
@@ -60,6 +61,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 	private Tuning tuning;
 	private int capo;
 	private boolean pickedBass;
+	private boolean chordNameMadnessCapoRelative;
 
 	boolean ignoreEvents = false;
 
@@ -80,6 +82,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 		centOffset = arrangement.centOffset;
 		capo = arrangement.capo;
 		pickedBass = arrangement.pickedBass;
+		chordNameMadnessCapoRelative = arrangement.chordNameMadnessCapoRelative;
 
 		final AtomicInteger row = new AtomicInteger(0);
 		addArrangmentType(row);
@@ -110,6 +113,8 @@ public class ArrangementSettingsPane extends ParamsPane {
 		} else {
 			addMoveFretsCheckbox(row);
 		}
+
+		addChordNameCapoRelativeCheckbox(row);
 
 		setOnFinish(this::saveAndExit, onCancel);
 		addDefaultFinish(row.incrementAndGet());
@@ -284,6 +289,16 @@ public class ArrangementSettingsPane extends ParamsPane {
 		add(moveFrets, 20, getY(row.getAndIncrement()), 200, 20);
 	}
 
+	private void addChordNameCapoRelativeCheckbox(final AtomicInteger row) {
+		final JCheckBox checkbox = new JCheckBox();
+		checkbox.setSelected(chordNameMadnessCapoRelative);
+		checkbox.addActionListener(e -> chordNameMadnessCapoRelative = checkbox.isSelected());
+
+		chordNameCapoRelativeField = new FieldWithLabel<>(Label.ARRANGEMENT_OPTIONS_CHORD_NAME_CAPO_RELATIVE, 5, 20, 20,
+				checkbox, LabelPosition.RIGHT_PACKED);
+		add(chordNameCapoRelativeField, 20, getY(row.getAndIncrement()), 250, 20);
+	}
+
 	private void onTuningSelected(final TuningType newTuningType) {
 		if (ignoreEvents) {
 			return;
@@ -395,6 +410,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 		arrangement.tuning = tuning;
 		arrangement.capo = capo;
 		arrangement.pickedBass = pickedBass;
+		arrangement.chordNameMadnessCapoRelative = chordNameMadnessCapoRelative;
 
 		selectionManager.clear();
 
