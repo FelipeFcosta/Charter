@@ -80,8 +80,8 @@ public class GuitarDrawer {
 	}
 
 	private boolean addChord(final FrameData frameData, final HighwayDrawer highwayDrawer, final int panelWidth,
-			final Chord chord, final boolean selected, final int highlightedString, final boolean lastWasLinkNext,
-			final boolean wrongLinkNext) {
+			final Chord chord, final boolean selected, final int highlightedString, final boolean editingChordNote,
+			final boolean lastWasLinkNext, final boolean wrongLinkNext) {
 		final int x = positionToX(chord.position(frameData.beats), frameData.time);
 		if (isPastRightEdge(x, panelWidth)) {
 			return false;
@@ -94,7 +94,7 @@ public class GuitarDrawer {
 
 		final ChordTemplate chordTemplate = frameData.arrangement.chordTemplates.get(chord.templateId());
 		for (final EditorNoteDrawingData noteData : fromChord(frameData.beats, frameData.time, chord, chordTemplate, x,
-				selected, highlightedString, lastWasLinkNext, wrongLinkNext, frameData.ctrlPressed)) {
+				selected, highlightedString, editingChordNote, lastWasLinkNext, wrongLinkNext, frameData.ctrlPressed)) {
 			highwayDrawer.addNote(noteData);
 		}
 
@@ -130,10 +130,10 @@ public class GuitarDrawer {
 
 	private boolean addChordOrNote(final FrameData frameData, final HighwayDrawer highwayDrawer, final int panelWidth,
 			final ChordOrNote chordOrNote, final boolean selected, final int highlightedString,
-			final boolean lastWasLinkNext, final boolean wrongLinkNext) {
+			final boolean editingChordNote, final boolean lastWasLinkNext, final boolean wrongLinkNext) {
 		if (chordOrNote.isChord()) {
 			return addChord(frameData, highwayDrawer, panelWidth, chordOrNote.chord(), selected, highlightedString,
-					lastWasLinkNext, wrongLinkNext);
+					editingChordNote, lastWasLinkNext, wrongLinkNext);
 		}
 		if (chordOrNote.isNote()) {
 			return addNote(frameData, highwayDrawer, panelWidth, chordOrNote.note(), selected,
@@ -229,10 +229,18 @@ public class GuitarDrawer {
 			}
 
 			final boolean selected = selectedNoteIds.contains(i);
-			final int highlightedString = i != highlightId ? -1//
+			// Determine highlighted string: either from hover highlight or from selected chord note
+			int highlightedString = i != highlightId ? -1//
 					: frameData.highlightData.id.map(id -> id.string.orElse(-1)).orElse(-1);
-			addChordOrNote(frameData, highwayDrawer, panelWidth, sound, selected, highlightedString, lastWasLinkNext,
-					wrongLinkNext);
+			// Check if we're in chord note editing mode
+			boolean editingChordNote = false;
+			if (selected && sound.isChord() && frameData.selectedChordNoteString != null
+					&& sound.chord().chordNotes.containsKey(frameData.selectedChordNoteString)) {
+				highlightedString = frameData.selectedChordNoteString;
+				editingChordNote = true;
+			}
+			addChordOrNote(frameData, highwayDrawer, panelWidth, sound, selected, highlightedString, editingChordNote,
+					lastWasLinkNext, wrongLinkNext);
 
 			lastWasLinkNext = sound.chord() != null ? sound.chord().linkNext() : sound.note().linkNext;
 

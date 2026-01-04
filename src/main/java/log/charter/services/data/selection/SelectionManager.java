@@ -1,6 +1,7 @@
 package log.charter.services.data.selection;
 
 import static log.charter.data.config.Config.selectNotesByTails;
+import static log.charter.gui.chartPanelDrawers.common.DrawerUtils.yToString;
 import static log.charter.util.CollectionUtils.closest;
 import static log.charter.util.ScalingUtils.xToPosition;
 
@@ -8,9 +9,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import log.charter.data.ChartData;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
+import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.time.ConstantPosition;
 import log.charter.data.song.position.time.IConstantPosition;
 import log.charter.data.song.position.virtual.IVirtualConstantPosition;
@@ -35,6 +38,12 @@ public class SelectionManager implements Initiable {
 	private MouseHandler mouseHandler;
 
 	private final Map<PositionType, SelectionList<?, ?, ?>> selectionLists = new HashMap2<>();
+
+	/**
+	 * When editing a chord, this holds the specific string number that is selected
+	 * for individual note editing. When null, the whole chord is selected.
+	 */
+	private Integer selectedChordNoteString = null;
 
 	@Override
 	public void init() {
@@ -146,10 +155,35 @@ public class SelectionManager implements Initiable {
 			if (!ctrl) {
 				clearSelectionsExcept(PositionType.NONE);
 			}
+			selectedChordNoteString = null;
 
 			currentSelectionEditor.selectionChanged(true);
 			return;
 		}
+
+		// Check if clicking on an already-selected chord to select a specific note
+		if (clickData.pressHighlight.type == PositionType.GUITAR_NOTE && !ctrl && !shift) {
+			final Set<Integer> selectedIds = accessor(PositionType.GUITAR_NOTE).getSelectedIdsSet(PositionType.GUITAR_NOTE);
+			if (selectedIds.contains(clickData.pressHighlight.id) && clickData.pressHighlight.chordOrNote != null
+					&& clickData.pressHighlight.chordOrNote.isChord()) {
+				// Clicking on an already-selected chord - select specific string
+				final int clickedString = yToString(clickData.pressPosition.y, chartData.currentStrings());
+				// Verify the chord has a note on this string
+				if (clickData.pressHighlight.chordOrNote.chord().chordNotes.containsKey(clickedString)) {
+					// If clicking the same string again, deselect it (go back to whole chord selection)
+					if (selectedChordNoteString != null && selectedChordNoteString == clickedString) {
+						selectedChordNoteString = null;
+					} else {
+						selectedChordNoteString = clickedString;
+					}
+					currentSelectionEditor.selectionChanged(false);
+					return;
+				}
+			}
+		}
+
+		// Clear chord note selection when selecting different sound
+		selectedChordNoteString = null;
 
 		clearSelectionsExcept(clickData.pressHighlight.type);
 
@@ -165,7 +199,31 @@ public class SelectionManager implements Initiable {
 
 	public void clear() {
 		clearSelectionsExcept(PositionType.NONE);
+		selectedChordNoteString = null;
 		currentSelectionEditor.selectionChanged(true);
+	}
+
+	/**
+	 * Gets the currently selected chord note string for individual editing.
+	 * @return the string number (0-based) if a specific chord note is selected, null if whole chord is selected
+	 */
+	public Integer getSelectedChordNoteString() {
+		return selectedChordNoteString;
+	}
+
+	/**
+	 * Sets the specific chord note string for individual editing.
+	 * @param string the string number (0-based), or null to select whole chord
+	 */
+	public void setSelectedChordNoteString(final Integer string) {
+		this.selectedChordNoteString = string;
+	}
+
+	/**
+	 * Clears the selected chord note string, returning to whole-chord selection mode.
+	 */
+	public void clearSelectedChordNoteString() {
+		this.selectedChordNoteString = null;
 	}
 
 	@SuppressWarnings("unchecked")

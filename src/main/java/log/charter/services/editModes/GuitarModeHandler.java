@@ -339,7 +339,14 @@ public class GuitarModeHandler implements ModeHandler {
 		}
 
 		fretNumberTimer = nanoTime() / 1_000_000 + 2000;
-		guitarSoundsHandler.setFret(lastFretNumber);
+
+		// Check if a specific chord note is selected for editing
+		final Integer selectedChordNoteString = selectionManager.getSelectedChordNoteString();
+		if (selectedChordNoteString != null) {
+			guitarSoundsHandler.setFretForChordNote(lastFretNumber, selectedChordNoteString);
+		} else {
+			guitarSoundsHandler.setFret(lastFretNumber);
+		}
 	}
 
 	@Override

@@ -339,11 +339,109 @@ public class GuitarSoundsHandler {
 				moveFretForFHPs(fretChange);
 				break;
 			case GUITAR_NOTE:
-				moveFretForSounds(fretChange);
+				final Integer selectedChordNoteString = selectionManager.getSelectedChordNoteString();
+				if (selectedChordNoteString != null) {
+					moveFretForChordNote(fretChange, selectedChordNoteString);
+				} else {
+					moveFretForSounds(fretChange);
+				}
 				break;
 			default:
 				break;
 		}
+	}
+
+	/**
+	 * Moves the fret of a single note within a selected chord.
+	 */
+	private void moveFretForChordNote(final int fretChange, final int string) {
+		final List<Selection<ChordOrNote>> selected = selectionManager.<ChordOrNote>accessor(PositionType.GUITAR_NOTE)
+				.getSelected();
+		if (selected.size() != 1) {
+			return;
+		}
+
+		final Selection<ChordOrNote> selection = selected.get(0);
+		final ChordOrNote sound = selection.selectable;
+		if (!sound.isChord()) {
+			return;
+		}
+
+		final Chord chord = sound.chord();
+		final ChordTemplate oldTemplate = chartData.currentArrangement().chordTemplates.get(chord.templateId());
+		if (!oldTemplate.frets.containsKey(string)) {
+			return;
+		}
+
+		final int oldFret = oldTemplate.frets.get(string);
+		final int newFret = max(0, min(InstrumentConfig.frets, oldFret + fretChange));
+		if (newFret == oldFret) {
+			return;
+		}
+
+		undoSystem.addUndo();
+
+		final ChordTemplate newTemplate = new ChordTemplate(oldTemplate);
+		newTemplate.frets.put(string, newFret);
+		if (newFret == 0) {
+			newTemplate.fingers.remove(string);
+		}
+		setChordName(newTemplate);
+
+		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
+		chord.updateTemplate(newTemplateId, newTemplate);
+
+		guitarSoundsStatusesHandler.updateLinkedNote(selection.id);
+		currentSelectionEditor.selectionChanged(false);
+		chordTemplatesEditorTab.refreshTemplates();
+	}
+
+	/**
+	 * Sets the fret of a single note within a selected chord.
+	 */
+	public void setFretForChordNote(final int fret, final int string) {
+		final List<Selection<ChordOrNote>> selected = selectionManager.<ChordOrNote>accessor(PositionType.GUITAR_NOTE)
+				.getSelected();
+		if (selected.size() != 1) {
+			return;
+		}
+
+		final Selection<ChordOrNote> selection = selected.get(0);
+		final ChordOrNote sound = selection.selectable;
+		if (!sound.isChord()) {
+			return;
+		}
+
+		final Chord chord = sound.chord();
+		final ChordTemplate oldTemplate = chartData.currentArrangement().chordTemplates.get(chord.templateId());
+		if (!oldTemplate.frets.containsKey(string)) {
+			return;
+		}
+
+		if (fret < 0 || fret > InstrumentConfig.frets) {
+			return;
+		}
+
+		final int oldFret = oldTemplate.frets.get(string);
+		if (fret == oldFret) {
+			return;
+		}
+
+		undoSystem.addUndo();
+
+		final ChordTemplate newTemplate = new ChordTemplate(oldTemplate);
+		newTemplate.frets.put(string, fret);
+		if (fret == 0) {
+			newTemplate.fingers.remove(string);
+		}
+		setChordName(newTemplate);
+
+		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
+		chord.updateTemplate(newTemplateId, newTemplate);
+
+		guitarSoundsStatusesHandler.updateLinkedNote(selection.id);
+		currentSelectionEditor.selectionChanged(false);
+		chordTemplatesEditorTab.refreshTemplates();
 	}
 
 	private void setFretForFHPs(final int fret) {

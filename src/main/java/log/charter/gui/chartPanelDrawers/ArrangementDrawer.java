@@ -63,7 +63,8 @@ public class ArrangementDrawer implements Initiable {
 				time, //
 				g, //
 				generateHighlightData(time), //
-				keyboardHandler.ctrl());
+				keyboardHandler.ctrl(), //
+				selectionManager.getSelectedChordNoteString());
 	}
 
 	public void draw(final Graphics2D g, final double time) {

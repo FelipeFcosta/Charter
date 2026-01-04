@@ -23,11 +23,13 @@ public class FrameData {
 	public final Graphics2D g;
 	public final HighlightData highlightData;
 	public final boolean ctrlPressed;
+	public final Integer selectedChordNoteString;
 
 	public FrameData(final ImmutableBeatsMap beats, final Map<Integer, Double> bookmarks, final VocalPath vocals,
 			final Arrangement arrangement, final Level level, final Pair<Double, Double> repeaterSpan,
 			final ISelectionAccessor<? extends IVirtualConstantPosition> selection, final double time,
-			final Graphics2D g, final HighlightData highlightData, final boolean ctrlPressed) {
+			final Graphics2D g, final HighlightData highlightData, final boolean ctrlPressed,
+			final Integer selectedChordNoteString) {
 		this.beats = beats;
 		this.bookmarks = bookmarks;
 		this.vocals = vocals;
@@ -39,11 +41,12 @@ public class FrameData {
 		this.g = g;
 		this.highlightData = highlightData;
 		this.ctrlPressed = ctrlPressed;
+		this.selectedChordNoteString = selectedChordNoteString;
 	}
 
 	public FrameData spawnSubData(final Graphics2D g) {
 		return new FrameData(beats, bookmarks, vocals, arrangement, level, repeaterSpan, selection, time, g,
-				highlightData, ctrlPressed);
+				highlightData, ctrlPressed, selectedChordNoteString);
 	}
 
 }
