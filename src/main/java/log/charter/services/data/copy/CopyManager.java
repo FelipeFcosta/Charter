@@ -183,14 +183,15 @@ public class CopyManager {
 	}
 
 	private CopyData getGuitarCopyData() {
+		// Prioritize GUITAR_NOTE because it triggers full paste (including FHP, hand shapes, etc.)
+		if (selectionManager.accessor(PositionType.GUITAR_NOTE).isSelected()) {
+			return getGuitarCopyDataGuitarNotes();
+		}
 		if (selectionManager.accessor(PositionType.FHP).isSelected()) {
 			return getCopyData(PositionType.FHP, CopiedFHP::new, FHPsCopyData::new);
 		}
 		if (selectionManager.accessor(PositionType.EVENT_POINT).isSelected()) {
 			return getGuitarCopyDataEventPoints();
-		}
-		if (selectionManager.accessor(PositionType.GUITAR_NOTE).isSelected()) {
-			return getGuitarCopyDataGuitarNotes();
 		}
 		if (selectionManager.accessor(PositionType.HAND_SHAPE).isSelected()) {
 			return getGuitarCopyDataHandShapes();
@@ -290,6 +291,7 @@ public class CopyManager {
 			final FullCopyData fullCopy = copyData.fullCopy;
 			if (fullCopy instanceof FullGuitarCopyData) {
 				final FullGuitarCopyData fullGuitarCopyData = (FullGuitarCopyData) fullCopy;
+				fullGuitarCopyData.beats.paste(chartData, selectionManager, currentTime, true);
 				fullGuitarCopyData.toneChanges.paste(chartData, selectionManager, currentTime, true);
 				fullGuitarCopyData.fhps.paste(chartData, selectionManager, currentTime, true);
 				fullGuitarCopyData.handShapes.paste(chartData, selectionManager, currentTime, true);

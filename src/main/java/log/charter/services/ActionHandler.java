@@ -177,6 +177,11 @@ public class ActionHandler implements Initiable {
 		switchTo(currentMode, currentPath);
 	}
 
+	private void cut() {
+		copyManager.copy();
+		chartItemsHandler.delete();
+	}
+
 	private void handleNumber(final int number) {
 		modeManager.getHandler().handleNumber(number);
 	}
@@ -243,6 +248,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.BPM_DOUBLE, bpmDoubler::doubleBPM);
 		actionHandlers.put(Action.BPM_HALVE, bpmHalver::halveBPM);
 		actionHandlers.put(Action.COPY, copyManager::copy);
+		actionHandlers.put(Action.CUT, this::cut);
 		actionHandlers.put(Action.DELETE, chartItemsHandler::delete);
 		actionHandlers.put(Action.DOUBLE_GRID, this::doubleGridSize);
 		actionHandlers.put(Action.EDIT_VOCALS, vocalsHandler::editVocals);
