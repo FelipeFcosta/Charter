@@ -16,8 +16,10 @@ import log.charter.data.song.Arrangement;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.ChordTemplate;
 import log.charter.data.song.EventPoint;
+import log.charter.data.song.FHP;
 import log.charter.data.song.HandShape;
 import log.charter.data.song.Phrase;
+import log.charter.data.song.ToneChange;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.FractionalPosition;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
@@ -126,8 +128,62 @@ public class CopyManager {
 		final List<ChordTemplate> copiedChordTemplates = chartData.currentArrangement().chordTemplates//
 				.stream().map(ChordTemplate::new).collect(Collectors.toList());
 		final List<CopiedSound> copiedSounds = makeCopy(selected, CopiedSound::copy);
-		final FractionalPosition from = selected.get(0).position();
-		final FractionalPosition to = selected.get(selected.size() - 1).endPosition().position();
+		
+		// Calculate range from notes
+		FractionalPosition from = selected.get(0).position();
+		FractionalPosition to = selected.get(selected.size() - 1).endPosition().position();
+		
+		// Expand range to include selected event points
+		final List<EventPoint> selectedEventPoints = selectionManager.getSelectedElements(PositionType.EVENT_POINT);
+		if (!selectedEventPoints.isEmpty()) {
+			final FractionalPosition eventFrom = selectedEventPoints.get(0).position();
+			final FractionalPosition eventTo = selectedEventPoints.get(selectedEventPoints.size() - 1).position();
+			if (eventFrom.compareTo(from) < 0) {
+				from = eventFrom;
+			}
+			if (eventTo.compareTo(to) > 0) {
+				to = eventTo;
+			}
+		}
+		
+		// Expand range to include selected tone changes
+		final List<ToneChange> selectedToneChanges = selectionManager.getSelectedElements(PositionType.TONE_CHANGE);
+		if (!selectedToneChanges.isEmpty()) {
+			final FractionalPosition toneFrom = selectedToneChanges.get(0).position();
+			final FractionalPosition toneTo = selectedToneChanges.get(selectedToneChanges.size() - 1).position();
+			if (toneFrom.compareTo(from) < 0) {
+				from = toneFrom;
+			}
+			if (toneTo.compareTo(to) > 0) {
+				to = toneTo;
+			}
+		}
+		
+		// Expand range to include selected FHPs
+		final List<FHP> selectedFHPs = selectionManager.getSelectedElements(PositionType.FHP);
+		if (!selectedFHPs.isEmpty()) {
+			final FractionalPosition fhpFrom = selectedFHPs.get(0).position();
+			final FractionalPosition fhpTo = selectedFHPs.get(selectedFHPs.size() - 1).position();
+			if (fhpFrom.compareTo(from) < 0) {
+				from = fhpFrom;
+			}
+			if (fhpTo.compareTo(to) > 0) {
+				to = fhpTo;
+			}
+		}
+		
+		// Expand range to include selected hand shapes
+		final List<HandShape> selectedHandShapes = selectionManager.getSelectedElements(PositionType.HAND_SHAPE);
+		if (!selectedHandShapes.isEmpty()) {
+			final FractionalPosition hsFrom = selectedHandShapes.get(0).position();
+			final FractionalPosition hsTo = selectedHandShapes.get(selectedHandShapes.size() - 1).endPosition().position();
+			if (hsFrom.compareTo(from) < 0) {
+				from = hsFrom;
+			}
+			if (hsTo.compareTo(to) > 0) {
+				to = hsTo;
+			}
+		}
 
 		final ICopyData copyData = new SoundsCopyData(copiedChordTemplates, copiedSounds);
 		return new CopyData(copyData, getFullCopyData(from, to));
