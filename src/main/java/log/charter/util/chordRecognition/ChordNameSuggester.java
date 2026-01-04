@@ -63,7 +63,22 @@ public class ChordNameSuggester {
 	}
 
 	public static List<String> suggestChordNames(final Tuning tuning, final Map<Integer, Integer> templateFrets) {
-		final int[] sounds = SoundUtils.getSounds(tuning, false, templateFrets);
+		return suggestChordNames(tuning, templateFrets, 0);
+	}
+
+	public static List<String> suggestChordNames(final Tuning tuning, final Map<Integer, Integer> templateFrets, final int capo) {
+		final Map<Integer, Integer> adjustedFrets;
+		if (capo > 0) {
+			adjustedFrets = new java.util.HashMap<>();
+			for (final Map.Entry<Integer, Integer> entry : templateFrets.entrySet()) {
+				final int fret = entry.getValue();
+				adjustedFrets.put(entry.getKey(), Math.max(0, fret - capo));
+			}
+		} else {
+			adjustedFrets = templateFrets;
+		}
+
+		final int[] sounds = SoundUtils.getSounds(tuning, false, adjustedFrets);
 
 		while (negativeExists(sounds)) {
 			for (int i = 0; i < sounds.length; i++) {
