@@ -217,21 +217,21 @@ public class SelectionManager implements Initiable {
 	}
 
 	public void selectAll() {
-		final PositionType positionTypeToSelect = switch (modeManager.getMode()) {
-			case VOCALS -> PositionType.VOCAL;
-			case GUITAR -> {
-				PositionType positionType = selectedType();
-				if (positionType != PositionType.NONE) {
-					yield positionType;
-				}
-
-				positionType = mouseHandler.getMouseHoverPositionType();
-				yield positionType == PositionType.NONE ? PositionType.GUITAR_NOTE : positionType;
+		switch (modeManager.getMode()) {
+			case VOCALS -> {
+				selectionLists.get(PositionType.VOCAL).addAll();
 			}
-			default -> PositionType.NONE;
-		};
+			case GUITAR -> {
+				selectionLists.get(PositionType.GUITAR_NOTE).addAll();
+				selectionLists.get(PositionType.HAND_SHAPE).addAll();
+				selectionLists.get(PositionType.FHP).addAll();
+				selectionLists.get(PositionType.EVENT_POINT).addAll();
+				selectionLists.get(PositionType.TONE_CHANGE).addAll();
+			}
+			default -> {
+			}
+		}
 
-		selectionLists.get(positionTypeToSelect).addAll();
 		currentSelectionEditor.selectionChanged(true);
 	}
 

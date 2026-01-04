@@ -81,6 +81,7 @@ public class Localization {
 		CONFIG_INSTRUMENT("Instrument"), //
 		CONFIG_SECRETS("Secrets"), //
 		COPY("Copy"), //
+		CUT("Cut"), //
 		COPY_ALL_FILES("Copy all files?"), //
 		COPY_ALL_FILES_MESSAGE("Copy all files? If not, only project and main audio will be moved."), //
 		COPY_AUDIO("Copy audio?"), //

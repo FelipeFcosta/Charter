@@ -6,8 +6,10 @@ import static log.charter.util.CollectionUtils.map;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,7 +48,8 @@ public class ChartItemsHandler {
 	private UndoSystem undoSystem;
 
 	public <T extends IVirtualConstantPosition> void delete() {
-		boolean nonEmptyFound = false;
+		// First, collect all selections before clearing
+		final Map<PositionType, List<Integer>> selectionsToDelete = new HashMap<>();
 
 		for (final PositionType type : PositionType.values()) {
 			if (type == PositionType.NONE || type == PositionType.BEAT) {
@@ -59,13 +62,20 @@ public class ChartItemsHandler {
 			}
 
 			final List<Selection<T>> selected = selectedTypeAccessor.getSelected();
-			if (!nonEmptyFound) {
-				undoSystem.addUndo();
-				selectionManager.clear();
-				nonEmptyFound = true;
-			}
+			selectionsToDelete.put(type, selected.stream().map(selection -> selection.id).collect(Collectors.toList()));
+		}
 
-			delete(type, selected.stream().map(selection -> selection.id).collect(Collectors.toList()));
+		if (selectionsToDelete.isEmpty()) {
+			return;
+		}
+
+		// Now clear selections and add undo
+		undoSystem.addUndo();
+		selectionManager.clear();
+
+		// Finally, delete all collected selections
+		for (final Map.Entry<PositionType, List<Integer>> entry : selectionsToDelete.entrySet()) {
+			delete(entry.getKey(), entry.getValue());
 		}
 	}
 
