@@ -4,6 +4,7 @@ import static java.lang.System.nanoTime;
 import static log.charter.data.ChordTemplateFingerSetter.setSuggestedFingers;
 import static log.charter.gui.chartPanelDrawers.common.DrawerUtils.yToString;
 import static log.charter.util.CollectionUtils.lastBefore;
+import static log.charter.util.CollectionUtils.lastBeforeEqual;
 import static log.charter.util.Utils.nvl;
 
 import java.util.List;
@@ -151,6 +152,22 @@ public class GuitarModeHandler implements ModeHandler {
 		return sound;
 	}
 
+	private int getDefaultFretForPosition(final FractionalPosition position, final int string) {
+		final List<HandShape> handShapes = chartData.currentHandShapes();
+		final HandShape handShape = lastBeforeEqual(handShapes, position).find();
+
+		if (handShape != null && handShape.templateId != null
+				&& handShape.endPosition().compareTo(position) >= 0) {
+			final ChordTemplate template = chartData.currentChordTemplates().get(handShape.templateId);
+			final Integer fret = template.frets.get(string);
+			if (fret != null) {
+				return fret;
+			}
+		}
+
+		return chartData.currentArrangement().capo;
+	}
+
 	private int addOrRemoveSingleNote(final FractionalPosition position, final int string, final Integer id,
 			final ChordOrNote chordOrNote) {
 		if (string < 0 || string >= chartData.currentStrings()) {
@@ -158,7 +175,7 @@ public class GuitarModeHandler implements ModeHandler {
 		}
 
 		if (chordOrNote == null) {
-			final int defaultFret = chartData.currentArrangement().capo;
+			final int defaultFret = getDefaultFretForPosition(position, string);
 			addSound(new Note(position, string, defaultFret));
 			return 1;
 		}
@@ -183,8 +200,7 @@ public class GuitarModeHandler implements ModeHandler {
 			if (chordTemplate.frets.containsKey(string)) {
 				chordTemplate.frets.remove(string);
 			} else {
-				final int fret = chordTemplate.frets.values().stream().collect(Collectors.minBy(Integer::compare))
-						.orElse(0);
+				final int fret = getDefaultFretForPosition(position, string);
 				chordTemplate.frets.put(string, fret);
 			}
 
@@ -198,7 +214,7 @@ public class GuitarModeHandler implements ModeHandler {
 		} else {
 			final ChordTemplate chordTemplate = new ChordTemplate();
 			chordTemplate.frets.put(chordOrNote.note().string, chordOrNote.note().fret);
-			chordTemplate.frets.put(string, chordOrNote.note().fret);
+			chordTemplate.frets.put(string, getDefaultFretForPosition(position, string));
 			setSuggestedFingers(chordTemplate);
 
 			final int chordId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
