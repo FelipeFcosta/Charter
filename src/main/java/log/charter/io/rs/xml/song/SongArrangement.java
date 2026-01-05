@@ -160,13 +160,13 @@ public class SongArrangement {
 		setPhrases(beats, arrangement);
 		setTones(beats, arrangement);
 		chordTemplates = new CountedList<>(arrangement.chordTemplates.stream()//
-				.map(ArrangementChordTemplate::new)//
+				.map(ct -> new ArrangementChordTemplate(ct, capo))//
 				.collect(Collectors.toList()));
 		events = new CountedList<>(ArrangementEvent.fromEventsAndBeatMap(beats,
 				arrangement.getFilteredEventPoints(p -> !p.events.isEmpty()), songChart.beatsMap));
 
 		levels = new CountedList<>(ArrangementLevel.fromLevels(songChart.beatsMap.immutable, arrangement.levels,
-				arrangement.chordTemplates));
+				arrangement.chordTemplates, capo));
 
 		fixMeasureNumbers();
 	}

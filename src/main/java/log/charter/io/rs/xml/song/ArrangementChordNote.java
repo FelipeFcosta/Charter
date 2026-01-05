@@ -16,11 +16,11 @@ import log.charter.io.rs.xml.converters.CountedListConverter.CountedList;
 @XStreamAlias("chordNote")
 public class ArrangementChordNote extends ArrangementNote {
 	public ArrangementChordNote(final ImmutableBeatsMap beats, final int string, final int fret,
-			final ChordNote chordNote, final boolean ignore) {
+			final ChordNote chordNote, final boolean ignore, final int capo) {
 		time = (int) chordNote.position(beats);
 		sustain = (int) chordNote.endPosition(beats) - time;
 		this.string = string;
-		this.fret = fret;
+		this.fret = fret == capo ? 0 : fret;
 
 		vibrato = chordNote.vibrato ? 1 : null;
 		tremolo = chordNote.tremolo ? 1 : null;

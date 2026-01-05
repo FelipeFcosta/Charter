@@ -21,9 +21,9 @@ import log.charter.util.CollectionUtils;
 @XStreamAlias("level")
 public class ArrangementLevel {
 	public static List<ArrangementLevel> fromLevels(final ImmutableBeatsMap beats, final List<Level> levels,
-			final List<ChordTemplate> chordTemplates) {
+			final List<ChordTemplate> chordTemplates, final int capo) {
 		final List<ArrangementLevel> arrangementLevels = CollectionUtils.mapWithId(levels,
-				(difficulty, level) -> new ArrangementLevel(beats, difficulty, level, chordTemplates));
+				(difficulty, level) -> new ArrangementLevel(beats, difficulty, level, chordTemplates, capo));
 
 		arrangementLevels.sort((a, b) -> Integer.compare(a.difficulty, b.difficulty));
 
@@ -49,10 +49,10 @@ public class ArrangementLevel {
 	}
 
 	private ArrangementLevel(final ImmutableBeatsMap beats, final int difficulty, final Level level,
-			final List<ChordTemplate> chordTemplates) {
+			final List<ChordTemplate> chordTemplates, final int capo) {
 		this.difficulty = difficulty;
 
-		setChordsAndNotes(beats, level, chordTemplates);
+		setChordsAndNotes(beats, level, chordTemplates, capo);
 
 		fretHandMutes = new CountedList<>();
 		anchors = new CountedList<>(map(level.fhps, a -> anchor(beats, a)));
@@ -60,7 +60,7 @@ public class ArrangementLevel {
 	}
 
 	private void setChordsAndNotes(final ImmutableBeatsMap beats, final Level level,
-			final List<ChordTemplate> chordTemplates) {
+			final List<ChordTemplate> chordTemplates, final int capo) {
 		notes = new CountedList<>();
 		chords = new CountedList<>();
 		final List<ChordOrNote> chordsAndNotes = level.sounds;
@@ -68,14 +68,14 @@ public class ArrangementLevel {
 		for (int i = 0; i < chordsAndNotes.size(); i++) {
 			final ChordOrNote sound = chordsAndNotes.get(i);
 			if (sound.isNote()) {
-				notes.list.add(new ArrangementNote(beats, sound.note()));
+				notes.list.add(new ArrangementNote(beats, sound.note(), capo));
 				continue;
 			}
 
 			final Chord chord = sound.chord();
 			final ChordTemplate chordTemplate = chordTemplates.get(chord.templateId());
 			final boolean forceAddNotes = level.shouldChordShowNotes(beats, i);
-			final ArrangementChord arrangementChord = new ArrangementChord(beats, chord, chordTemplate, forceAddNotes);
+			final ArrangementChord arrangementChord = new ArrangementChord(beats, chord, chordTemplate, forceAddNotes, capo);
 
 			if (chord.splitIntoNotes) {
 				arrangementChord.chordNotes.stream().map(ArrangementNote::new).forEach(notes.list::add);
