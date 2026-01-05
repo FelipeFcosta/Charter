@@ -13,6 +13,7 @@ import java.util.Set;
 
 import log.charter.data.ChartData;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
+import log.charter.data.song.HandShape;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.time.ConstantPosition;
 import log.charter.data.song.position.time.IConstantPosition;
@@ -44,6 +45,12 @@ public class SelectionManager implements Initiable {
 	 * for individual note editing. When null, the whole chord is selected.
 	 */
 	private Integer selectedChordNoteString = null;
+
+	/**
+	 * Tracks the last clicked handshape ID for cycling through overlapping handshapes.
+	 * When clicking at the same position with overlapping handshapes, we cycle to the next one.
+	 */
+	private Integer lastClickedHandShapeId = null;
 
 	@Override
 	public void init() {
@@ -133,12 +140,91 @@ public class SelectionManager implements Initiable {
 		return closest;
 	}
 
+	/**
+	 * Finds all handshapes that contain the given x position (for overlapping handshape cycling)
+	 */
+	private List<PositionWithIdAndType> findAllHandShapesAtPosition(final int x, final List<PositionWithIdAndType> positions) {
+		final List<PositionWithIdAndType> result = new ArrayList<>();
+		
+		for (final PositionWithIdAndType pos : positions) {
+			final int startX = chartTimeHandler.positionToX(pos.asConstantPosition().position());
+			final int endX = chartTimeHandler.positionToX(pos.endPosition().asConstantPosition().position());
+			// Check if x is within the handshape bounds (with some tolerance)
+			if (x >= startX - 20 && x <= endX + 20) {
+				result.add(pos);
+			}
+		}
+		
+		return result;
+	}
+
+	/**
+	 * For highlighting - returns the handshape with visual precedence (last one in list at position).
+	 * Does NOT update any state or change what's displayed.
+	 */
+	private PositionWithIdAndType findHandShapeForHighlight(final int x, final List<PositionWithIdAndType> positions) {
+		final List<PositionWithIdAndType> overlapping = findAllHandShapesAtPosition(x, positions);
+		
+		if (overlapping.isEmpty()) {
+			return null;
+		}
+		
+		// Return the LAST overlapping handshape - this is the one with visual precedence
+		// (drawn on top because it comes later in the list)
+		return overlapping.get(overlapping.size() - 1);
+	}
+
+	/**
+	 * For actual clicks - cycles through overlapping handshapes, updates tracking state,
+	 * and reorders the list to give the selected handshape visual precedence.
+	 */
+	public PositionWithIdAndType cycleHandShapeOnClick(final int x, final int y) {
+		final PositionType positionType = PositionType.fromY(y, modeManager.getMode());
+		if (positionType != PositionType.HAND_SHAPE) {
+			return null;
+		}
+		
+		final List<PositionWithIdAndType> positions = positionType.getPositionsWithIdsAndTypes(chartData);
+		final List<PositionWithIdAndType> overlapping = findAllHandShapesAtPosition(x, positions);
+		
+		if (overlapping.isEmpty()) {
+			return null;
+		}
+		
+		if (overlapping.size() == 1) {
+			lastClickedHandShapeId = overlapping.get(0).id;
+			return overlapping.get(0);
+		}
+		
+		// Multiple overlapping - the one with visual precedence is the LAST one in the overlapping list
+		// (because it's last in the main list, so drawn on top)
+		// Cycle backwards to reveal what's underneath
+		final int nextIndex = overlapping.size() - 2; // Second to last, which is "underneath" the current precedent
+		final PositionWithIdAndType next = overlapping.get(nextIndex < 0 ? overlapping.size() - 1 : nextIndex);
+		
+		// Move the 'next' handshape to the end of the main list to give it visual precedence
+		final List<HandShape> handShapes = chartData.currentHandShapes();
+		final HandShape handShapeToMove = next.handShape;
+		handShapes.remove(handShapeToMove);
+		handShapes.add(handShapeToMove);
+		
+		// Update the lastClickedHandShapeId and return with the updated ID
+		final int newId = handShapes.indexOf(handShapeToMove);
+		lastClickedHandShapeId = newId;
+		
+		return PositionWithIdAndType.of(chartData.beats(), newId, handShapeToMove);
+	}
+
 	public PositionWithIdAndType findExistingPosition(final int x, final int y) {
 		final PositionType positionType = PositionType.fromY(y, modeManager.getMode());
 		final List<PositionWithIdAndType> positions = positionType.getPositionsWithIdsAndTypes(chartData);
 
+		// Special handling for handshapes - use highlight logic (no cycling)
+		if (positionType == PositionType.HAND_SHAPE) {
+			return findHandShapeForHighlight(x, positions);
+		}
+
 		if (positionType == PositionType.VOCAL//
-				|| positionType == PositionType.HAND_SHAPE//
 				|| (positionType == PositionType.GUITAR_NOTE && selectNotesByTails)) {
 			return findWithLengthExisting(x, generateLinksWithLength(positions));
 		}
@@ -184,6 +270,21 @@ public class SelectionManager implements Initiable {
 
 		// Clear chord note selection when selecting different sound
 		selectedChordNoteString = null;
+
+		// Special handling for handshapes - cycle through overlapping ones on click
+		if (clickData.pressHighlight.type == PositionType.HAND_SHAPE && !ctrl && !shift) {
+			final PositionWithIdAndType cycledHandShape = cycleHandShapeOnClick(
+					clickData.pressPosition.x, clickData.pressPosition.y);
+			if (cycledHandShape != null && cycledHandShape.id != null) {
+				clearSelectionsExcept(PositionType.HAND_SHAPE);
+				final SelectionList<?, ?, ?> selectionList = selectionLists.get(PositionType.HAND_SHAPE);
+				if (selectionList != null) {
+					selectionList.addSelectablesWithModifiers(cycledHandShape.id, false, false);
+				}
+				currentSelectionEditor.selectionChanged(true);
+				return;
+			}
+		}
 
 		clearSelectionsExcept(clickData.pressHighlight.type);
 

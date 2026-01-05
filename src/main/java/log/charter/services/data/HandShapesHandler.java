@@ -1,8 +1,5 @@
 package log.charter.services.data;
 
-import static log.charter.util.CollectionUtils.firstAfter;
-import static log.charter.util.CollectionUtils.lastBefore;
-
 import java.util.List;
 
 import log.charter.data.ChartData;
@@ -42,15 +39,8 @@ public class HandShapesHandler {
 		final IConstantFractionalPosition endPosition = selected.get(selected.size() - 1).selectable.endPosition()
 				.toFraction(chartData.beats());
 
-		int deleteFromId = lastBefore(handShapes, position).findId(0);
-		if (handShapes.size() > deleteFromId && handShapes.get(deleteFromId).endPosition().compareTo(position) < 0) {
-			deleteFromId++;
-		}
-
-		final int deleteToId = firstAfter(handShapes, endPosition).findId(handShapes.size()) - 1;
-		for (int i = deleteToId; i >= deleteFromId; i--) {
-			handShapes.remove(i);
-		}
+		// Note: Overlapping handshapes are allowed in Rocksmith (used for arpeggios/fingerpicking)
+		// so we no longer delete existing handshapes that overlap with the new one
 
 		ChordTemplate chordTemplate = new ChordTemplate();
 		if (selected.get(0).selectable.isChord()) {
@@ -62,7 +52,9 @@ public class HandShapesHandler {
 		handShape.templateId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 		chordTemplatesEditorTab.refreshTemplates();
 
-		handShapes.add(deleteFromId, handShape);
+		handShapes.add(handShape);
+		handShapes.sort(IConstantFractionalPosition::compareTo);
+
 		new HandShapePane(chartData, charterFrame, chordTemplatesEditorTab, handShape, () -> {
 			undoSystem.undo();
 			undoSystem.removeRedo();

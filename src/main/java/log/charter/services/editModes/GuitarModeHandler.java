@@ -108,6 +108,7 @@ public class GuitarModeHandler implements ModeHandler {
 		final FractionalPosition endPosition = chartData.beats().addGrid(position, 1).toFraction(chartData.beats())
 				.position();
 
+
 		final HandShape handShape = new HandShape(position, endPosition);
 		final List<HandShape> handShapes = chartData.currentHandShapes();
 		handShapes.add(handShape);
@@ -325,8 +326,9 @@ public class GuitarModeHandler implements ModeHandler {
 	}
 
 	private void changeHandShapesLength(final int change) {
+		// Pass false for fixLengths - overlapping handshapes with DIFFERENT templateIds are valid
 		chartItemsHandler.changePositionsWithLengthsByGrid(
-				selectionManager.getSelectedElements(PositionType.HAND_SHAPE), chartData.currentHandShapes(), change);
+				selectionManager.getSelectedElements(PositionType.HAND_SHAPE), chartData.currentHandShapes(), change, false);
 	}
 
 	@Override

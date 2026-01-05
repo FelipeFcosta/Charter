@@ -262,11 +262,20 @@ public class GuitarDrawer {
 		final Set<Integer> selectedHandShapeIds = frameData.selection.getSelectedIdsSet(PositionType.HAND_SHAPE);
 		final int highlightId = frameData.highlightData.getId(PositionType.HAND_SHAPE);
 
+		// First pass: draw non-selected, non-highlighted handshapes
 		for (int i = 0; i < frameData.level.handShapes.size(); i++) {
+			final boolean selected = selectedHandShapeIds.contains(i);
+			final boolean highlighted = i == highlightId;
+			
+			// Skip selected/highlighted - they'll be drawn last to appear on top
+			if (selected || highlighted) {
+				continue;
+			}
+			
 			final HandShape handShape = frameData.level.handShapes.get(i);
 			final int x = positionToX(handShape.position(frameData.beats), frameData.time);
 			if (isPastRightEdge(x, panelWidth)) {
-				break;
+				continue;
 			}
 
 			final int length = positionToX(handShape.endPosition(frameData.beats), frameData.time) - x;
@@ -281,8 +290,37 @@ public class GuitarDrawer {
 				chordTemplate = new ChordTemplate();
 			}
 
+			highwayDrawer.addHandShape(x, length, false, false, handShape, chordTemplate);
+		}
+
+		// Second pass: draw selected/highlighted handshapes last (on top)
+		for (int i = 0; i < frameData.level.handShapes.size(); i++) {
 			final boolean selected = selectedHandShapeIds.contains(i);
 			final boolean highlighted = i == highlightId;
+			
+			// Only draw selected/highlighted in this pass
+			if (!selected && !highlighted) {
+				continue;
+			}
+			
+			final HandShape handShape = frameData.level.handShapes.get(i);
+			final int x = positionToX(handShape.position(frameData.beats), frameData.time);
+			if (isPastRightEdge(x, panelWidth)) {
+				continue;
+			}
+
+			final int length = positionToX(handShape.endPosition(frameData.beats), frameData.time) - x;
+			if (!isOnScreen(x, length)) {
+				continue;
+			}
+
+			final ChordTemplate chordTemplate;
+			if (handShape.templateId != null && frameData.arrangement.chordTemplates.size() > handShape.templateId) {
+				chordTemplate = frameData.arrangement.chordTemplates.get(handShape.templateId);
+			} else {
+				chordTemplate = new ChordTemplate();
+			}
+
 			highwayDrawer.addHandShape(x, length, selected, highlighted, handShape, chordTemplate);
 		}
 

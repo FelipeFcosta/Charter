@@ -126,7 +126,10 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 				dragSounds(clickData, chartData.currentSounds());
 			}
 			if (clickData.pressHighlight.type == PositionType.HAND_SHAPE) {
-				dragPositionsWithLength(PositionType.HAND_SHAPE, clickData, chartData.currentHandShapes());
+				// Pass false for fixLengths - overlapping handshapes with DIFFERENT templateIds are valid
+				dragPositionsWithLength(PositionType.HAND_SHAPE, clickData, chartData.currentHandShapes(), false);
+				// But fix overlaps between handshapes with the SAME templateId
+				arrangementFixer.fixSameTemplateHandShapeOverlaps();
 			}
 		}
 
@@ -143,7 +146,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		if (!clickData.isXDrag() || keyboardHandler.scrollLock()) {
 			selectionManager.click(clickData, keyboardHandler.ctrl(), keyboardHandler.shift());
 		} else if (clickData.pressHighlight.type == PositionType.VOCAL) {
-			dragPositionsWithLength(PositionType.VOCAL, clickData, chartData.currentVocals().vocals);
+			dragPositionsWithLength(PositionType.VOCAL, clickData, chartData.currentVocals().vocals, true);
 		}
 
 		if (isDoubleClick && clickData.pressHighlight.vocal != null) {
@@ -255,7 +258,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 	}
 
 	private <T extends IVirtualPositionWithEnd> void dragPositionsWithLength(final PositionType type,
-			final MouseButtonPressReleaseData clickData, final List<T> allPositions) {
+			final MouseButtonPressReleaseData clickData, final List<T> allPositions, final boolean fixLengths) {
 		List<Selection<T>> selectedPositions = selectionManager.<T>accessor(clickData.pressHighlight.type)//
 				.getSelected();
 
@@ -281,7 +284,11 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 
 		allPositions.sort(IVirtualConstantPosition.comparator(chartData.beats()));
 
-		arrangementFixer.fixLengths(allPositions);
+		// Note: For handshapes, fixLengths should be false because overlapping handshapes 
+		// are valid in Rocksmith (used for arpeggios/fingerpicking)
+		if (fixLengths) {
+			arrangementFixer.fixLengths(allPositions);
+		}
 
 		reselectDraggedPositions(type, positions);
 	}

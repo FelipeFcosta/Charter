@@ -128,8 +128,17 @@ public class ChartItemsHandler {
 
 	private <T extends IVirtualPositionWithEnd> void snapPositionsWithLength(final Stream<T> positions,
 			final List<T> allPositions) {
+		snapPositionsWithLength(positions, allPositions, true);
+	}
+
+	private <T extends IVirtualPositionWithEnd> void snapPositionsWithLength(final Stream<T> positions,
+			final List<T> allPositions, final boolean fixLengths) {
 		snapPositions(positions, allPositions);
-		arrangementFixer.fixLengths(allPositions);
+		// Note: For handshapes, fixLengths should be false because overlapping handshapes 
+		// are valid in Rocksmith (used for arpeggios/fingerpicking)
+		if (fixLengths) {
+			arrangementFixer.fixLengths(allPositions);
+		}
 	}
 
 	private <C extends IVirtualConstantPosition> void reselectAfterSnapping(final PositionType type,
@@ -164,8 +173,9 @@ public class ChartItemsHandler {
 				snapNotePositions(selected.stream().map(selection -> (ChordOrNote) selection.selectable));
 				break;
 			case HAND_SHAPE:
+				// Pass false for fixLengths - overlapping handshapes are valid in Rocksmith
 				snapPositionsWithLength(selected.stream().map(selection -> (HandShape) selection.selectable),
-						chartData.currentArrangementLevel().handShapes);
+						chartData.currentArrangementLevel().handShapes, false);
 				break;
 			case VOCAL:
 				snapPositionsWithLength(selected.stream().map(selection -> (Vocal) selection.selectable),
@@ -208,7 +218,8 @@ public class ChartItemsHandler {
 		snapPositions(getFromTo(arrangement.toneChanges, from, to, comparator).stream(), arrangement.toneChanges);
 		snapPositions(getFromTo(level.fhps, from, to, comparator).stream(), level.fhps);
 		snapNotePositions(getFromTo(level.sounds, from, to, comparator).stream());
-		snapPositionsWithLength(getFromTo(level.handShapes, from, to, comparator).stream(), level.handShapes);
+		// Pass false for fixLengths - overlapping handshapes are valid in Rocksmith
+		snapPositionsWithLength(getFromTo(level.handShapes, from, to, comparator).stream(), level.handShapes, false);
 
 		reselectAfterSnapping(accessor.type(), selected);
 	}
@@ -252,12 +263,22 @@ public class ChartItemsHandler {
 
 	public <P extends IVirtualPositionWithEnd> void changePositionsWithLengthsByGrid(final List<P> toChange,
 			final List<P> allPositions, final int gridsChange) {
+		changePositionsWithLengthsByGrid(toChange, allPositions, gridsChange, true);
+	}
+
+	public <P extends IVirtualPositionWithEnd> void changePositionsWithLengthsByGrid(final List<P> toChange,
+			final List<P> allPositions, final int gridsChange, final boolean fixLengths) {
 		final ImmutableBeatsMap beats = chartData.beats();
 		for (final P selected : toChange) {
 			changePositionLength(beats, selected, gridsChange);
 		}
 
-		arrangementFixer.fixLengths(allPositions);
+		// Note: For handshapes, fixLengths should be false because overlapping handshapes 
+		// are valid in Rocksmith (used for arpeggios/fingerpicking)
+		if (fixLengths) {
+			arrangementFixer.fixLengths(allPositions);
+		}
+		
 	}
 
 	private void changeNoteLength(final ImmutableBeatsMap beats, final List<ChordOrNote> sounds, final CommonNote note,
