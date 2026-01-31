@@ -66,14 +66,25 @@ public class EditorNoteDrawingData {
 
 	public static List<EditorNoteDrawingData> fromChord(final ImmutableBeatsMap beats, final double time,
 			final Chord chord, final ChordTemplate chordTemplate, final int x, final boolean selected,
-			final int highlightedString, final boolean lastWasLinkNext, final boolean wrongLinkNext,
-			final boolean ctrl) {
+			final int highlightedString, final boolean editingChordNote, final boolean lastWasLinkNext, 
+			final boolean wrongLinkNext, final boolean ctrl) {
 		final List<EditorNoteDrawingData> notes = new ArrayList<>();
 
 		for (final Entry<Integer, ChordNote> chordNoteEntry : chord.chordNotes.entrySet()) {
 			final int string = chordNoteEntry.getKey();
-			notes.add(fromChordNote(beats, time, chord, chordTemplate, x, string, chordNoteEntry.getValue(), selected,
-					highlightedString == string, lastWasLinkNext, wrongLinkNext, ctrl));
+			final boolean noteSelected;
+			final boolean noteHighlighted;
+			if (editingChordNote && highlightedString >= 0) {
+				// A specific chord note is selected for editing - only show that note as selected
+				noteSelected = (string == highlightedString);
+				noteHighlighted = false;
+			} else {
+				// Normal selection or hover highlight - all notes show selection, with hover highlight on specific note
+				noteSelected = selected;
+				noteHighlighted = (highlightedString == string);
+			}
+			notes.add(fromChordNote(beats, time, chord, chordTemplate, x, string, chordNoteEntry.getValue(), noteSelected,
+					noteHighlighted, lastWasLinkNext, wrongLinkNext, ctrl));
 		}
 
 		return notes;

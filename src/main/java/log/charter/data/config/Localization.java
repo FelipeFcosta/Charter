@@ -81,6 +81,7 @@ public class Localization {
 		CONFIG_INSTRUMENT("Instrument"), //
 		CONFIG_SECRETS("Secrets"), //
 		COPY("Copy"), //
+		CUT("Cut"), //
 		COPY_ALL_FILES("Copy all files?"), //
 		COPY_ALL_FILES_MESSAGE("Copy all files? If not, only project and main audio will be moved."), //
 		COPY_AUDIO("Copy audio?"), //
@@ -128,6 +129,8 @@ public class Localization {
 		FORCE_ARPEGGIO_IN_RS("in RS"), //
 		FPS("FPS"), //
 		FRET("Fret"), //
+		FRETS_DECREMENT("-"), //
+		FRETS_INCREMENT("+"), //
 		NAME_CANT_BE_EMPTY("Name can't be empty"), //
 		NUMBER_0("Number 0"), //
 		NUMBER_1("Number 1"), //
@@ -457,6 +460,7 @@ public class Localization {
 		ARRANGEMENT_OPTIONS_STRINGS("Strings"), //
 		ARRANGEMENT_OPTIONS_CAPO("Capo"), //
 		ARRANGEMENT_OPTIONS_MOVE_FRETS("Move frets on tuning change"), //
+		ARRANGEMENT_OPTIONS_CHORD_NAME_CAPO_RELATIVE("Chord naming considers capo"), //
 
 		VOCAL_PANE_CREATION("Vocal creation"), //
 		VOCAL_PANE_EDIT("Vocal edit"), //

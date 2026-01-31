@@ -31,7 +31,7 @@ public class Player {
 	private final RubberBandStretcher rubberBandStretcher;
 	private final FloatQueue[] stretchingSamplesQueue;
 
-	public long playingStartTime = -1;
+	public volatile long playingStartTime = -1;
 
 	public Player(final AudioData musicData, final DoubleSupplier volume, final int speed, final Effect effect) {
 		this.musicData = musicData;

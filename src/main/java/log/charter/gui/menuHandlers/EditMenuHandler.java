@@ -39,6 +39,7 @@ class EditMenuHandler extends CharterMenuHandler {
 		menu.add(createItem(Action.SELECT_ALL));
 		menu.add(createItem(Action.DELETE));
 		menu.add(createItem(Action.COPY));
+		menu.add(createItem(Action.CUT));
 		menu.add(createItem(Action.PASTE));
 		if (modeManager.getMode() == EditMode.GUITAR) {
 			menu.add(createItem(Action.SPECIAL_PASTE));

@@ -15,10 +15,11 @@ public class ArrangementChordTemplate {
 	public ArrangementChordTemplate() {
 	}
 
-	public ArrangementChordTemplate(final ChordTemplate chordTemplate) {
+	public ArrangementChordTemplate(final ChordTemplate chordTemplate, final int capo) {
 		chordName = chordTemplate.chordName;
 		displayName = chordName + (chordTemplate.forceArpeggioInRS ? "-arp" : "");
 		fingers = new HashMap2<>(chordTemplate.fingers);
-		frets = new HashMap2<>(chordTemplate.frets);
+		frets = new HashMap2<>();
+		chordTemplate.frets.forEach((string, fret) -> frets.put(string, fret == capo ? 0 : fret));
 	}
 }

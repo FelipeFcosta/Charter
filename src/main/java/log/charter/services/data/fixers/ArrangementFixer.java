@@ -119,6 +119,10 @@ public class ArrangementFixer {
 	private void addMissingHandShapes(final Arrangement arrangement, final Level level) {
 		final List<EventPoint> phrases = filter(arrangement.eventPoints, ep -> ep.hasPhrase());
 
+		// Sort handshapes by position to ensure correct processing order
+		// (handshapes may be unsorted if one was moved to end for foreground precedence)
+		level.handShapes.sort(IConstantFractionalPosition::compareTo);
+
 		int handShapeId = 0;
 		HandShape handShape = level.handShapes.isEmpty() ? null : level.handShapes.get(handShapeId);
 		for (int i = 0; i < level.sounds.size(); i++) {
@@ -127,11 +131,16 @@ public class ArrangementFixer {
 				continue;
 			}
 
+			// Advance to the first handshape that ends after this sound
 			while (handShape != null && handShape.endPosition().compareTo(sound) <= 0) {
 				handShapeId++;
 				handShape = handShapeId >= level.handShapes.size() ? null : level.handShapes.get(handShapeId);
 			}
-			if (handShape != null && handShape.position().compareTo(sound) <= 0) {
+			
+			// Check if the current handshape covers this sound
+			// A handshape covers a sound if it starts at or before the sound AND ends after the sound starts
+			if (handShape != null && handShape.position().compareTo(sound) <= 0 
+					&& handShape.endPosition().compareTo(sound) > 0) {
 				continue;
 			}
 
@@ -376,6 +385,54 @@ public class ArrangementFixer {
 		}
 	}
 
+	/**
+	 * Fixes overlapping handshapes that have the same templateId.
+	 * If two handshapes with the same templateId overlap, the earlier one is truncated.
+	 * Overlapping handshapes with DIFFERENT templateIds are allowed (for arpeggios/fingerpicking).
+	 */
+	private void fixSameTemplateHandShapeOverlaps(final List<HandShape> handShapes) {
+		if (handShapes.size() < 2) {
+			return;
+		}
+
+		// Sort handshapes by position to ensure correct processing order
+		// (handshapes may be unsorted if one was moved to end for foreground precedence)
+		handShapes.sort(IConstantFractionalPosition::compareTo);
+
+		for (int i = 0; i < handShapes.size(); i++) {
+			final HandShape current = handShapes.get(i);
+			if (current.templateId == null) {
+				continue;
+			}
+
+			for (int j = i + 1; j < handShapes.size(); j++) {
+				final HandShape next = handShapes.get(j);
+				
+				// Only fix overlaps between handshapes with the same templateId
+				if (!current.templateId.equals(next.templateId)) {
+					continue;
+				}
+
+				// Only truncate if current starts before next (should be true after sorting, but check for safety)
+				// and if current's end overlaps with next's start
+				if (current.position().compareTo(next.position()) < 0 
+						&& current.endPosition().compareTo(next.position()) > 0) {
+					// Truncate current to end at next's start
+					current.endPosition(next.position());
+				}
+			}
+		}
+
+	}
+
+	/**
+	 * Public method to fix same-template handshape overlaps.
+	 * Called when handshapes are modified (scroll extend, drag, etc.)
+	 */
+	public void fixSameTemplateHandShapeOverlaps() {
+		fixSameTemplateHandShapeOverlaps(chartData.currentHandShapes());
+	}
+
 	private void fixLevel(final Arrangement arrangement, final Level level) {
 		level.sounds.removeIf(sound -> sound.isChord() //
 				&& (sound.chord().templateId() >= arrangement.chordTemplates.size()//
@@ -383,14 +440,26 @@ public class ArrangementFixer {
 
 		removeDuplicatesFractional(level.fhps);
 		removeDuplicatesFractional(level.sounds);
-		removeDuplicatesFractional(level.handShapes);
+		// Note: Do NOT call removeDuplicatesFractional on handShapes - overlapping handshapes 
+		// at the same start position are valid in Rocksmith (used for arpeggios/fingerpicking)
+		
+		// Remove zero-duration handshapes (startTime == endTime)
+		level.handShapes.removeIf(hs -> hs.position().compareTo(hs.endPosition()) >= 0);
+		
+		// Fix overlapping handshapes with the SAME templateId (truncate earlier one)
+		// Note: fixSameTemplateHandShapeOverlaps will sort handshapes internally
+		fixSameTemplateHandShapeOverlaps(level.handShapes);
+		
+		// Remove any zero-duration handshapes that may have been created by truncation
+		level.handShapes.removeIf(hs -> hs.position().compareTo(hs.endPosition()) >= 0);
 
 		addMissingFHPs(arrangement, level);
 		addMissingHandShapes(arrangement, level);
 
 		joinSimilarLinkedNotes(level);
 		fixNoteLengths(level.sounds);
-		fixLengths(level.handShapes);
+		// Note: Do NOT call fixLengths on handShapes - handshapes can legitimately overlap 
+		// in time (endTime of one can extend past startTime of another)
 		fixSlides(level.sounds);
 	}
 

@@ -9,6 +9,7 @@ import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamConverter;
 import com.thoughtworks.xstream.annotations.XStreamImplicit;
 import com.thoughtworks.xstream.annotations.XStreamInclude;
+import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.ChordTemplate;
@@ -40,8 +41,12 @@ public class ArrangementChord implements IPosition {
 	@XStreamImplicit
 	public List<ArrangementChordNote> chordNotes;
 
+	@XStreamOmitField
+	private int capo;
+
 	public ArrangementChord(final ImmutableBeatsMap beats, final Chord chord, final ChordTemplate chordTemplate,
-			final boolean forceAddNotes) {
+			final boolean forceAddNotes, final int capo) {
+		this.capo = capo;
 		time = (int) chord.position(beats);
 		chordId = chord.templateId();
 		accent = chord.accent ? 1 : null;
@@ -97,7 +102,7 @@ public class ArrangementChord implements IPosition {
 
 			final ChordNote chordNote = chord.chordNotes.get(string);
 			final ArrangementChordNote arrangementChordNote = new ArrangementChordNote(beats, string, fret, chordNote,
-					chord.ignore);
+					chord.ignore, capo);
 
 			chordNotes.add(arrangementChordNote);
 		}

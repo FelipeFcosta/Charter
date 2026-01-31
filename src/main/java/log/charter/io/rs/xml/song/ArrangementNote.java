@@ -102,10 +102,10 @@ public class ArrangementNote {
 		return new CountedList<>(map(bendValues, b -> new ArrangementBendValue(beats, b)));
 	}
 
-	public ArrangementNote(final ImmutableBeatsMap beats, final Note note) {
+	public ArrangementNote(final ImmutableBeatsMap beats, final Note note, final int capo) {
 		time = (int) note.position(beats);
 		string = note.string;
-		fret = note.fret;
+		fret = note.fret == capo ? 0 : note.fret;
 		final int length = (int) note.endPosition(beats) - time;
 		sustain = length > 0 ? length : null;
 		vibrato = note.vibrato ? 1 : null;

@@ -177,6 +177,11 @@ public class ActionHandler implements Initiable {
 		switchTo(currentMode, currentPath);
 	}
 
+	private void cut() {
+		copyManager.copy();
+		chartItemsHandler.delete();
+	}
+
 	private void handleNumber(final int number) {
 		modeManager.getHandler().handleNumber(number);
 	}
@@ -232,6 +237,15 @@ public class ActionHandler implements Initiable {
 		chartToolbar.updateValues();
 	}
 
+	private void handleExit() {
+		// If a chord note is selected, Escape clears that selection first
+		if (selectionManager.getSelectedChordNoteString() != null) {
+			selectionManager.clearSelectedChordNoteString();
+			return;
+		}
+		charterContext.exit();
+	}
+
 	private final Map<Action, Runnable> actionHandlers = new HashMap<>();
 
 	@Override
@@ -243,10 +257,11 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.BPM_DOUBLE, bpmDoubler::doubleBPM);
 		actionHandlers.put(Action.BPM_HALVE, bpmHalver::halveBPM);
 		actionHandlers.put(Action.COPY, copyManager::copy);
+		actionHandlers.put(Action.CUT, this::cut);
 		actionHandlers.put(Action.DELETE, chartItemsHandler::delete);
 		actionHandlers.put(Action.DOUBLE_GRID, this::doubleGridSize);
 		actionHandlers.put(Action.EDIT_VOCALS, vocalsHandler::editVocals);
-		actionHandlers.put(Action.EXIT, charterContext::exit);
+		actionHandlers.put(Action.EXIT, this::handleExit);
 		actionHandlers.put(Action.NUMBER_0, () -> handleNumber(0));
 		actionHandlers.put(Action.NUMBER_1, () -> handleNumber(1));
 		actionHandlers.put(Action.NUMBER_2, () -> handleNumber(2));

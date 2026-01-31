@@ -39,6 +39,7 @@ public enum ShortcutConfigGroup {
 			Action.TOGGLE_REPEAT_END), //
 	EDITING(Label.EDITING, //
 			Action.COPY, //
+			Action.CUT, //
 			Action.PASTE, //
 			Action.SPECIAL_PASTE, //
 			Action.DELETE, //

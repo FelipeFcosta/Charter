@@ -6,8 +6,10 @@ import static log.charter.util.CollectionUtils.map;
 
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,7 +48,8 @@ public class ChartItemsHandler {
 	private UndoSystem undoSystem;
 
 	public <T extends IVirtualConstantPosition> void delete() {
-		boolean nonEmptyFound = false;
+		// First, collect all selections before clearing
+		final Map<PositionType, List<Integer>> selectionsToDelete = new HashMap<>();
 
 		for (final PositionType type : PositionType.values()) {
 			if (type == PositionType.NONE || type == PositionType.BEAT) {
@@ -59,13 +62,20 @@ public class ChartItemsHandler {
 			}
 
 			final List<Selection<T>> selected = selectedTypeAccessor.getSelected();
-			if (!nonEmptyFound) {
-				undoSystem.addUndo();
-				selectionManager.clear();
-				nonEmptyFound = true;
-			}
+			selectionsToDelete.put(type, selected.stream().map(selection -> selection.id).collect(Collectors.toList()));
+		}
 
-			delete(type, selected.stream().map(selection -> selection.id).collect(Collectors.toList()));
+		if (selectionsToDelete.isEmpty()) {
+			return;
+		}
+
+		// Now clear selections and add undo
+		undoSystem.addUndo();
+		selectionManager.clear();
+
+		// Finally, delete all collected selections
+		for (final Map.Entry<PositionType, List<Integer>> entry : selectionsToDelete.entrySet()) {
+			delete(entry.getKey(), entry.getValue());
 		}
 	}
 
@@ -118,8 +128,17 @@ public class ChartItemsHandler {
 
 	private <T extends IVirtualPositionWithEnd> void snapPositionsWithLength(final Stream<T> positions,
 			final List<T> allPositions) {
+		snapPositionsWithLength(positions, allPositions, true);
+	}
+
+	private <T extends IVirtualPositionWithEnd> void snapPositionsWithLength(final Stream<T> positions,
+			final List<T> allPositions, final boolean fixLengths) {
 		snapPositions(positions, allPositions);
-		arrangementFixer.fixLengths(allPositions);
+		// Note: For handshapes, fixLengths should be false because overlapping handshapes 
+		// are valid in Rocksmith (used for arpeggios/fingerpicking)
+		if (fixLengths) {
+			arrangementFixer.fixLengths(allPositions);
+		}
 	}
 
 	private <C extends IVirtualConstantPosition> void reselectAfterSnapping(final PositionType type,
@@ -154,8 +173,9 @@ public class ChartItemsHandler {
 				snapNotePositions(selected.stream().map(selection -> (ChordOrNote) selection.selectable));
 				break;
 			case HAND_SHAPE:
+				// Pass false for fixLengths - overlapping handshapes are valid in Rocksmith
 				snapPositionsWithLength(selected.stream().map(selection -> (HandShape) selection.selectable),
-						chartData.currentArrangementLevel().handShapes);
+						chartData.currentArrangementLevel().handShapes, false);
 				break;
 			case VOCAL:
 				snapPositionsWithLength(selected.stream().map(selection -> (Vocal) selection.selectable),
@@ -198,7 +218,8 @@ public class ChartItemsHandler {
 		snapPositions(getFromTo(arrangement.toneChanges, from, to, comparator).stream(), arrangement.toneChanges);
 		snapPositions(getFromTo(level.fhps, from, to, comparator).stream(), level.fhps);
 		snapNotePositions(getFromTo(level.sounds, from, to, comparator).stream());
-		snapPositionsWithLength(getFromTo(level.handShapes, from, to, comparator).stream(), level.handShapes);
+		// Pass false for fixLengths - overlapping handshapes are valid in Rocksmith
+		snapPositionsWithLength(getFromTo(level.handShapes, from, to, comparator).stream(), level.handShapes, false);
 
 		reselectAfterSnapping(accessor.type(), selected);
 	}
@@ -242,12 +263,22 @@ public class ChartItemsHandler {
 
 	public <P extends IVirtualPositionWithEnd> void changePositionsWithLengthsByGrid(final List<P> toChange,
 			final List<P> allPositions, final int gridsChange) {
+		changePositionsWithLengthsByGrid(toChange, allPositions, gridsChange, true);
+	}
+
+	public <P extends IVirtualPositionWithEnd> void changePositionsWithLengthsByGrid(final List<P> toChange,
+			final List<P> allPositions, final int gridsChange, final boolean fixLengths) {
 		final ImmutableBeatsMap beats = chartData.beats();
 		for (final P selected : toChange) {
 			changePositionLength(beats, selected, gridsChange);
 		}
 
-		arrangementFixer.fixLengths(allPositions);
+		// Note: For handshapes, fixLengths should be false because overlapping handshapes 
+		// are valid in Rocksmith (used for arpeggios/fingerpicking)
+		if (fixLengths) {
+			arrangementFixer.fixLengths(allPositions);
+		}
+		
 	}
 
 	private void changeNoteLength(final ImmutableBeatsMap beats, final List<ChordOrNote> sounds, final CommonNote note,
