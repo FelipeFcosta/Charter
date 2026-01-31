@@ -2,10 +2,10 @@ package log.charter.gui.components.preview3D.drawers;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static log.charter.gui.components.preview3D.Preview3DUtils.chartboardYPosition;
 import static log.charter.gui.components.preview3D.Preview3DUtils.closeDistanceZ;
 import static log.charter.gui.components.preview3D.Preview3DUtils.fadedDistanceZ;
 import static log.charter.gui.components.preview3D.Preview3DUtils.fretThickness;
-import static log.charter.gui.components.preview3D.Preview3DUtils.getChartboardYPosition;
 import static log.charter.gui.components.preview3D.Preview3DUtils.getFretPosition;
 import static log.charter.gui.components.preview3D.Preview3DUtils.getTimePosition;
 import static log.charter.gui.components.preview3D.Preview3DUtils.getVisibility;
@@ -14,7 +14,6 @@ import java.awt.Color;
 
 import org.lwjgl.opengl.GL30;
 
-import log.charter.data.ChartData;
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.gui.components.preview3D.data.HandShapeDrawData;
 import log.charter.gui.components.preview3D.data.Preview3DDrawData;
@@ -25,14 +24,8 @@ import log.charter.gui.components.preview3D.shaders.ShadersHolder.FadingShaderDr
 import log.charter.util.data.IntRange;
 
 public class Preview3DHandShapesDrawer {
-	private static final double lineThickness0 = fretThickness * 2;
-	private static final double lineThickness1 = fretThickness * 6;
-
-	private ChartData data;
-
-	public void init(final ChartData data) {
-		this.data = data;
-	}
+	private static final double lineThickness0 = fretThickness * 3;
+	private static final double lineThickness1 = fretThickness * 9;
 
 	private void addSquare(final FadingShaderDrawData drawData, final double x0, final double x1, final double y,
 			final double z0, final double z1, final Color color0, final Color color1) {
@@ -55,9 +48,9 @@ public class Preview3DHandShapesDrawer {
 		addSquare(drawData, x2, x3, y, z0, z1, color, alpha);
 	}
 
-	private void addHandShape(final Preview3DDrawData drawData, final FadingShaderDrawData shaderDrawData,
-			final HandShapeDrawData handShape) {
-		final double y = getChartboardYPosition(data.currentStrings()) + 0.0002;
+	private void addHandShape(final ShadersHolder shadersHolder, final Preview3DDrawData drawData,
+			final FadingShaderDrawData shaderDrawData, final HandShapeDrawData handShape) {
+		final double y = chartboardYPosition + 0.0002;
 		final boolean arpeggio = handShape.template.arpeggio;
 
 		final double timeFrom = max(0, handShape.timeFrom - drawData.time);
@@ -82,10 +75,10 @@ public class Preview3DHandShapesDrawer {
 	}
 
 	public void draw(final ShadersHolder shadersHolder, final Preview3DDrawData drawData) {
-		final FadingShaderDrawData shaderDrawData = shadersHolder.new FadingShaderDrawData();
+		final FadingShaderDrawData fadingShader = shadersHolder.new FadingShaderDrawData();
 
-		drawData.handShapes.forEach(handShape -> addHandShape(drawData, shaderDrawData, handShape));
+		drawData.handShapes.forEach(handShape -> addHandShape(shadersHolder, drawData, fadingShader, handShape));
 
-		shaderDrawData.draw(GL30.GL_QUADS, Matrix4.identity, closeDistanceZ, fadedDistanceZ);
+		fadingShader.draw(GL30.GL_QUADS, Matrix4.identity, closeDistanceZ, fadedDistanceZ);
 	}
 }
