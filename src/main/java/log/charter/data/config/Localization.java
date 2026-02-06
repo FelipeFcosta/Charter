@@ -80,6 +80,8 @@ public class Localization {
 		CONFIG_GENERAL("General"), //
 		CONFIG_INSTRUMENT("Instrument"), //
 		CONFIG_SECRETS("Secrets"), //
+		CONFIGS_AND_LOGS("Open configs and logs folder"), //
+		CONFIGS_AND_LOGS_MESSAGE("Configs and logs folder is %s"), //
 		COPY("Copy"), //
 		CUT("Cut"), //
 		COPY_ALL_FILES("Copy all files?"), //
