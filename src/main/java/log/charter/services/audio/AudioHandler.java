@@ -33,7 +33,7 @@ public class AudioHandler {
 	public boolean bandPassFilterEnabled = false;
 	public boolean highPassFilterEnabled = false;
 	private double songTimeOnStart = 0;
-	private boolean midiNeedsStart = false;
+	private long playStartTime;
 
 	private final boolean ignoreStops = false;
 	public boolean midiNotesPlaying = false;
@@ -98,10 +98,11 @@ public class AudioHandler {
 			Logger.error("Couldn't play sound", e);
 		}
 		songTimeOnStart = chartTimeHandler.time();
+		playStartTime = nanoTime() / 1_000_000L;
 
-		// Delay MIDI start until audio actually starts (playingStartTime is set)
-		midiNeedsStart = midiNotesPlaying;
-
+		if (midiNotesPlaying) {
+			midiChartNotePlayer.startPlaying(speed);
+		}
 		chartToolbar.setPlayButtonIcon();
 	}
 
@@ -135,7 +136,6 @@ public class AudioHandler {
 
 		songPlayer.stop();
 		songPlayer = null;
-		midiNeedsStart = false;
 		metronomeHandler.stop();
 		clapsHandler.stop();
 
@@ -184,22 +184,9 @@ public class AudioHandler {
 			return;
 		}
 
-		// Use the Player's playingStartTime which accounts for audio startup latency
-		final long playerStartTime = songPlayer.playingStartTime;
-		if (playerStartTime < 0) {
-			// Audio hasn't started playing yet, don't advance the chart
-			return;
-		}
-
-		// Start MIDI now that audio has started
-		if (midiNeedsStart) {
-			midiChartNotePlayer.startPlaying(speed);
-			midiNeedsStart = false;
-		}
-
 		if (songPlayer.isStopped()) {
 			if (repeatManager.isRepeating()) {
-				final double timePassed = (nanoTime() - playerStartTime) / 1_000_000.0 * speed / 100;
+				final double timePassed = (nanoTime() / 1_000_000.0 - playStartTime) * speed / 100;
 				final double nextTime = songTimeOnStart + timePassed;
 				chartTimeHandler.nextTime(nextTime);
 				return;
@@ -208,7 +195,7 @@ public class AudioHandler {
 			stopMusic();
 		}
 
-		final double timePassed = (nanoTime() - playerStartTime) / 1_000_000.0 * speed / 100;
+		final double timePassed = (nanoTime() / 1_000_000.0 - playStartTime) * speed / 100;
 		final double nextTime = songTimeOnStart + timePassed;
 		chartTimeHandler.nextTime(nextTime);
 
@@ -229,6 +216,10 @@ public class AudioHandler {
 		metronomeHandler.nextTime(t);
 		clapsHandler.stop();
 		clapsHandler.nextTime(t);
+		if (midiNotesPlaying) {
+			midiChartNotePlayer.stopPlaying();
+			midiChartNotePlayer.startPlaying(speed);
+		}
 
 		playMusic(lastPlayedData);
 	}
