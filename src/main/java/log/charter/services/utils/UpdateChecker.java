@@ -78,6 +78,9 @@ public class UpdateChecker {
 			return false; // versions are equal
 		} catch (final NumberFormatException e) {
 			Logger.error("Error comparing versions: " + currentVersion + " vs " + newVersion, e);
+			return false;
+		}
+	}
 
 	private static boolean isExeAvailable() {
 		try {
