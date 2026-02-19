@@ -259,6 +259,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.COPY, copyManager::copy);
 		actionHandlers.put(Action.CUT, this::cut);
 		actionHandlers.put(Action.DELETE, chartItemsHandler::delete);
+		actionHandlers.put(Action.DELETE_RELATED, chartItemsHandler::deleteRelated);
 		actionHandlers.put(Action.DOUBLE_GRID, this::doubleGridSize);
 		actionHandlers.put(Action.EDIT_VOCALS, vocalsHandler::editVocals);
 		actionHandlers.put(Action.EXIT, this::handleExit);

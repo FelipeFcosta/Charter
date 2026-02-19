@@ -43,6 +43,7 @@ public enum ShortcutConfigGroup {
 			Action.PASTE, //
 			Action.SPECIAL_PASTE, //
 			Action.DELETE, //
+			Action.DELETE_RELATED, //
 			Action.UNDO, //
 			Action.REDO, //
 			Action.SELECT_ALL, //

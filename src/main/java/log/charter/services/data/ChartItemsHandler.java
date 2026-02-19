@@ -26,6 +26,7 @@ import log.charter.data.song.ToneChange;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.notes.CommonNote;
 import log.charter.data.song.position.FractionalPosition;
+import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.data.song.position.virtual.IVirtualConstantPosition;
 import log.charter.data.song.position.virtual.IVirtualPosition;
 import log.charter.data.song.position.virtual.IVirtualPositionWithEnd;
@@ -38,6 +39,7 @@ import log.charter.services.data.selection.ISelectionAccessor;
 import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
 import log.charter.services.editModes.ModeManager;
+import log.charter.util.CollectionUtils;
 
 public class ChartItemsHandler {
 
@@ -93,6 +95,14 @@ public class ChartItemsHandler {
 			chartData.currentArrangement().tones = chartData.currentArrangement().toneChanges.stream()//
 					.map(toneChange -> toneChange.toneName)//
 					.collect(Collectors.toCollection(HashSet::new));
+		}
+
+		switch (type) {
+			case GUITAR_NOTE:
+				arrangementFixer.fixNoteLengths(chartData.currentSounds());
+				break;
+			default:
+				break;
 		}
 	}
 
