@@ -98,6 +98,7 @@ public class Localization {
 				"Couldn't run update script, run the program as administrator, install update manually or install it in a different folder"), //
 		CREATE_DEFAULT_STRETCHES_IN_BACKGROUND("Create stretched audio in the background when new song is made"), //
 		DELETE("Delete"), //
+		DELETE_RELATED("Delete related"), //
 		DELETE_ARRANGEMENT("Delete arrangement"), //
 		DELETE_ARRANGEMENT_POPUP_MSG("Are you sure you want to delete arrangement %s?"), //
 		DELETE_ARRANGEMENT_POPUP_TITLE("Delete arrangement?"), //
@@ -119,8 +120,10 @@ public class Localization {
 		EXIT("Exit"), //
 		EXPLOSIONS("Explosions"), //
 		EXPLOSIONS_SHAKY_CAM("Shaky cam"), //
+		FHP_INSIDE_HAND_SHAPE("Fret Hand Position change inside a Hand Shape"), //
 		FHP_PANE("FHP"), //
 		FHP_STARTS_ON_WRONG_FRET("Fret Hand Position starts on fret below or equal to capo/0"), //
+		FHP_TOO_CLOSE_TO_NEXT("Fret Hand Position too close to next one (<%d ms)"), //
 		FHP_WIDTH("Width"), //
 		FILE_MENU("File"), //
 		FINGER_NOT_SET_FOR_FRETTED_STRING("Finger not set for fretted string in template [%d] - string %d"), //

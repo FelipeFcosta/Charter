@@ -5,6 +5,7 @@ import static log.charter.util.CollectionUtils.lastBeforeEqual;
 import static log.charter.util.CollectionUtils.max;
 import static log.charter.util.CollectionUtils.min;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -24,6 +25,7 @@ import log.charter.data.song.notes.Chord;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.notes.CommonNote;
 import log.charter.data.song.notes.Note;
+import log.charter.data.song.notes.NoteInterface;
 import log.charter.data.song.position.FractionalPosition;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.data.song.position.time.ConstantPosition;
@@ -154,7 +156,7 @@ public class ArrangementFixer {
 		final List<EventPoint> sections = filter(arrangement.eventPoints, p -> p.section != null);
 
 		for (final EventPoint eventPoint : arrangement.eventPoints) {
-			if (eventPoint.phrase == null) {
+			if (eventPoint.phrase == null || eventPoint.phrase.equals("COUNT")) {
 				continue;
 			}
 
@@ -276,9 +278,15 @@ public class ArrangementFixer {
 		}
 	}
 
+	private void removeBendsOutOfBounds(final CommonNote note) {
+		note.bendValues(note.bendValues().stream()//
+				.filter(b -> b.compareTo(note) >= 0 && b.compareTo(note.endPosition()) <= 0)//
+				.collect(Collectors.toList()));
+	}
+
 	private void fixLinkedNoteLength(final CommonNote note, final int id, final List<ChordOrNote> sounds) {
 		LinkedNotesFixer.fixLinkedNote(note, id, sounds);
-		WrongBendPositionRemover.fixBends(note);
+		removeBendsOutOfBounds(note);
 	}
 
 	private void fixNotLinkedNoteLength(final CommonNote note, final int id, final List<ChordOrNote> sounds) {
@@ -323,7 +331,7 @@ public class ArrangementFixer {
 		}
 
 		fixNotLinkedNoteLength(note, id, sounds);
-		WrongBendPositionRemover.fixBends(note);
+		removeBendsOutOfBounds(note);
 	}
 
 	private void fixNoteLength(final CommonNote note, final int id, final List<ChordOrNote> sounds) {
@@ -334,7 +342,7 @@ public class ArrangementFixer {
 
 		fixNotLinkedNoteLength(note, id, sounds);
 		removeNoteTailIfNeeded(note, id, sounds);
-		WrongBendPositionRemover.fixBends(note);
+		removeBendsOutOfBounds(note);
 	}
 
 	public void fixSoundLength(final int id, final List<ChordOrNote> sounds) {
@@ -433,10 +441,67 @@ public class ArrangementFixer {
 		fixSameTemplateHandShapeOverlaps(chartData.currentHandShapes());
 	}
 
+	private void addMissingBends(final List<ChordOrNote> sounds) {
+		for (int i = 0; i < sounds.size(); i++) {
+			final int id = i;
+			final ChordOrNote sound = sounds.get(i);
+			sounds.get(i).notes().forEach(note -> {
+				final ChordOrNote previousSound = ChordOrNote.findPreviousSoundOnString(note.string(), id - 1, sounds);
+				if (previousSound == null) {
+					return;
+				}
+
+				final NoteInterface previousNote = previousSound.getString(note.string()).get();
+				if (!previousNote.linkNext()) {
+					return;
+				}
+
+				if (previousNote.bendValues().isEmpty()) {
+					if (note.bendValues().isEmpty()) {
+						return;
+					}
+
+					final BendValue firstBend = note.bendValues().get(0);
+					if (firstBend.bendValue.compareTo(BigDecimal.ZERO) == 0
+							|| firstBend.position().compareTo(sound) > 0) {
+						return;
+					}
+
+					firstBend.bendValue = BigDecimal.ZERO;
+					return;
+				}
+
+				final BendValue lastBendOnPreviousNote = previousNote.bendValues()
+						.get(previousNote.bendValues().size() - 1);
+				if (note.bendValues().isEmpty()) {
+					final BendValue bend = new BendValue(lastBendOnPreviousNote);
+					bend.position(sound.position());
+					note.bendValues().add(bend);
+					return;
+				}
+
+				final BendValue firstBend = note.bendValues().get(0);
+				if (firstBend.bendValue.compareTo(lastBendOnPreviousNote.bendValue) == 0
+						&& firstBend.position().compareTo(sound) == 0) {
+					return;
+				}
+				if (firstBend.position().compareTo(sound) != 0) {
+					final BendValue bend = new BendValue(lastBendOnPreviousNote);
+					bend.position(sound.position());
+					note.bendValues().add(0, bend);
+					return;
+				}
+
+				firstBend.bendValue = lastBendOnPreviousNote.bendValue;
+			});
+		}
+	}
+
 	private void fixLevel(final Arrangement arrangement, final Level level) {
 		level.sounds.removeIf(sound -> sound.isChord() //
 				&& (sound.chord().templateId() >= arrangement.chordTemplates.size()//
 						|| sound.chord().chordNotes.isEmpty()));
+		level.handShapes.removeIf(hs -> hs.endPosition().equals(hs.position()));
 
 		removeDuplicatesFractional(level.fhps);
 		removeDuplicatesFractional(level.sounds);
@@ -461,6 +526,7 @@ public class ArrangementFixer {
 		// Note: Do NOT call fixLengths on handShapes - handshapes can legitimately overlap 
 		// in time (endTime of one can extend past startTime of another)
 		fixSlides(level.sounds);
+		addMissingBends(level.sounds);
 	}
 
 	public void fixArrangements() {

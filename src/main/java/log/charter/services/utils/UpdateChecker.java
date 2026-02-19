@@ -82,6 +82,15 @@ public class UpdateChecker {
 		}
 	}
 
+	private static boolean isExeAvailable() {
+		try {
+			return RW.getJarDirectory().getParentFile().listFiles((dir, name) -> name.endsWith(".exe")).length > 0;
+		} catch (final Exception e) {
+
+			return false;
+		}
+	}
+
 	private CharterContext charterContext;
 	private CharterFrame charterFrame;
 
@@ -107,7 +116,7 @@ public class UpdateChecker {
 		}
 	}
 
-	private void informUserAboutNewVersionWindows(final String newVersion) {
+	private void informUserAboutNewVersionWithUpdate(final String newVersion) {
 		final ConfirmAnswer answer = ComponentUtils.askYesNo(charterFrame, Label.NEW_VERSION,
 				Label.NEW_VERSION_AVAILABLE_UPDATE, newVersion, CharterMain.VERSION);
 
@@ -139,8 +148,8 @@ public class UpdateChecker {
 			return;
 		}
 
-		if (SystemType.is(SystemType.WINDOWS)) {
-			informUserAboutNewVersionWindows(version);
+		if (SystemType.is(SystemType.WINDOWS) && isExeAvailable()) {
+			informUserAboutNewVersionWithUpdate(version);
 		} else {
 			informUserAboutNewVersion(version);
 		}
