@@ -64,8 +64,8 @@ public class USCTxtImporter {
 				if (s.endsWith(" ")) {
 					currentVocal.text(s.substring(0, s.length() - 1));
 				} else {
-					currentVocal.flag(VocalFlag.WORD_PART);
 					currentVocal.text(s);
+					currentVocal.flag(VocalFlag.WORD_PART);
 				}
 			};
 		}
