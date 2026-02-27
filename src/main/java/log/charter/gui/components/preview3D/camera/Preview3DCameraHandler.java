@@ -28,10 +28,10 @@ public class Preview3DCameraHandler {
 	private final static int fretFocusWindowEndOffset = 3000;
 	private static final double focusingSpeed = 0.7;
 
-	private final static double minScreenScaleX = 0.5;
-	private final static double screenScaleXMultiplier = 1;
-	private final static double minScreenScaleY = 1;
-	private final static double screenScaleYMultiplier = 0.5;
+	private final static double minScreenScaleX = 0.75;
+	private final static double screenScaleXMultiplier = 1.5;
+	private final static double minScreenScaleY = 1.5;
+	private final static double screenScaleYMultiplier = 0.75;
 
 	private static final double weightedPosition = getFretPosition(InstrumentConfig.frets) * 0.4
 			+ getFretPosition(0) * 0.6;

@@ -63,12 +63,12 @@ public class Preview3DSectionDrawer {
 		final IConstantFractionalPosition timeAsFraction = new Position(time).toFraction(chartData.beats());
 		final EventPoint currentPhrase = findCurrentPhrase(timeAsFraction);
 		if (currentPhrase != null && !"END".equals(currentPhrase.phrase)) {
-			drawText(shadersHolder, currentPhrase.phrase, ColorLabel.PHRASE_COLOR.color(), -0.6, 0.83, 0.08,
+			drawText(shadersHolder, currentPhrase.phrase, ColorLabel.PHRASE_COLOR.color(), -0.6, 0.87, 0.08,
 					aspectRatio);
 			final EventPoint currentSection = findCurrentSection(timeAsFraction);
 			if (currentSection != null) {
 				drawText(shadersHolder, currentSection.section.label.label(), ColorLabel.SECTION_COLOR.color(), -0.6,
-						0.95, 0.13, aspectRatio);
+						0.99, 0.13, aspectRatio);
 			}
 		}
 

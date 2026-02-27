@@ -92,9 +92,9 @@ public class Preview3DLyricsDrawer {
 		final String textDone = getLineFromTo(currentLineStart, currentVocalId);
 		final String textToDo = getLineFromTo(currentVocalId + 1, currentLineEnd);
 
-		final double x1 = drawText(shadersHolder, textDone, ColorLabel.PREVIEW_3D_LYRICS_PASSED.color(), -0.6, 0.7,
-				0.1 * textSizeMultiplier, aspectRatio);
-		drawText(shadersHolder, textToDo, ColorLabel.PREVIEW_3D_LYRICS.color(), x1, 0.7, 0.1 * textSizeMultiplier,
+		final double x1 = drawText(shadersHolder, textDone, ColorLabel.PREVIEW_3D_LYRICS_PASSED.color(), -0.6, 0.78,
+				0.095 * textSizeMultiplier, aspectRatio);
+		drawText(shadersHolder, textToDo, ColorLabel.PREVIEW_3D_LYRICS.color(), x1, 0.78, 0.095 * textSizeMultiplier,
 				aspectRatio);
 	}
 
@@ -110,8 +110,8 @@ public class Preview3DLyricsDrawer {
 		final int nextLineStart = findLineStart(vocals, findLineEnd(vocals, currentVocalId) + 1);
 		final int nextLineEnd = findLineEnd(vocals, nextLineStart);
 		final String textToDo = getLineFromTo(nextLineStart, nextLineEnd);
-		drawText(shadersHolder, textToDo, ColorLabel.PREVIEW_3D_LYRICS.color(), -0.6, 0.7 - 0.14 * textSizeMultiplier,
-				0.1 * textSizeMultiplier, aspectRatio);
+		drawText(shadersHolder, textToDo, ColorLabel.PREVIEW_3D_LYRICS.color(), -0.6, 0.78 - 0.12 * textSizeMultiplier,
+				0.095 * textSizeMultiplier, aspectRatio);
 	}
 
 	public void draw(final ShadersHolder shadersHolder, final double time, final double aspectRatio,

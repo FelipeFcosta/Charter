@@ -659,12 +659,18 @@ public class Preview3DGuitarSoundsDrawer {
 	}
 
 	private void addExplosionsForStrings(final ChordOrNote sound) {
-		final int size = !sound.isChord() ? 0 : chartData.currentStrings() / 2;
-		for (int i = chartData.currentStrings() - size; i < chartData.currentStrings(); i++) {
-			explosions.add(new NoteHitDrawObject(i, 0));
+		if (sound.isChord()) {
+			final int capo = chartData.currentArrangement().capo;
+			sound.notesWithFrets(chartData.currentChordTemplates()).forEach(n -> {
+				if (!ChordOrNote.isLinkedToPrevious(n.string(), lastSound, chartData.currentSounds())) {
+					final int fret = n.fret() <= capo ? 0 : n.fret();
+					explosions.add(new NoteHitDrawObject(n.string(), fret));
+				}
+			});
+			cameraHandler.shakeCamera(sound.chord().chordNotes.size());
+		} else {
+			cameraHandler.shakeCamera(0);
 		}
-
-		cameraHandler.shakeCamera(sound.isChord() ? sound.chord().chordNotes.size() : 0);
 	}
 
 	private void addExplosionsToDraw(final List<SoundDrawObject> objectsToDraw, final Preview3DDrawData drawData) {
