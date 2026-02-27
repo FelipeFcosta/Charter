@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import log.charter.data.song.configs.Tuning;
+import log.charter.data.song.configs.Tuning.TuningType;
 import log.charter.util.SoundUtils;
 import log.charter.util.collections.ArrayList2;
 
@@ -62,11 +63,66 @@ public class ChordNameSuggester {
 		return false;
 	}
 
+	/**
+	 * Returns an E-tuning-equivalent Tuning for chord naming purposes, if the
+	 * actual tuning is a standard (all-uniform) or drop-2 tuning. For standard
+	 * tunings this returns E standard; for drop-2 tunings this returns E drop D.
+	 * For anything else (open, DADGAD, E drop C, custom, etc.) the actual tuning
+	 * is returned unchanged.
+	 */
+	private static Tuning computeETuningEquivalent(final Tuning tuning) {
+		final int strings = tuning.strings();
+		if (strings <= 1) {
+			return tuning;
+		}
+
+		final int[] tuningValues = tuning.getTuning();
+
+		// The drop string index mirrors the logic used in TuningType.fromStandardOrDropTuning
+		final int dropStringIdx = strings - Math.min(6, strings);
+
+		// Determine the common value of all non-drop strings
+		int baseValue = Integer.MIN_VALUE;
+		boolean isNormalizable = true;
+		for (int i = 0; i < strings; i++) {
+			if (i == dropStringIdx) {
+				continue;
+			}
+			if (baseValue == Integer.MIN_VALUE) {
+				baseValue = tuningValues[i];
+			} else if (tuningValues[i] != baseValue) {
+				isNormalizable = false;
+				break;
+			}
+		}
+
+		if (!isNormalizable || baseValue == Integer.MIN_VALUE) {
+			return tuning;
+		}
+
+		final int dropDiff = tuningValues[dropStringIdx] - baseValue;
+		if (dropDiff == 0) {
+			// Standard tuning (all strings same) → name as E standard
+			return new Tuning(TuningType.E_STANDARD, strings);
+		} else if (dropDiff == -2) {
+			// Drop-2 tuning → name as E drop D
+			return new Tuning(TuningType.E_DROP_D, strings);
+		}
+
+		// Drop-4 (E drop C) or any other interval structure → no normalization
+		return tuning;
+	}
+
 	public static List<String> suggestChordNames(final Tuning tuning, final Map<Integer, Integer> templateFrets) {
-		return suggestChordNames(tuning, templateFrets, 0);
+		return suggestChordNames(tuning, templateFrets, 0, false);
 	}
 
 	public static List<String> suggestChordNames(final Tuning tuning, final Map<Integer, Integer> templateFrets, final int capo) {
+		return suggestChordNames(tuning, templateFrets, capo, false);
+	}
+
+	public static List<String> suggestChordNames(final Tuning tuning, final Map<Integer, Integer> templateFrets,
+			final int capo, final boolean useETuningNaming) {
 		final Map<Integer, Integer> adjustedFrets;
 		if (capo > 0) {
 			adjustedFrets = new java.util.HashMap<>();
@@ -78,7 +134,8 @@ public class ChordNameSuggester {
 			adjustedFrets = templateFrets;
 		}
 
-		final int[] sounds = SoundUtils.getSounds(tuning, false, adjustedFrets);
+		final Tuning effectiveTuning = useETuningNaming ? computeETuningEquivalent(tuning) : tuning;
+		final int[] sounds = SoundUtils.getSounds(effectiveTuning, false, adjustedFrets);
 
 		while (negativeExists(sounds)) {
 			for (int i = 0; i < sounds.length; i++) {

@@ -66,16 +66,18 @@ public class ChordNameAdviceButton extends JButton implements ActionListener, Mo
 	private final Supplier<Tuning> tuningSupplier;
 	private final Supplier<HashMap2<Integer, Integer>> fretsSupplier;
 	private final Supplier<Integer> capoSupplier;
+	private final Supplier<Boolean> useETuningNamingSupplier;
 	private final Consumer<String> onChoose;
 
 	public ChordNameAdviceButton(final Label label, final RowedPanel parent, final Supplier<Tuning> tuningSupplier,
 			final Supplier<HashMap2<Integer, Integer>> fretsSupplier, final Supplier<Integer> capoSupplier,
-			final Consumer<String> onChoose) {
+			final Supplier<Boolean> useETuningNamingSupplier, final Consumer<String> onChoose) {
 		super(label.label());
 		this.parent = parent;
 		this.tuningSupplier = tuningSupplier;
 		this.fretsSupplier = fretsSupplier;
 		this.capoSupplier = capoSupplier;
+		this.useETuningNamingSupplier = useETuningNamingSupplier;
 		this.onChoose = onChoose;
 
 		addActionListener(this);
@@ -117,7 +119,7 @@ public class ChordNameAdviceButton extends JButton implements ActionListener, Mo
 		removePopup();
 
 		final List<String> suggestedChordNames = suggestChordNames(tuningSupplier.get(), fretsSupplier.get(),
-				capoSupplier.get());
+				capoSupplier.get(), useETuningNamingSupplier.get());
 
 		final int x = getX();
 		int y = getY() + getHeight();

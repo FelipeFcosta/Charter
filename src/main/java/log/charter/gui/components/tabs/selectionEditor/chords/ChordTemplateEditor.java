@@ -242,6 +242,7 @@ public class ChordTemplateEditor implements ChordTemplateEditorInterface, MouseL
 				() -> chartData.currentArrangement().chordNameMadnessCapoRelative
 						? chartData.currentArrangement().capo
 						: 0,
+				() -> chartData.currentArrangement().chordNameMadnessCapoRelative,
 				this::onChordNameSelect);
 		parent.addWithSettingSize(chordNameAdviceButton, x, parent.sizes.getY(row), 150, 20);
 	}

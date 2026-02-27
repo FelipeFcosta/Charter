@@ -76,11 +76,10 @@ public class GuitarSoundsHandler {
 			return;
 		}
 
-		final int capo = chartData.currentArrangement().chordNameMadnessCapoRelative
-				? chartData.currentArrangement().capo
-				: 0;
+		final boolean useETuningNaming = chartData.currentArrangement().chordNameMadnessCapoRelative;
+		final int capo = useETuningNaming ? chartData.currentArrangement().capo : 0;
 		final List<String> suggestedNames = ChordNameSuggester.suggestChordNames(chartData.currentArrangement().tuning,
-				template.frets, capo);
+				template.frets, capo, useETuningNaming);
 
 		if (!suggestedNames.isEmpty()) {
 			template.chordName = suggestedNames.get(0);

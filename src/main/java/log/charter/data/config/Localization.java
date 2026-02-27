@@ -465,7 +465,7 @@ public class Localization {
 		ARRANGEMENT_OPTIONS_STRINGS("Strings"), //
 		ARRANGEMENT_OPTIONS_CAPO("Capo"), //
 		ARRANGEMENT_OPTIONS_MOVE_FRETS("Move frets on tuning change"), //
-		ARRANGEMENT_OPTIONS_CHORD_NAME_CAPO_RELATIVE("Chord naming considers capo"), //
+		ARRANGEMENT_OPTIONS_CHORD_NAME_CAPO_RELATIVE("Keep E tuning chord naming"), //
 
 		VOCAL_PANE_CREATION("Vocal creation"), //
 		VOCAL_PANE_EDIT("Vocal edit"), //
