@@ -74,6 +74,11 @@ public class CopyManager {
 		return map(selected, e -> copyMaker.make(basePosition, e));
 	}
 
+	private <T extends IConstantFractionalPosition, V extends Copied<T>> List<V> makeCopy(final List<T> selected,
+			final FractionalPosition basePosition, final CopyMakerSimple<T, V> copyMaker) {
+		return map(selected, e -> copyMaker.make(basePosition, e));
+	}
+
 	private <T extends IConstantFractionalPosition, V extends Copied<T>> List<V> copyPositionsFromTo(
 			final FractionalPosition from, final FractionalPosition to, final List<T> positions,
 			final CopyMakerSimple<T, V> copyMaker) {
@@ -124,17 +129,16 @@ public class CopyManager {
 
 	private CopyData getGuitarCopyDataGuitarNotes() {
 		final List<ChordOrNote> selected = selectionManager.getSelectedElements(PositionType.GUITAR_NOTE);
+		final List<EventPoint> selectedEventPoints = selectionManager.getSelectedElements(PositionType.EVENT_POINT);
+		final List<ToneChange> selectedToneChanges = selectionManager.getSelectedElements(PositionType.TONE_CHANGE);
+		final List<FHP> selectedFHPs = selectionManager.getSelectedElements(PositionType.FHP);
+		final List<HandShape> selectedHandShapes = selectionManager.getSelectedElements(PositionType.HAND_SHAPE);
 
-		final List<ChordTemplate> copiedChordTemplates = chartData.currentArrangement().chordTemplates//
-				.stream().map(ChordTemplate::new).collect(Collectors.toList());
-		final List<CopiedSound> copiedSounds = makeCopy(selected, CopiedSound::copy);
-		
-		// Calculate range from notes
+		// Calculate the earliest and latest positions across all selected types first,
+		// so that all layers share the same base position when copied and pasted.
 		FractionalPosition from = selected.get(0).position();
 		FractionalPosition to = selected.get(selected.size() - 1).endPosition().position();
-		
-		// Expand range to include selected event points
-		final List<EventPoint> selectedEventPoints = selectionManager.getSelectedElements(PositionType.EVENT_POINT);
+
 		if (!selectedEventPoints.isEmpty()) {
 			final FractionalPosition eventFrom = selectedEventPoints.get(0).position();
 			final FractionalPosition eventTo = selectedEventPoints.get(selectedEventPoints.size() - 1).position();
@@ -145,9 +149,7 @@ public class CopyManager {
 				to = eventTo;
 			}
 		}
-		
-		// Expand range to include selected tone changes
-		final List<ToneChange> selectedToneChanges = selectionManager.getSelectedElements(PositionType.TONE_CHANGE);
+
 		if (!selectedToneChanges.isEmpty()) {
 			final FractionalPosition toneFrom = selectedToneChanges.get(0).position();
 			final FractionalPosition toneTo = selectedToneChanges.get(selectedToneChanges.size() - 1).position();
@@ -158,9 +160,7 @@ public class CopyManager {
 				to = toneTo;
 			}
 		}
-		
-		// Expand range to include selected FHPs
-		final List<FHP> selectedFHPs = selectionManager.getSelectedElements(PositionType.FHP);
+
 		if (!selectedFHPs.isEmpty()) {
 			final FractionalPosition fhpFrom = selectedFHPs.get(0).position();
 			final FractionalPosition fhpTo = selectedFHPs.get(selectedFHPs.size() - 1).position();
@@ -171,9 +171,7 @@ public class CopyManager {
 				to = fhpTo;
 			}
 		}
-		
-		// Expand range to include selected hand shapes
-		final List<HandShape> selectedHandShapes = selectionManager.getSelectedElements(PositionType.HAND_SHAPE);
+
 		if (!selectedHandShapes.isEmpty()) {
 			final FractionalPosition hsFrom = selectedHandShapes.get(0).position();
 			final FractionalPosition hsTo = selectedHandShapes.get(selectedHandShapes.size() - 1).endPosition().position();
@@ -184,6 +182,10 @@ public class CopyManager {
 				to = hsTo;
 			}
 		}
+
+		final List<ChordTemplate> copiedChordTemplates = chartData.currentArrangement().chordTemplates//
+				.stream().map(ChordTemplate::new).collect(Collectors.toList());
+		final List<CopiedSound> copiedSounds = makeCopy(selected, from, CopiedSound::copy);
 
 		final ICopyData copyData = new SoundsCopyData(copiedChordTemplates, copiedSounds);
 		return new CopyData(copyData, getFullCopyData(from, to));

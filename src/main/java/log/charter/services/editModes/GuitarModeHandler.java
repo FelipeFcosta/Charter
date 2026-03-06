@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import log.charter.data.ChartData;
+import log.charter.util.collections.HashMap2;
 import log.charter.data.config.values.InstrumentConfig;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.ChordTemplate;
@@ -169,6 +170,30 @@ public class GuitarModeHandler implements ModeHandler {
 		return chartData.currentArrangement().capo;
 	}
 
+	private ChordTemplate getHandShapeTemplate(final FractionalPosition position) {
+		final List<HandShape> handShapes = chartData.currentHandShapes();
+		final HandShape handShape = lastBeforeEqual(handShapes, position).find();
+
+		if (handShape != null && handShape.templateId != null
+				&& handShape.endPosition().compareTo(position) >= 0) {
+			return chartData.currentChordTemplates().get(handShape.templateId);
+		}
+
+		return null;
+	}
+
+	private void applyHandShapeTemplateIfMatches(final FractionalPosition position, final ChordTemplate chordTemplate) {
+		final ChordTemplate handShapeTemplate = getHandShapeTemplate(position);
+		if (handShapeTemplate == null) {
+			return;
+		}
+
+		if (handShapeTemplate.frets.equals(chordTemplate.frets)) {
+			chordTemplate.chordName = handShapeTemplate.chordName;
+			chordTemplate.fingers = new HashMap2<>(handShapeTemplate.fingers);
+		}
+	}
+
 	private int addOrRemoveSingleNote(final FractionalPosition position, final int string, final Integer id,
 			final ChordOrNote chordOrNote) {
 		if (string < 0 || string >= chartData.currentStrings()) {
@@ -206,6 +231,7 @@ public class GuitarModeHandler implements ModeHandler {
 			}
 
 			setSuggestedFingers(chordTemplate);
+			applyHandShapeTemplateIfMatches(position, chordTemplate);
 
 			final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 			chordOrNote.chord().updateTemplate(newTemplateId, chordTemplate);
@@ -217,6 +243,7 @@ public class GuitarModeHandler implements ModeHandler {
 			chordTemplate.frets.put(chordOrNote.note().string, chordOrNote.note().fret);
 			chordTemplate.frets.put(string, getDefaultFretForPosition(position, string));
 			setSuggestedFingers(chordTemplate);
+			applyHandShapeTemplateIfMatches(position, chordTemplate);
 
 			final int chordId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 			sounds.set(id, chordOrNote.asChord(chordId, chordTemplate));

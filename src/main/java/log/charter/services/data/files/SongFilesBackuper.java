@@ -10,6 +10,7 @@ import java.util.List;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.Config;
+import log.charter.data.undoSystem.UndoSystem;
 import log.charter.io.Logger;
 import log.charter.services.CharterContext.Initiable;
 import log.charter.util.RW;
@@ -33,13 +34,26 @@ public class SongFilesBackuper implements Initiable {
 		return backupFolder;
 	}
 
-	public static void makeBackups(final String dir, final List<String> fileNames) {
+	public static void makeBackups(final String dir, final List<String> fileNames,
+			final List<String> rsXmlFileNames) {
 		final File backupFolder = makeSureBackupFolderExists(dir);
 
 		for (final String fileName : fileNames) {
 			final File f = new File(dir, fileName);
 			if (f.exists()) {
 				RW.writeB(new File(backupFolder, fileName), RW.readB(f));
+			}
+		}
+
+		if (!rsXmlFileNames.isEmpty()) {
+			final File xmlBackupFolder = new File(backupFolder, "RS XML");
+			xmlBackupFolder.mkdirs();
+			final File rsXmlDir = new File(dir, "RS XML");
+			for (final String fileName : rsXmlFileNames) {
+				final File f = new File(rsXmlDir, fileName);
+				if (f.exists()) {
+					RW.writeB(new File(xmlBackupFolder, fileName), RW.readB(f));
+				}
 			}
 		}
 
@@ -84,6 +98,9 @@ public class SongFilesBackuper implements Initiable {
 	}
 
 	private ChartData chartData;
+	private UndoSystem undoSystem;
+
+	private int lastBackupUndoId = -1;
 
 	@Override
 	public void init() {
@@ -91,7 +108,7 @@ public class SongFilesBackuper implements Initiable {
 			while (true) {
 				try {
 					if (Config.backupDelay > 0) {
-						Thread.sleep(Config.backupDelay * 1000);
+						Thread.sleep(Config.backupDelay * 1000L);
 					}
 				} catch (final InterruptedException e) {
 					e.printStackTrace();
@@ -111,20 +128,27 @@ public class SongFilesBackuper implements Initiable {
 			return;
 		}
 
+		final int currentUndoId = undoSystem.getLastUndoId();
+		if (currentUndoId == lastBackupUndoId) {
+			return;
+		}
+
 		final List<String> filesToBackup = new ArrayList<>();
 		filesToBackup.add(chartData.projectFileName);
 
-		// Also backup RS XML arrangement files
-		final File projectDir = new File(chartData.path);
-		final File[] xmlFiles = projectDir.listFiles((dir, name) -> name.endsWith("_RS2.xml"));
+		final List<String> rsXmlFilesToBackup = new ArrayList<>();
+		final File rsXmlDir = new File(chartData.path, "RS XML");
+		final File[] xmlFiles = rsXmlDir.listFiles((dir, name) -> name.endsWith("_RS2.xml"));
 		if (xmlFiles != null) {
 			for (final File xmlFile : xmlFiles) {
-				filesToBackup.add(xmlFile.getName());
+				rsXmlFilesToBackup.add(xmlFile.getName());
 			}
 		}
 
-		Logger.debug("Doing backup of " + chartData.path + ", files: " + filesToBackup);
+		Logger.debug("Doing backup of " + chartData.path + ", files: " + filesToBackup + ", RS XML files: "
+				+ rsXmlFilesToBackup);
 
-		makeBackups(chartData.path, filesToBackup);
+		makeBackups(chartData.path, filesToBackup, rsXmlFilesToBackup);
+		lastBackupUndoId = currentUndoId;
 	}
 }

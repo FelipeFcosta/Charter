@@ -162,7 +162,7 @@ public class USCTxtImporter {
 			currentVocal.position(FractionalPosition.fromTime(chartData.beats(), startTime));
 			currentVocal.endPosition(FractionalPosition.fromTime(chartData.beats(), endTime));
 
-			final String text = tokens[4].replace("`", "'");
+			final String text = tokens[4].replace("`", "'").replace("’", "'");
 			textAdder.accept(text);
 			currentVocal.text(currentVocal.text().stripTrailing());
 
