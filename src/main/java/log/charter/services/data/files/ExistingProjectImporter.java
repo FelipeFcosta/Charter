@@ -15,7 +15,6 @@ import log.charter.data.ChartData;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.SongChart;
-import log.charter.data.song.vocals.VocalPath;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.simple.LoadingDialog;
 import log.charter.gui.components.tabs.TextTab;
@@ -24,16 +23,12 @@ import log.charter.io.Logger;
 import log.charter.io.rs.xml.RSXMLToArrangement;
 import log.charter.io.rs.xml.song.SongArrangement;
 import log.charter.io.rs.xml.song.SongArrangementXStreamHandler;
-import log.charter.io.rs.xml.vocals.ArrangementVocals;
-import log.charter.io.rs.xml.vocals.VocalsXStreamHandler;
 import log.charter.io.rsc.xml.ChartProject;
 import log.charter.services.audio.AudioHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.sound.data.AudioData;
 import log.charter.sound.utils.AudioGenerator;
-import log.charter.util.RW;
-
 public class ExistingProjectImporter {
 	private AudioHandler audioHandler;
 	private ChartData chartData;
@@ -100,25 +95,21 @@ public class ExistingProjectImporter {
 		Arrays.sort(xmlFiles, Comparator.comparingInt(ExistingProjectImporter::rsXmlFileId));
 
 		final List<Arrangement> arrangements = new ArrayList<>();
-		final List<VocalPath> vocalPaths = new ArrayList<>();
 
 		for (final File xmlFile : xmlFiles) {
+			if (xmlFile.getName().contains("_Vocals_")) {
+				continue;
+			}
+
 			try {
-				if (xmlFile.getName().contains("_Vocals_")) {
-					final ArrangementVocals arrangementVocals = VocalsXStreamHandler
-							.readVocals(RW.read(xmlFile, "UTF-8"));
-					vocalPaths.add(new VocalPath(songChart.beatsMap.immutable, arrangementVocals));
-				} else {
-					final SongArrangement songArrangement = SongArrangementXStreamHandler.readSong(xmlFile);
-					arrangements.add(RSXMLToArrangement.toArrangement(songArrangement, songChart.beatsMap.immutable));
-				}
+				final SongArrangement songArrangement = SongArrangementXStreamHandler.readSong(xmlFile);
+				arrangements.add(RSXMLToArrangement.toArrangement(songArrangement, songChart.beatsMap.immutable));
 			} catch (final Exception e) {
 				Logger.error("Couldn't reimport RS XML file: " + xmlFile.getName(), e);
 			}
 		}
 
 		songChart.arrangements = arrangements;
-		songChart.vocalPaths = vocalPaths;
 	}
 
 	private void openInternal(final LoadingDialog loadingDialog, final String path) {
