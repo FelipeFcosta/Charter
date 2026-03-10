@@ -211,9 +211,15 @@ public class RSXMLLevelTransformer {
 
 		for (final ArrangementNote arrangementNote : chordNotes) {
 			final ChordNote chordNote = chord.chordNotes.get(arrangementNote.string);
-			chordNote.linkNext = mapInteger(arrangementNote.linkNext);
 			chordNote.endPosition(arrangementNote.sustain == null ? chord.position()
 					: FractionalPosition.fromTimeRounded(beats, arrangementNote.time + arrangementNote.sustain));
+
+			chordNote.vibrato = mapInteger(arrangementNote.vibrato);
+			chordNote.tremolo = mapInteger(arrangementNote.tremolo);
+			chordNote.hopo = HOPO.fromArrangmentNote(arrangementNote);
+			chordNote.harmonic = Harmonic.fromArrangmentNote(arrangementNote);
+			chordNote.mute = Mute.fromArrangmentNote(arrangementNote);
+			chordNote.linkNext = mapInteger(arrangementNote.linkNext);
 
 			if (arrangementNote.bendValues != null && !arrangementNote.bendValues.list.isEmpty()) {
 				for (final ArrangementBendValue bendValue : arrangementNote.bendValues.list) {
