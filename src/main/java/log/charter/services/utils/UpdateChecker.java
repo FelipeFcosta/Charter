@@ -10,6 +10,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.util.Optional;
 
 import log.charter.CharterMain;
+import log.charter.data.config.Config;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.config.SystemType;
 import log.charter.gui.CharterFrame;
@@ -101,11 +102,18 @@ public class UpdateChecker {
 		return true;
 	}
 
+	private void skipVersion(final String version) {
+		Config.skippedUpdateVersion = version;
+		Config.markChanged();
+		Config.save();
+	}
+
 	private void informUserAboutNewVersion(final String newVersion) {
 		final ConfirmAnswer answer = ComponentUtils.askYesNo(charterFrame, Label.NEW_VERSION,
 				Label.NEW_VERSION_AVAILABLE_DOWNLOAD, newVersion, CharterMain.VERSION);
 
 		if (answer != ConfirmAnswer.YES) {
+			skipVersion(newVersion);
 			return;
 		}
 
@@ -121,6 +129,7 @@ public class UpdateChecker {
 				Label.NEW_VERSION_AVAILABLE_UPDATE, newVersion, CharterMain.VERSION);
 
 		if (answer != ConfirmAnswer.YES) {
+			skipVersion(newVersion);
 			return;
 		}
 
@@ -145,6 +154,10 @@ public class UpdateChecker {
 
 		final String version = getVersion(response);
 		if (version == null || !isNewerVersion(CharterMain.VERSION, version)) {
+			return;
+		}
+
+		if (version.equals(Config.skippedUpdateVersion)) {
 			return;
 		}
 

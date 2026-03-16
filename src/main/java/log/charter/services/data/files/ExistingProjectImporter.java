@@ -15,6 +15,7 @@ import log.charter.data.ChartData;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.SongChart;
+import log.charter.data.song.vocals.VocalPath;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.simple.LoadingDialog;
 import log.charter.gui.components.tabs.TextTab;
@@ -23,12 +24,16 @@ import log.charter.io.Logger;
 import log.charter.io.rs.xml.RSXMLToArrangement;
 import log.charter.io.rs.xml.song.SongArrangement;
 import log.charter.io.rs.xml.song.SongArrangementXStreamHandler;
+import log.charter.io.rs.xml.vocals.ArrangementVocals;
+import log.charter.io.rs.xml.vocals.VocalsXStreamHandler;
 import log.charter.io.rsc.xml.ChartProject;
+import log.charter.util.RW;
 import log.charter.services.audio.AudioHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.sound.data.AudioData;
 import log.charter.sound.utils.AudioGenerator;
+
 public class ExistingProjectImporter {
 	private AudioHandler audioHandler;
 	private ChartData chartData;
@@ -81,18 +86,26 @@ public class ExistingProjectImporter {
 		}
 	}
 
-	private void reimportFromRSXML(final SongChart songChart, final String dir) {
+	private File[] rsXmlFiles(final String dir) {
 		final File rsXmlDir = new File(dir, "RS XML");
 		if (!rsXmlDir.exists() || !rsXmlDir.isDirectory()) {
-			return;
+			return null;
 		}
 
 		final File[] xmlFiles = rsXmlDir.listFiles((d, name) -> name.endsWith("_RS2.xml"));
 		if (xmlFiles == null || xmlFiles.length == 0) {
-			return;
+			return null;
 		}
 
 		Arrays.sort(xmlFiles, Comparator.comparingInt(ExistingProjectImporter::rsXmlFileId));
+		return xmlFiles;
+	}
+
+	private void reimportArrangementsFromRSXML(final SongChart songChart, final String dir) {
+		final File[] xmlFiles = rsXmlFiles(dir);
+		if (xmlFiles == null) {
+			return;
+		}
 
 		final List<Arrangement> arrangements = new ArrayList<>();
 
@@ -110,6 +123,33 @@ public class ExistingProjectImporter {
 		}
 
 		songChart.arrangements = arrangements;
+	}
+
+	private void reimportVocalsFromRSXML(final SongChart songChart, final String dir) {
+		final File[] xmlFiles = rsXmlFiles(dir);
+		if (xmlFiles == null) {
+			return;
+		}
+
+		final List<VocalPath> vocalPaths = new ArrayList<>();
+
+		for (final File xmlFile : xmlFiles) {
+			if (!xmlFile.getName().contains("_Vocals_")) {
+				continue;
+			}
+
+			try {
+				final ArrangementVocals arrangementVocals = VocalsXStreamHandler
+						.readVocals(RW.read(xmlFile, "UTF-8"));
+				vocalPaths.add(new VocalPath(songChart.beatsMap.immutable, arrangementVocals));
+			} catch (final Exception e) {
+				Logger.error("Couldn't reimport vocals RS XML file: " + xmlFile.getName(), e);
+			}
+		}
+
+		if (!vocalPaths.isEmpty()) {
+			songChart.vocalPaths = vocalPaths;
+		}
 	}
 
 	private void openInternal(final LoadingDialog loadingDialog, final String path) {
@@ -142,7 +182,10 @@ public class ExistingProjectImporter {
 			return;
 		}
 
-		reimportFromRSXML(songChart, dir);
+		if (songChart.arrangements.isEmpty()) {
+			reimportArrangementsFromRSXML(songChart, dir);
+		}
+		reimportVocalsFromRSXML(songChart, dir);
 
 		final List<String> rsXmlFilesToBackup = new ArrayList<>();
 		final File rsXmlDir = new File(dir, "RS XML");

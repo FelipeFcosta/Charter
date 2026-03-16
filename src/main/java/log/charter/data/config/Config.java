@@ -41,6 +41,7 @@ public class Config {
 	public static int stretchedMusicSpeed = 100;
 	public static boolean selectNotesByTails = false;
 	public static boolean audioFolderChosenForNewSong = false;
+	public static String skippedUpdateVersion = "";
 
 	private static boolean changed = false;
 
@@ -65,6 +66,8 @@ public class Config {
 				forBoolean(v -> selectNotesByTails = v, () -> selectNotesByTails, selectNotesByTails));
 		valueAccessors.put("audioFolderChosenForNewSong", forBoolean(v -> audioFolderChosenForNewSong = v,
 				() -> audioFolderChosenForNewSong, audioFolderChosenForNewSong));
+		valueAccessors.put("skippedUpdateVersion",
+				forString(v -> skippedUpdateVersion = v, () -> skippedUpdateVersion, skippedUpdateVersion));
 
 		AudioConfig.init(valueAccessors, "audio");
 		DebugConfig.init(valueAccessors, "debug");
