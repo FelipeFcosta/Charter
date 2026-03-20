@@ -1,11 +1,14 @@
 package log.charter.gui.menuHandlers;
 
 import java.io.File;
+import java.util.List;
 
 import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.Localization.Label;
+import log.charter.data.config.values.PathsConfig;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.simple.SpecialMenuItem;
 import log.charter.gui.panes.colorConfig.ColorConfigPane;
@@ -24,6 +27,7 @@ import log.charter.services.data.files.LRCImporter;
 import log.charter.services.data.files.MidiImporter;
 import log.charter.services.data.files.RSXMLImporter;
 import log.charter.services.data.files.USCTxtImporter;
+import log.charter.services.data.files.SongFileHandler;
 import log.charter.services.data.files.newProject.NewProjectFromGP7Creator;
 import log.charter.services.data.files.newProject.NewProjectFromRSXMLCreator;
 import log.charter.services.editModes.EditMode;
@@ -46,6 +50,7 @@ public class FileMenuHandler extends CharterMenuHandler {
 	private NewProjectFromRSXMLCreator newProjectFromRSXMLCreator;
 	private ProjectAudioHandler projectAudioHandler;
 	private RSXMLImporter rsXMLImporter;
+	private SongFileHandler songFileHandler;
 	private StemAddService stemAddService;
 	private USCTxtImporter uscTxtImporter;
 
@@ -63,6 +68,31 @@ public class FileMenuHandler extends CharterMenuHandler {
 		// TODO create projects based on GPA files
 
 		return newProjectSubmenu;
+	}
+
+	private JMenu prepareOpenRecentMenu() {
+		final JMenu recentSubmenu = createMenu(Label.OPEN_RECENT);
+		final List<String> recent = PathsConfig.recentPaths;
+
+		if (recent.isEmpty()) {
+			final JMenuItem emptyItem = new JMenuItem(Label.OPEN_RECENT_EMPTY.label());
+			emptyItem.setEnabled(false);
+			recentSubmenu.add(emptyItem);
+		} else {
+			for (final String path : recent) {
+				final File projectFile = new File(path);
+				final String displayName = projectFile.getParentFile() != null
+						? projectFile.getParentFile().getName() + File.separator + projectFile.getName()
+						: projectFile.getName();
+				final JMenuItem item = createItem(displayName, () -> songFileHandler.openRecent(path));
+				if (!projectFile.exists()) {
+					item.setEnabled(false);
+				}
+				recentSubmenu.add(item);
+			}
+		}
+
+		return recentSubmenu;
 	}
 
 	private JMenu prepareImportsMenu() {
@@ -86,6 +116,7 @@ public class FileMenuHandler extends CharterMenuHandler {
 		final JMenu menu = createMenu(Label.FILE_MENU);
 		menu.add(prepareNewProjectMenu());
 		menu.add(createItem(Action.OPEN_PROJECT));
+		menu.add(prepareOpenRecentMenu());
 
 		if (modeManager.getMode() != EditMode.EMPTY) {
 			menu.addSeparator();

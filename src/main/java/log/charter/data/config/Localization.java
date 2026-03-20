@@ -230,6 +230,8 @@ public class Localization {
 		NOTE_WITHOUT_FHP("Note without FHP"), //
 		OFFSET_MS_FIELD("Offset (ms):"), //
 		OPEN_PROJECT("Open project"), //
+		OPEN_RECENT("Open recent"), //
+		OPEN_RECENT_EMPTY("No recent projects"), //
 		PASS_FILTER_ALGORITHM("Algorithm"), //
 		PASS_FILTER_CENTER_FREQUENCY("Center frequency"), //
 		PASS_FILTER_FREQUENCY("Frequency"), //

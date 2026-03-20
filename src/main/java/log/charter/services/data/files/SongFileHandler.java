@@ -45,6 +45,14 @@ public class SongFileHandler {
 	private TextTab textTab;
 	private UndoSystem undoSystem;
 
+	public void openRecent(final String path) {
+		if (!askToSaveChanged()) {
+			return;
+		}
+
+		existingProjectImporter.open(path);
+	}
+
 	public void open() {
 		if (!askToSaveChanged()) {
 			return;
@@ -181,6 +189,7 @@ public class SongFileHandler {
 		}
 
 		PathsConfig.lastPath = new File(chartData.path, chartData.projectFileName).getAbsolutePath();
+		PathsConfig.addRecentPath(PathsConfig.lastPath);
 		Config.markChanged();
 		Config.save();
 

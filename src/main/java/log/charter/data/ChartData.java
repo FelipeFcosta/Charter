@@ -62,6 +62,7 @@ public class ChartData {
 		this.projectFileName = projectFileName;
 		PathsConfig.lastDir = path;
 		PathsConfig.lastPath = new File(path, projectFileName).getAbsolutePath();
+		PathsConfig.addRecentPath(PathsConfig.lastPath);
 		Config.markChanged();
 
 		selectionManager.clear();
