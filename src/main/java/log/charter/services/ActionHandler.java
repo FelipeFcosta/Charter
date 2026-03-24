@@ -325,6 +325,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.SAVE, songFileHandler::save);
 		actionHandlers.put(Action.SAVE_AS, songFileHandler::saveAs);
 		actionHandlers.put(Action.SELECT_ALL, selectionManager::selectAll);
+		actionHandlers.put(Action.SELECT_ALL_EQUAL, selectionManager::selectAllEqual);
 		actionHandlers.put(Action.SNAP_ALL, chartItemsHandler::snapAll);
 		actionHandlers.put(Action.SNAP_SELECTED, chartItemsHandler::snapSelected);
 		actionHandlers.put(Action.SPECIAL_PASTE, copyManager::specialPaste);

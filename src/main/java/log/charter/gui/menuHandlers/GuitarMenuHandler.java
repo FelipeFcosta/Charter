@@ -71,6 +71,9 @@ class GuitarMenuHandler extends CharterMenuHandler {
 	@Override
 	JMenu prepareMenu() {
 		final JMenu menu = createMenu(Label.GUITAR_MENU);
+		menu.add(createItem(Action.SELECT_ALL_EQUAL));
+
+		menu.addSeparator();
 		addStringChangeItems(menu);
 
 		menu.addSeparator();

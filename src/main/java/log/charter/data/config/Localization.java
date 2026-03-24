@@ -283,6 +283,7 @@ public class Localization {
 		SECTION_VERSE("Verse"), //
 		SECTION_WITHOUT_PHRASE("Section without phrase"), //
 		SELECT_ALL("Select all"), //
+		SELECT_ALL_EQUAL("Select all equal"), //
 		SELECT_NOTES_BY_TAILS("Select notes by tails"), //
 		SET_LENGTH("Set length"), //
 		SET_LENGTH_TO_SECONDS("Set length to be this many seconds:"), //

@@ -9,12 +9,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import log.charter.data.ChartData;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
+import log.charter.data.song.BendValue;
+import log.charter.data.song.ChordTemplate;
 import log.charter.data.song.HandShape;
+import log.charter.data.song.notes.Chord;
+import log.charter.data.song.notes.ChordNote;
 import log.charter.data.song.notes.ChordOrNote;
+import log.charter.data.song.notes.Note;
+import log.charter.data.song.position.FractionalPosition;
+import log.charter.services.editModes.EditMode;
 import log.charter.data.song.position.time.ConstantPosition;
 import log.charter.data.song.position.time.IConstantPosition;
 import log.charter.data.song.position.virtual.IVirtualConstantPosition;
@@ -373,6 +381,144 @@ public class SelectionManager implements Initiable {
 		}
 
 		return new NoneSelectionAccessor<T>();
+	}
+
+	private FractionalPosition relativeDuration(final FractionalPosition start, final FractionalPosition end) {
+		return end.add(start.negate());
+	}
+
+	private boolean bendValuesAreEqual(final List<BendValue> a, final List<BendValue> b,
+			final FractionalPosition aPosRef, final FractionalPosition bPosRef) {
+		if (a.size() != b.size()) {
+			return false;
+		}
+		for (int i = 0; i < a.size(); i++) {
+			final BendValue bvA = a.get(i);
+			final BendValue bvB = b.get(i);
+			if (!relativeDuration(aPosRef, bvA.position()).equals(relativeDuration(bPosRef, bvB.position()))) {
+				return false;
+			}
+			if (!bvA.bendValue.equals(bvB.bendValue)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean notesAreEqual(final Note a, final Note b) {
+		if (a.string != b.string || a.fret != b.fret) {
+			return false;
+		}
+		if (!relativeDuration(a.position(), a.endPosition()).equals(relativeDuration(b.position(), b.endPosition()))) {
+			return false;
+		}
+		return a.bassPicking == b.bassPicking
+				&& a.mute == b.mute
+				&& a.hopo == b.hopo
+				&& a.harmonic == b.harmonic
+				&& a.vibrato == b.vibrato
+				&& a.tremolo == b.tremolo
+				&& a.linkNext == b.linkNext
+				&& Objects.equals(a.slideTo, b.slideTo)
+				&& a.unpitchedSlide == b.unpitchedSlide
+				&& a.accent == b.accent
+				&& a.ignore == b.ignore
+				&& a.passOtherNotes == b.passOtherNotes
+				&& bendValuesAreEqual(a.bendValues, b.bendValues, a.position(), b.position());
+	}
+
+	private boolean chordNotesAreEqual(final Chord chordA, final ChordNote cnA,
+			final Chord chordB, final ChordNote cnB) {
+		if (!relativeDuration(chordA.position(), cnA.endPosition())
+				.equals(relativeDuration(chordB.position(), cnB.endPosition()))) {
+			return false;
+		}
+		return cnA.mute == cnB.mute
+				&& cnA.hopo == cnB.hopo
+				&& cnA.harmonic == cnB.harmonic
+				&& cnA.vibrato == cnB.vibrato
+				&& cnA.tremolo == cnB.tremolo
+				&& cnA.linkNext == cnB.linkNext
+				&& Objects.equals(cnA.slideTo, cnB.slideTo)
+				&& cnA.unpitchedSlide == cnB.unpitchedSlide
+				&& bendValuesAreEqual(cnA.bendValues, cnB.bendValues, chordA.position(), chordB.position());
+	}
+
+	private FractionalPosition findHandShapeDuration(final FractionalPosition chordPosition,
+			final int templateId, final List<HandShape> handShapes) {
+		for (final HandShape hs : handShapes) {
+			if (hs.templateId != null && hs.templateId == templateId
+					&& hs.position().equals(chordPosition)) {
+				return relativeDuration(hs.position(), hs.endPosition());
+			}
+		}
+		return null;
+	}
+
+	private boolean chordsAreEqual(final Chord a, final Chord b,
+			final List<ChordTemplate> chordTemplates, final List<HandShape> handShapes) {
+		final ChordTemplate tA = chordTemplates.get(a.templateId());
+		final ChordTemplate tB = chordTemplates.get(b.templateId());
+		if (!tA.equals(tB)) {
+			return false;
+		}
+		if (a.splitIntoNotes != b.splitIntoNotes
+				|| a.forceNoNotes != b.forceNoNotes
+				|| a.accent != b.accent
+				|| a.ignore != b.ignore
+				|| a.passOtherNotes != b.passOtherNotes) {
+			return false;
+		}
+		if (!a.chordNotes.keySet().equals(b.chordNotes.keySet())) {
+			return false;
+		}
+		for (final int string : a.chordNotes.keySet()) {
+			if (!chordNotesAreEqual(a, a.chordNotes.get(string), b, b.chordNotes.get(string))) {
+				return false;
+			}
+		}
+		final FractionalPosition hsA = findHandShapeDuration(a.position(), a.templateId(), handShapes);
+		final FractionalPosition hsB = findHandShapeDuration(b.position(), b.templateId(), handShapes);
+		return Objects.equals(hsA, hsB);
+	}
+
+	public void selectAllEqual() {
+		if (modeManager.getMode() != EditMode.GUITAR) {
+			return;
+		}
+
+		final List<Integer> selectedIds = getSelectedIds(PositionType.GUITAR_NOTE);
+		if (selectedIds.size() != 1) {
+			return;
+		}
+
+		final List<ChordOrNote> sounds = chartData.currentSounds();
+		final int selectedId = selectedIds.get(0);
+		if (selectedId >= sounds.size()) {
+			return;
+		}
+
+		final ChordOrNote selected = sounds.get(selectedId);
+		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
+		final List<HandShape> handShapes = chartData.currentHandShapes();
+
+		final List<Integer> equalIds = new ArrayList<>();
+		for (int i = 0; i < sounds.size(); i++) {
+			final ChordOrNote sound = sounds.get(i);
+			if (selected.isNote() && sound.isNote()) {
+				if (notesAreEqual(selected.note(), sound.note())) {
+					equalIds.add(i);
+				}
+			} else if (selected.isChord() && sound.isChord()) {
+				if (chordsAreEqual(selected.chord(), sound.chord(), chordTemplates, handShapes)) {
+					equalIds.add(i);
+				}
+			}
+		}
+
+		clearSelectionsExcept(PositionType.NONE);
+		selectionLists.get(PositionType.GUITAR_NOTE).add(equalIds);
+		currentSelectionEditor.selectionChanged(true);
 	}
 
 	public void selectAll() {
