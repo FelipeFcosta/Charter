@@ -287,15 +287,18 @@ public class CopyManager {
 		}
 	}
 
-	private CopyData getDataFromClipboard() {
-		String xml;
+	private String getClipboardXml() {
 		try {
-			xml = new String(ClipboardHandler.readClipboardBytes(), "UTF-8");
+			final String xml = new String(ClipboardHandler.readClipboardBytes(), "UTF-8");
+			return xml.isEmpty() ? null : xml;
 		} catch (final UnsupportedEncodingException e) {
 			Logger.error("Couldn't read clipboard data", e);
 			return null;
 		}
-		if (xml.isEmpty()) {
+	}
+
+	private CopyData parseClipboardXml(final String xml) {
+		if (xml == null) {
 			return null;
 		}
 
@@ -311,6 +314,10 @@ public class CopyManager {
 		}
 	}
 
+	private CopyData getDataFromClipboard() {
+		return parseClipboardXml(getClipboardXml());
+	}
+
 	private void pasteVocals(final CopyData copyData) {
 		final ICopyData selectedCopy = copyData.selectedCopy;
 		if (selectedCopy.isEmpty() || selectedCopy.type() != PositionType.VOCAL) {
@@ -322,7 +329,7 @@ public class CopyManager {
 		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.displayTimeFractional(), true);
 	}
 
-	private void pasteGuitar(final CopyData copyData) {
+	private void pasteGuitar(final CopyData copyData, final String clipboardXml) {
 		final ICopyData selectedCopy = copyData.selectedCopy;
 		if (selectedCopy.isEmpty()) {
 			return;
@@ -339,6 +346,46 @@ public class CopyManager {
 			case VOCAL:
 			default:
 				return;
+		}
+
+		// When multiple guitar notes are selected AND the timeline position is snapped
+		// to one of them, paste a copy at every selected position (replacing each one).
+		// Sounds that are the receiving end of a link-next are skipped — they are
+		// considered part of the primary note, not independent paste targets.
+		// Each iteration deserializes a fresh copy of the clipboard data because
+		// CopiedSound.prepareValue() mutates internal state.
+		if (selectedCopy.type() == PositionType.GUITAR_NOTE) {
+			final List<ChordOrNote> selectedSounds = selectionManager.getSelectedElements(PositionType.GUITAR_NOTE);
+			if (selectedSounds.size() > 1) {
+				final FractionalPosition currentTime = chartTimeHandler.displayTimeFractional();
+				final boolean snappedToSelection = selectedSounds.stream()
+						.anyMatch(s -> s.position().compareTo(currentTime) == 0);
+
+				if (snappedToSelection) {
+					final List<ChordOrNote> allSounds = chartData.currentSounds();
+					final List<FractionalPosition> targetPositions = new java.util.ArrayList<>();
+					for (final ChordOrNote sound : selectedSounds) {
+						final int idx = allSounds.indexOf(sound);
+						if (idx >= 0 && !ChordOrNote.isLinkedToPrevious(sound, idx, allSounds)) {
+							targetPositions.add(sound.position());
+						}
+					}
+
+					undoSystem.addUndo();
+					selectionManager.clear();
+
+					for (final FractionalPosition targetPosition : targetPositions) {
+						final CopyData freshData = parseClipboardXml(clipboardXml);
+						if (freshData == null || freshData.selectedCopy == null || freshData.selectedCopy.isEmpty()) {
+							continue;
+						}
+						freshData.selectedCopy.paste(chartData, selectionManager, targetPosition, true);
+					}
+
+					chordTemplatesEditorTab.refreshTemplates();
+					return;
+				}
+			}
 		}
 
 		undoSystem.addUndo();
@@ -366,7 +413,8 @@ public class CopyManager {
 			return;
 		}
 
-		final CopyData copyData = getDataFromClipboard();
+		final String clipboardXml = getClipboardXml();
+		final CopyData copyData = parseClipboardXml(clipboardXml);
 		if (copyData == null || copyData.selectedCopy == null) {
 			return;
 		}
@@ -376,7 +424,7 @@ public class CopyManager {
 			return;
 		}
 		if (modeManager.getMode() == EditMode.GUITAR) {
-			pasteGuitar(copyData);
+			pasteGuitar(copyData, clipboardXml);
 			return;
 		}
 
