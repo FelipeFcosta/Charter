@@ -22,6 +22,7 @@ import log.charter.data.song.position.virtual.IVirtualPositionWithEnd;
 import log.charter.data.types.PositionType;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.CharterFrame;
+import log.charter.gui.chartPanelDrawers.common.DrawerUtils;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
 import log.charter.gui.panes.songEdits.HandShapePane;
 import log.charter.gui.panes.songEdits.VocalPane;
@@ -66,6 +67,14 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		if (releaseCancelled) {
 			pressCancelsRelease = false;
 			return;
+		}
+
+		if (!chartData.isEmpty && e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2
+				&& e.getY() < DrawerUtils.lanesTop) {
+			final double rawTime = xToPosition(e.getX(), chartTimeHandler.displayTime());
+			final IVirtualConstantPosition snapped = chartData.beats()
+					.getPositionFromGridClosestTo(new Position(rawTime));
+			chartTimeHandler.nextTime(snapped.toPosition(chartData.beats()).position());
 		}
 	}
 
@@ -172,7 +181,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 				lastLeftClickTime = System.currentTimeMillis();
 				lastClickId = clickData.pressHighlight.id;
 
-				switch (modeManager.getMode()) {
+			switch (modeManager.getMode()) {
 					case GUITAR -> leftClickGuitar(clickData, doubleClick);
 					case TEMPO_MAP -> dragTempo(clickData);
 					case VOCALS -> leftClickVocals(clickData, doubleClick);
