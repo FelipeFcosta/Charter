@@ -81,6 +81,7 @@ public class DefaultShortcuts extends ShortcutList {
 		super.set(Action.PASTE, new Shortcut(KeyEvent.VK_V).ctrl());
 		super.set(Action.PLACE_LYRIC_FROM_TEXT, new Shortcut(KeyEvent.VK_SPACE).ctrl());
 		super.set(Action.PLAY_AUDIO, new Shortcut(KeyEvent.VK_SPACE));
+		super.set(Action.PLAY_SELECTED_NOTES_SOUND, new Shortcut(KeyEvent.VK_S));
 		super.set(Action.PREVIOUS_BEAT, new Shortcut(KeyEvent.VK_LEFT).shift().alt());
 		super.set(Action.PREVIOUS_GRID, new Shortcut(KeyEvent.VK_LEFT).ctrl().alt());
 		super.set(Action.PREVIOUS_ITEM, new Shortcut(KeyEvent.VK_LEFT).alt());

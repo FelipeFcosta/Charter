@@ -4,7 +4,10 @@ import static java.lang.System.nanoTime;
 
 import com.breakfastquay.rubberband.RubberBandStretcher;
 
+import java.util.List;
+
 import log.charter.data.ChartData;
+import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.config.Config;
 import log.charter.data.config.values.PassFiltersConfig;
 import log.charter.gui.components.toolbar.ChartToolbar;
@@ -238,5 +241,13 @@ public class AudioHandler {
 
 	public boolean isPlaying() {
 		return songPlayer != null;
+	}
+
+	public void previewSounds(final List<ChordOrNote> sounds) {
+		midiChartNotePlayer.previewSounds(sounds);
+	}
+
+	public void stopPreviewSounds() {
+		midiChartNotePlayer.stopPreviewSounds();
 	}
 }

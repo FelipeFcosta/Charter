@@ -282,6 +282,7 @@ public class Localization {
 		SECTION_VARIATION("Variation"), //
 		SECTION_VERSE("Verse"), //
 		SECTION_WITHOUT_PHRASE("Section without phrase"), //
+		PLAY_SELECTED_NOTES_SOUND("Play selected notes sound"), //
 		SELECT_ALL("Select all"), //
 		SELECT_ALL_EQUAL("Select all equal"), //
 		SELECT_NOTES_BY_TAILS("Select notes by tails"), //

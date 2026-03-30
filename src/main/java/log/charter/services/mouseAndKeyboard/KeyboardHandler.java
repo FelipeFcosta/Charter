@@ -191,12 +191,15 @@ public class KeyboardHandler implements KeyListener {
 					shortcut.command = false;
 					replaceHeldAction();
 					break;
-				default:
-					if (shortcut.key == keyCode) {
-						shortcut.key = -1;
-						heldAction = null;
+			default:
+				if (shortcut.key == keyCode) {
+					if (heldAction != null) {
+						actionHandler.fireReleaseAction(heldAction);
 					}
-					break;
+					shortcut.key = -1;
+					heldAction = null;
+				}
+				break;
 			}
 
 			e.consume();

@@ -276,4 +276,24 @@ public class MidiChartNotePlayer implements Initiable {
 		midiNotePlayer.stopSound();
 	}
 
+	private boolean previewing = false;
+
+	public void previewSounds(final List<ChordOrNote> sounds) {
+		if (previewing) {
+			return;
+		}
+
+		previewing = true;
+		midiNotePlayer.updateVolume();
+		midiNotePlayer.stopSound();
+		for (final ChordOrNote sound : sounds) {
+			midiNotePlayer.playSound(sound);
+		}
+	}
+
+	public void stopPreviewSounds() {
+		previewing = false;
+		midiNotePlayer.stopSound();
+	}
+
 }

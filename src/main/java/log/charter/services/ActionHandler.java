@@ -5,12 +5,15 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.util.Arrays.asList;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.Config;
+import log.charter.data.song.notes.ChordOrNote;
+import log.charter.data.types.PositionType;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.config.values.GridConfig;
 import log.charter.data.undoSystem.UndoSystem;
@@ -237,6 +240,25 @@ public class ActionHandler implements Initiable {
 		chartToolbar.updateValues();
 	}
 
+	private void previewSelectedNotes() {
+		final List<Integer> selectedIds = selectionManager.getSelectedIds(PositionType.GUITAR_NOTE);
+		if (selectedIds.isEmpty()) {
+			return;
+		}
+
+		final List<ChordOrNote> sounds = chartData.currentSounds();
+		final List<ChordOrNote> selectedSounds = new ArrayList<>(selectedIds.size());
+		for (final int id : selectedIds) {
+			if (id < sounds.size()) {
+				selectedSounds.add(sounds.get(id));
+			}
+		}
+
+		if (!selectedSounds.isEmpty()) {
+			audioHandler.previewSounds(selectedSounds);
+		}
+	}
+
 	private void handleExit() {
 		// If a chord note is selected, Escape clears that selection first
 		if (selectionManager.getSelectedChordNoteString() != null) {
@@ -315,6 +337,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.NEXT_ITEM_WITH_SELECT, chartTimeHandler::moveToNextItemWithSelect);
 		actionHandlers.put(Action.OPEN_PROJECT, songFileHandler::open);
 		actionHandlers.put(Action.PASTE, copyManager::paste);
+		actionHandlers.put(Action.PLAY_SELECTED_NOTES_SOUND, this::previewSelectedNotes);
 		actionHandlers.put(Action.PLACE_LYRIC_FROM_TEXT, vocalsHandler::placeLyricFromText);
 		actionHandlers.put(Action.PLAY_AUDIO, audioHandler::togglePlaySetSpeed);
 		actionHandlers.put(Action.PREVIOUS_BEAT, chartTimeHandler::moveToPreviousBeat);
@@ -387,6 +410,7 @@ public class ActionHandler implements Initiable {
 	private static final List<Action> actionsNotStoppingAudio = asList(//
 			Action.PLACE_LYRIC_FROM_TEXT, //
 			Action.PLAY_AUDIO, //
+			Action.PLAY_SELECTED_NOTES_SOUND, //
 			Action.SPEED_DECREASE, //
 			Action.SPEED_DECREASE_FAST, //
 			Action.SPEED_DECREASE_PRECISE, //
@@ -419,6 +443,12 @@ public class ActionHandler implements Initiable {
 		} catch (final Exception ex) {
 			Logger.error("Exception on action " + action, ex);
 			ComponentUtils.showPopup(charterFrame, Label.ERROR, ex.getLocalizedMessage());
+		}
+	}
+
+	public void fireReleaseAction(final Action action) {
+		if (action == Action.PLAY_SELECTED_NOTES_SOUND) {
+			audioHandler.stopPreviewSounds();
 		}
 	}
 
