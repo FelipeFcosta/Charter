@@ -105,7 +105,6 @@ public class DefaultShortcuts extends ShortcutList {
 		super.set(Action.TOGGLE_ACCENT, new Shortcut(KeyEvent.VK_A));
 		super.set(Action.TOGGLE_ACCENT_INDEPENDENTLY, new Shortcut(KeyEvent.VK_A).alt());
 		super.set(Action.TOGGLE_ANCHOR, new Shortcut(KeyEvent.VK_A));
-		super.set(Action.TOGGLE_BORDERLESS_PREVIEW_WINDOW, new Shortcut(KeyEvent.VK_F12));
 		super.set(Action.TOGGLE_CLAPS, new Shortcut(KeyEvent.VK_F3));
 		super.set(Action.TOGGLE_HARMONIC, new Shortcut(KeyEvent.VK_O));
 		super.set(Action.TOGGLE_HARMONIC_INDEPENDENTLY, new Shortcut(KeyEvent.VK_O).alt());

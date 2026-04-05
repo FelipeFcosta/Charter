@@ -43,18 +43,6 @@ public class WindowedPreviewHandler implements Initiable {
 		windowedPreviewFrame.setVisible(!windowedPreviewFrame.isVisible());
 	}
 
-	public void switchBorderlessWindowedPreview() {
-		if (SystemType.is(MAC)) {
-			return;
-		}
-
-		if (windowedPreviewFrame.isUndecorated()) {
-			windowedPreviewFrame.setWindowed();
-		} else {
-			windowedPreviewFrame.setBorderlessFullScreen();
-		}
-	}
-
 	public void repaint() {
 		if (SystemType.is(MAC)) {
 			return;

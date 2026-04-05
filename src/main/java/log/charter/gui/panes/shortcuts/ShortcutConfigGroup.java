@@ -89,7 +89,6 @@ public enum ShortcutConfigGroup {
 			Action.SAVE, //
 			Action.SAVE_AS, //
 			Action.TOGGLE_PREVIEW_WINDOW, //
-			Action.TOGGLE_BORDERLESS_PREVIEW_WINDOW, //
 			Action.TOGGLE_MIDI, //
 			Action.TOGGLE_CLAPS, //
 			Action.TOGGLE_METRONOME, //

@@ -364,8 +364,6 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.TOGGLE_ACCENT_INDEPENDENTLY, guitarSoundsStatusesHandler::toggleAccentIndependently);
 		actionHandlers.put(Action.TOGGLE_ANCHOR, beatsService::toggleAnchor);
 		actionHandlers.put(Action.TOGGLE_BAND_PASS_FILTER, audioHandler::toggleBandPassFilter);
-		actionHandlers.put(Action.TOGGLE_BORDERLESS_PREVIEW_WINDOW,
-				windowedPreviewHandler::switchBorderlessWindowedPreview);
 		actionHandlers.put(Action.TOGGLE_CLAPS, clapsHandler::toggleClaps);
 		actionHandlers.put(Action.TOGGLE_HARMONIC, guitarSoundsStatusesHandler::toggleHarmonic);
 		actionHandlers.put(Action.TOGGLE_HARMONIC_INDEPENDENTLY,

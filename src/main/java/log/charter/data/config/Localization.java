@@ -27,7 +27,6 @@ public class Localization {
 		ADD_LEVEL("Add level"), //
 		ADD_SILENCE_AT_THE_END("Add silence at the end"), //
 		ADD_SILENCE_IN_THE_BEGINNING("Add silence in the beginning"), //
-		APRIL_FOOLS_ENABLED("April fools"), //
 		ARPEGGIO("Arpeggio"), //
 		ARRANGEMENT_ID_NAME("Arrangement %d, %s:"), //
 		ARRANGEMENT_IMPORT_OPTIONS("Arrangement import options"), //
@@ -405,7 +404,6 @@ public class Localization {
 		GUITAR_MENU_EDIT_HAND_SHAPE("Edit hand shape"), //
 		GUITAR_MENU_AUTOCREATE_FHP("Autocreate Fret Hand Positions"), //
 		TOGGLE_PREVIEW_WINDOW("Windowed preview"), //
-		TOGGLE_BORDERLESS_PREVIEW_WINDOW("Borderless windowed preview"), //
 
 		TEMPO_BEAT_PANE("Tempo beat options"), //
 		TEMPO_BEAT_PANE_BPM("BPM"), //

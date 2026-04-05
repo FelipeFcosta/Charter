@@ -90,7 +90,6 @@ class GuitarMenuHandler extends CharterMenuHandler {
 
 		menu.addSeparator();
 		menu.add(createItem(Action.TOGGLE_PREVIEW_WINDOW));
-		menu.add(createItem(Action.TOGGLE_BORDERLESS_PREVIEW_WINDOW));
 
 		return menu;
 	}

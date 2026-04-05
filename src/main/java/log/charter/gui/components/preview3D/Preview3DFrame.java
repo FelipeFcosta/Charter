@@ -27,34 +27,7 @@ public class Preview3DFrame extends JFrame implements ComponentListener {
 
 		setLocation(WindowStateConfig.previewX, WindowStateConfig.previewY);
 		setSize(WindowStateConfig.previewWidth, WindowStateConfig.previewHeight);
-		if (WindowStateConfig.previewBorderless) {
-			setBorderlessFullScreen();
-			setExtendedState(JFrame.MAXIMIZED_BOTH);
-		} else {
-			setExtendedState(WindowStateConfig.previewExtendedState);
-		}
-	}
-
-	public void setBorderlessFullScreen() {
-		dispose();
-		setExtendedState(JFrame.MAXIMIZED_BOTH);
-		setUndecorated(true);
-		setVisible(true);
-
-		WindowStateConfig.previewBorderless = true;
-		Config.markChanged();
-	}
-
-	public void setWindowed() {
-		dispose();
 		setExtendedState(WindowStateConfig.previewExtendedState);
-		setLocation(WindowStateConfig.previewX, WindowStateConfig.previewY);
-		setSize(WindowStateConfig.previewWidth, WindowStateConfig.previewHeight);
-		setUndecorated(false);
-		setVisible(true);
-
-		WindowStateConfig.previewBorderless = false;
-		Config.markChanged();
 	}
 
 	@Override
@@ -63,10 +36,6 @@ public class Preview3DFrame extends JFrame implements ComponentListener {
 
 	@Override
 	public void componentMoved(final ComponentEvent e) {
-		if (WindowStateConfig.previewBorderless) {
-			return;
-		}
-
 		WindowStateConfig.previewX = e.getComponent().getX();
 		WindowStateConfig.previewY = e.getComponent().getY();
 		Config.markChanged();
@@ -74,10 +43,6 @@ public class Preview3DFrame extends JFrame implements ComponentListener {
 
 	@Override
 	public void componentResized(final ComponentEvent e) {
-		if (WindowStateConfig.previewBorderless) {
-			return;
-		}
-
 		WindowStateConfig.previewExtendedState = getExtendedState();
 		WindowStateConfig.previewWidth = getWidth();
 		WindowStateConfig.previewHeight = getHeight();

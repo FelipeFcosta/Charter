@@ -1,6 +1,5 @@
 package log.charter.data.config.values;
 
-import static log.charter.data.config.values.accessors.BooleanValueAccessor.forBoolean;
 import static log.charter.data.config.values.accessors.IntValueAccessor.forInteger;
 
 import java.util.Map;
@@ -21,7 +20,6 @@ public class WindowStateConfig {
 	public static int previewWidth = 1200;
 	public static int previewHeight = 700;
 	public static int previewExtendedState = JFrame.MAXIMIZED_BOTH;
-	public static boolean previewBorderless = false;
 
 	public static void init(final Map<String, ValueAccessor> valueAccessors, final String name) {
 		valueAccessors.put(name + ".x", forInteger(v -> x = v, () -> x, x));
@@ -38,8 +36,6 @@ public class WindowStateConfig {
 				forInteger(v -> previewHeight = v, () -> previewHeight, previewHeight));
 		valueAccessors.put(name + ".previewExtendedState",
 				forInteger(v -> previewExtendedState = v, () -> previewExtendedState, previewExtendedState));
-		valueAccessors.put(name + ".previewBorderless",
-				forBoolean(v -> previewBorderless = v, () -> previewBorderless, previewBorderless));
 	}
 
 }
