@@ -44,6 +44,12 @@ public class ChartProject {
 	public Map<Integer, Double> bookmarks = new HashMap<>();
 	public String text;
 
+	/** Total time spent charting this project (ms), persisted with the project file. */
+	public long chartingTimeMs;
+
+	/** When true, charting timer runs while the Charter window is active (foreground). */
+	public boolean chartingTimerSyncWithAudio;
+
 	public ChartProject(final double time, final EditMode editMode, final ChartData data, final SongChart songChart,
 			final int selectedStem, final String text) {
 		this.editMode = editMode;

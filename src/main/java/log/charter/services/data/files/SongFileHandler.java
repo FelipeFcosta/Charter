@@ -23,6 +23,7 @@ import log.charter.io.rs.xml.song.SongArrangement;
 import log.charter.io.rs.xml.song.SongArrangementXStreamHandler;
 import log.charter.io.rs.xml.vocals.ArrangementVocals;
 import log.charter.io.rsc.xml.ChartProject;
+import log.charter.services.data.ChartingTimerHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.services.data.fixers.ArrangementFixer;
@@ -37,6 +38,7 @@ public class SongFileHandler {
 
 	private ArrangementFixer arrangementFixer;
 	private ChartData chartData;
+	private ChartingTimerHandler chartingTimerHandler;
 	private CharterFrame charterFrame;
 	private ChartTimeHandler chartTimeHandler;
 	private ExistingProjectImporter existingProjectImporter;
@@ -145,6 +147,8 @@ public class SongFileHandler {
 
 		final ChartProject project = new ChartProject(chartTimeHandler.time(), modeManager.getMode(), chartData,
 				chartData.songChart, projectAudioHandler.getSelectedStem(), textTab.getText());
+		project.chartingTimeMs = chartingTimerHandler.getMsToSerialize();
+		project.chartingTimerSyncWithAudio = chartingTimerHandler.isSyncWithAudio();
 		timer.addTimestamp("generated project");
 		final String xml = writeChartProject(project);
 		timer.addTimestamp("wrote project to variable");

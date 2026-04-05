@@ -71,6 +71,9 @@ public class Localization {
 		CHANGE_LENGTH("Change length"), //
 		CHANGE_LENGTH_BY_SECONDS("Change length by this many seconds:"), //
 		CHANGE_SONG_PITCH("Change song pitch"), //
+		CHARTING_TIMER_AUTO("auto"), //
+		CHARTING_TIMER_RESET_POPUP_MSG("The elapsed charting time will be cleared to 0:00:00."), //
+		CHARTING_TIMER_RESET_POPUP_TITLE("Reset charting timer?"), //
 		CHOOSE_COLOR_FOR("Choose color for %s"), //
 		CHORD_WITH_NOTE_TAILS("Chord with note tails without any techniques"), //
 		CONFIG("Config"), //

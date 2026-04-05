@@ -17,6 +17,7 @@ import log.charter.data.song.Arrangement;
 import log.charter.data.song.SongChart;
 import log.charter.data.song.vocals.VocalPath;
 import log.charter.gui.CharterFrame;
+import log.charter.gui.components.simple.ChartingTimerPanel;
 import log.charter.gui.components.simple.LoadingDialog;
 import log.charter.gui.components.tabs.TextTab;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
@@ -29,6 +30,7 @@ import log.charter.io.rs.xml.vocals.VocalsXStreamHandler;
 import log.charter.io.rsc.xml.ChartProject;
 import log.charter.util.RW;
 import log.charter.services.audio.AudioHandler;
+import log.charter.services.data.ChartingTimerHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.sound.data.AudioData;
@@ -37,11 +39,13 @@ import log.charter.sound.utils.AudioGenerator;
 public class ExistingProjectImporter {
 	private AudioHandler audioHandler;
 	private ChartData chartData;
+	private ChartingTimerHandler chartingTimerHandler;
 	private CharterFrame charterFrame;
 	private ChartTimeHandler chartTimeHandler;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
 	private ProjectAudioHandler projectAudioHandler;
 	private TextTab textTab;
+	private ChartingTimerPanel chartingTimerPanel;
 
 	private ChartProject loadProjectFile(final File projectFileChosen) {
 		final String name = projectFileChosen.getName().toLowerCase();
@@ -205,6 +209,9 @@ public class ExistingProjectImporter {
 		projectAudioHandler.readStems();
 		projectAudioHandler.selectStem(project.selectedStem);
 		textTab.setText(project.text);
+
+		chartingTimerHandler.loadFromProject(project.chartingTimeMs, project.chartingTimerSyncWithAudio);
+		chartingTimerPanel.refresh();
 
 		audioHandler.clear();
 		chordTemplatesEditorTab.refreshTemplates();

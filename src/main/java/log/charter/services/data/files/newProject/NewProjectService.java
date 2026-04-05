@@ -11,9 +11,11 @@ import log.charter.data.config.values.PathsConfig;
 import log.charter.data.song.SongChart;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.containers.SongFolderSelectPane;
+import log.charter.gui.components.simple.ChartingTimerPanel;
 import log.charter.gui.components.tabs.TextTab;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
 import log.charter.services.audio.AudioHandler;
+import log.charter.services.data.ChartingTimerHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.services.data.files.SongFileHandler;
 import log.charter.sound.audioFormats.AudioFileMetadata;
@@ -22,11 +24,13 @@ import log.charter.sound.data.AudioData;
 public class NewProjectService {
 	private AudioHandler audioHandler;
 	private ChartData chartData;
+	private ChartingTimerHandler chartingTimerHandler;
 	private CharterFrame charterFrame;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
 	private ProjectAudioHandler projectAudioHandler;
 	private SongFileHandler songFileHandler;
 	private TextTab textTab;
+	private ChartingTimerPanel chartingTimerPanel;
 
 	public String generateFolderName(final File songFile, final AudioFileMetadata metadata) {
 		String defaultFolderName;
@@ -87,6 +91,9 @@ public class NewProjectService {
 	}
 
 	public void setDataForNewProject(final File projectFolder, final SongChart songChart, final AudioData musicData) {
+		chartingTimerHandler.reset();
+		chartingTimerPanel.refresh();
+
 		chartData.setNewSong(projectFolder, songChart, "project.rscp");
 		textTab.setText("");
 

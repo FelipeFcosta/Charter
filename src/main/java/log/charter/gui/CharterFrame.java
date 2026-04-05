@@ -26,8 +26,10 @@ import log.charter.data.config.values.WindowStateConfig;
 import log.charter.data.song.Arrangement;
 import log.charter.gui.chartPanelDrawers.common.DrawerUtils;
 import log.charter.gui.components.containers.CharterScrollPane;
+import log.charter.gui.components.containers.CharterTabArea;
 import log.charter.gui.components.containers.CharterTabbedPane;
 import log.charter.gui.components.containers.CharterTabbedPane.Tab;
+import log.charter.gui.components.simple.ChartingTimerPanel;
 import log.charter.gui.components.preview3D.Preview3DPanel;
 import log.charter.gui.components.simple.ChartMap;
 import log.charter.gui.components.tabs.HelpTab;
@@ -76,6 +78,8 @@ public class CharterFrame extends JFrame implements Initiable {
 	private ChartToolbar chartToolbar;
 	private ChartPanel chartPanel;
 	private ChartMap chartMap;
+	private ChartingTimerPanel chartingTimerPanel;
+	private CharterTabArea tabArea;
 	private CharterTabbedPane tabs;
 
 	private final Map<TabType, Integer> tabPositions = new HashMap<>();
@@ -134,6 +138,7 @@ public class CharterFrame extends JFrame implements Initiable {
 		final List<TabType> tabsOrder = getTabsOrder();
 		tabs = new CharterTabbedPane(
 				tabsOrder.stream().map(makeTabGenerator(errorsParentTab)).collect(Collectors.toList()));
+		tabArea = new CharterTabArea(tabs, chartingTimerPanel);
 		for (int i = 0; i < tabsOrder.size(); i++) {
 			tabPositions.put(tabsOrder.get(i), i);
 		}
@@ -142,7 +147,7 @@ public class CharterFrame extends JFrame implements Initiable {
 		add(chartToolbar);
 		add(chartPanel);
 		add(chartMap);
-		add(tabs);
+		add(tabArea);
 
 		addComponentListener(new CharterFrameComponentListener(this));
 		addKeyListener(keyboardHandler);
@@ -157,6 +162,7 @@ public class CharterFrame extends JFrame implements Initiable {
 		resizeComponents();
 
 		validate();
+		chartingTimerPanel.refresh();
 		setVisible(true);
 		setFocusable(true);
 	}
@@ -170,7 +176,7 @@ public class CharterFrame extends JFrame implements Initiable {
 				new Pair<>(chartToolbar, chartToolbar.getHeight()), //
 				new Pair<>(chartPanel, DrawerUtils.editAreaHeight), //
 				new Pair<>(chartMap, DrawerUtils.chartMapHeight), //
-				new Pair<>(tabs,
+				new Pair<>(tabArea,
 						height - chartToolbar.getHeight() - DrawerUtils.editAreaHeight - DrawerUtils.chartMapHeight));
 
 		int y = 0;

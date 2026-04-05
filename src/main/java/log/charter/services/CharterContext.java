@@ -3,6 +3,9 @@ package log.charter.services;
 import static log.charter.data.config.SystemType.MAC;
 import static log.charter.gui.components.utils.ComponentUtils.askYesNo;
 
+import java.awt.MouseInfo;
+import java.awt.Point;
+import java.awt.PointerInfo;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +18,7 @@ import log.charter.gui.ChartPanel;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.chartPanelDrawers.common.BeatsDrawer;
 import log.charter.gui.chartPanelDrawers.common.waveform.WaveFormDrawer;
+import log.charter.gui.components.simple.ChartingTimerPanel;
 import log.charter.gui.components.simple.ChartMap;
 import log.charter.gui.components.tabs.HelpTab;
 import log.charter.gui.components.tabs.TextTab;
@@ -35,6 +39,7 @@ import log.charter.services.audio.MetronomeHandler;
 import log.charter.services.audio.MidiChartNotePlayer;
 import log.charter.services.data.BeatsService;
 import log.charter.services.data.ChartItemsHandler;
+import log.charter.services.data.ChartingTimerHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.GuitarSoundsHandler;
 import log.charter.services.data.GuitarSoundsStatusesHandler;
@@ -131,6 +136,9 @@ public class CharterContext {
 	private final WaveFormDrawer waveFormDrawer = new WaveFormDrawer();
 	private final WindowedPreviewHandler windowedPreviewHandler = new WindowedPreviewHandler();
 
+	private final ChartingTimerHandler chartingTimerHandler = new ChartingTimerHandler();
+	private final ChartingTimerPanel chartingTimerPanel = new ChartingTimerPanel(chartingTimerHandler);
+
 	private final CharterFrame charterFrame = new CharterFrame();
 	private final CharterMenuBar charterMenuBar = new CharterMenuBar();
 	private final ChartToolbar chartToolbar = new ChartToolbar();
@@ -145,6 +153,9 @@ public class CharterContext {
 	private final AudioFramer audioFramer = new AudioFramer();
 	private final Framer framer = new Framer(this::frame);
 	private final UpdateChecker updateChecker = new UpdateChecker();
+	private static final long chartingTimerMouseIdleTimeoutMs = 60_000;
+	private Point lastMouseLocation = new Point(Integer.MIN_VALUE, Integer.MIN_VALUE);
+	private long lastMouseMoveTimestampMs = System.currentTimeMillis();
 
 	private Map<String, Object> getFieldsValues() {
 		final Map<String, Object> fields = new HashMap<>();
@@ -233,11 +244,15 @@ public class CharterContext {
 
 			chartTimeHandler.frame(frameTime);
 
+			chartingTimerHandler.applyAutoSyncFromWindowFocus(charterFrame.isActive());
+			applyChartingTimerMouseInactivityRule();
+
 			if (SystemType.not(MAC) && windowedPreviewHandler.isPreviewVisible()) {
 				windowedPreviewHandler.repaint();
 			}
 
 			if (charterFrame.isShowing()) {
+				chartingTimerPanel.refresh();
 				helpTab.updateValues();
 				titleUpdater.updateTitle();
 				charterFrame.validate();
@@ -246,6 +261,24 @@ public class CharterContext {
 		} catch (final Exception e) {
 			Logger.error("Exception in frame()", e);
 		}
+	}
+
+	private void applyChartingTimerMouseInactivityRule() {
+		final PointerInfo pointerInfo = MouseInfo.getPointerInfo();
+		if (pointerInfo == null) {
+			return;
+		}
+
+		final Point currentMouseLocation = pointerInfo.getLocation();
+		if (!lastMouseLocation.equals(currentMouseLocation)) {
+			lastMouseLocation = currentMouseLocation;
+			lastMouseMoveTimestampMs = System.currentTimeMillis();
+			chartingTimerHandler.onMouseMovedAfterInactivityPause();
+			return;
+		}
+
+		final long inactivityMs = System.currentTimeMillis() - lastMouseMoveTimestampMs;
+		chartingTimerHandler.applyMouseInactivityTimeout(inactivityMs >= chartingTimerMouseIdleTimeoutMs);
 	}
 
 	public void reloadTextures() {
@@ -284,6 +317,7 @@ public class CharterContext {
 	}
 
 	private void onExit() {
+		chartingTimerHandler.pauseForExit();
 		audioFramer.stop();
 		framer.stop();
 		charterFrame.dispose();
