@@ -468,6 +468,11 @@ public class Localization {
 		ARRANGEMENT_OPTIONS_CAPO("Capo"), //
 		ARRANGEMENT_OPTIONS_MOVE_FRETS("Move frets on tuning change"), //
 		ARRANGEMENT_OPTIONS_CHORD_NAME_CAPO_RELATIVE("Keep E tuning chord naming"), //
+		ARRANGEMENT_OPTIONS_TONES("Tones"), //
+		ARRANGEMENT_OPTIONS_TONE_EDIT("Edit name"), //
+		ARRANGEMENT_OPTIONS_TONE_REMOVE("Remove"), //
+		ARRANGEMENT_OPTIONS_TONE_NEW_NAME("New tone name:"), //
+		ARRANGEMENT_OPTIONS_TONE_REMOVE_CONFIRM("Remove tone \"%s\" from entire song?"), //
 
 		VOCAL_PANE_CREATION("Vocal creation"), //
 		VOCAL_PANE_EDIT("Vocal edit"), //

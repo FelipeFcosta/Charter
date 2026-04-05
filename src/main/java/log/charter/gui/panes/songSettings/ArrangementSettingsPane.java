@@ -9,11 +9,18 @@ import static log.charter.util.SoundUtils.soundToFullName;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import log.charter.data.ChartData;
@@ -22,6 +29,7 @@ import log.charter.data.config.values.InstrumentConfig;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.Arrangement.ArrangementSubtype;
 import log.charter.data.song.ChordTemplate;
+import log.charter.data.song.ToneChange;
 import log.charter.data.song.configs.Tuning;
 import log.charter.data.song.configs.Tuning.TuningType;
 import log.charter.gui.CharterFrame;
@@ -63,6 +71,16 @@ public class ArrangementSettingsPane extends ParamsPane {
 	private boolean pickedBass;
 	private boolean chordNameMadnessCapoRelative;
 
+	/**
+	 * Maps each original tone name → its current (possibly renamed) name.
+	 * A null value means the tone was removed. Excludes startingTone.
+	 */
+	private Map<String, String> tonesRenameMap;
+	private List<String> localTones;
+	private CharterSelect<String> tonesDropdown;
+	private JButton editToneButton;
+	private JButton removeToneButton;
+
 	boolean ignoreEvents = false;
 
 	public ArrangementSettingsPane(final CharterMenuBar charterMenuBar, final ChartData data, final CharterFrame frame,
@@ -90,6 +108,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 
 		addStringConfigValue(row.getAndIncrement(), 20, 0, Label.STARTING_TONE, startingTone, 100,
 				this::validateBaseTone, val -> startingTone = val, false);
+		addTonesSection(row);
 		addStringConfigValue(row.get(), 20, 0, Label.TUNING_PITCH,
 				formatPitch(AudioUtils.centsToPitch(440, centOffset.doubleValue())), 100, this::validateTuningPitch,
 				this::setTuningPitch, false);
@@ -118,6 +137,118 @@ public class ArrangementSettingsPane extends ParamsPane {
 
 		setOnFinish(this::saveAndExit, onCancel);
 		addDefaultFinish(row.incrementAndGet());
+	}
+
+	private void buildLocalTones() {
+		localTones = tonesRenameMap.values().stream()//
+				.filter(v -> v != null)//
+				.distinct()//
+				.sorted()//
+				.collect(Collectors.toCollection(ArrayList::new));
+	}
+
+	private void refreshTonesDropdown() {
+		if (tonesDropdown == null) {
+			return;
+		}
+		tonesDropdown.removeAllItems();
+		for (final String tone : localTones) {
+			tonesDropdown.addItem(new CharterSelect.ItemHolder<>(tone, tone));
+		}
+		final boolean hasTones = !localTones.isEmpty();
+		if (hasTones) {
+			tonesDropdown.setSelectedIndex(0);
+		}
+		tonesDropdown.setEnabled(hasTones);
+		editToneButton.setEnabled(hasTones);
+		removeToneButton.setEnabled(hasTones);
+	}
+
+	private void addTonesSection(final AtomicInteger row) {
+		final Arrangement arrangement = data.currentArrangement();
+		tonesRenameMap = new LinkedHashMap<>();
+		final List<String> sortedTones = new ArrayList<>(arrangement.tones);
+		Collections.sort(sortedTones);
+		for (final String tone : sortedTones) {
+			if (!tone.equals(startingTone)) {
+				tonesRenameMap.put(tone, tone);
+			}
+		}
+		buildLocalTones();
+
+		if (localTones.isEmpty()) {
+			return;
+		}
+
+		addLabel(row.get(), 20, Label.ARRANGEMENT_OPTIONS_TONES, 0);
+
+		tonesDropdown = new CharterSelect<>(localTones, localTones.get(0), s -> s, null);
+		add(tonesDropdown, 80, getY(row.get()), 145, 20);
+
+		editToneButton = new JButton(Label.ARRANGEMENT_OPTIONS_TONE_EDIT.label());
+		editToneButton.addActionListener(e -> onEditTone());
+		add(editToneButton, 230, getY(row.get()), 80, 20);
+
+		removeToneButton = new JButton(Label.ARRANGEMENT_OPTIONS_TONE_REMOVE.label());
+		removeToneButton.addActionListener(e -> onRemoveTone());
+		add(removeToneButton, 315, getY(row.getAndIncrement()), 70, 20);
+	}
+
+	private void onEditTone() {
+		final String selectedTone = tonesDropdown.getSelectedValue();
+		if (selectedTone == null) {
+			return;
+		}
+
+		final String newName = (String) JOptionPane.showInputDialog(this,
+				Label.ARRANGEMENT_OPTIONS_TONE_NEW_NAME.label(),
+				Label.ARRANGEMENT_OPTIONS_TONE_EDIT.label(),
+				JOptionPane.PLAIN_MESSAGE, null, null, selectedTone);
+
+		if (newName == null || newName.equals(selectedTone)) {
+			return;
+		}
+		if (newName.isBlank()) {
+			JOptionPane.showMessageDialog(this, Label.VALUE_CANT_BE_EMPTY.label());
+			return;
+		}
+
+		for (final Map.Entry<String, String> entry : tonesRenameMap.entrySet()) {
+			if (selectedTone.equals(entry.getValue())) {
+				entry.setValue(newName);
+			}
+		}
+
+		buildLocalTones();
+		refreshTonesDropdown();
+		final int idx = localTones.indexOf(newName);
+		if (idx >= 0) {
+			tonesDropdown.setSelectedIndex(idx);
+		}
+	}
+
+	private void onRemoveTone() {
+		final String selectedTone = tonesDropdown.getSelectedValue();
+		if (selectedTone == null) {
+			return;
+		}
+
+		final int confirm = JOptionPane.showConfirmDialog(this,
+				Label.ARRANGEMENT_OPTIONS_TONE_REMOVE_CONFIRM.format(selectedTone),
+				Label.ARRANGEMENT_OPTIONS_TONE_REMOVE.label(),
+				JOptionPane.YES_NO_OPTION);
+		if (confirm != JOptionPane.YES_OPTION) {
+			return;
+		}
+
+		for (final Map.Entry<String, String> entry : tonesRenameMap.entrySet()) {
+			if (selectedTone.equals(entry.getValue())) {
+				entry.setValue(null);
+			}
+		}
+
+		buildLocalTones();
+		refreshTonesDropdown();
 	}
 
 	private String validateBaseTone(final String text) {
@@ -405,12 +536,47 @@ public class ArrangementSettingsPane extends ParamsPane {
 
 		arrangement.arrangementType = arrangementType;
 		arrangement.arrangementSubtype = arrangementSubtype;
-		arrangement.startingTone = startingTone;
 		arrangement.centOffset = centOffset;
 		arrangement.tuning = tuning;
 		arrangement.capo = capo;
 		arrangement.pickedBass = pickedBass;
 		arrangement.chordNameMadnessCapoRelative = chordNameMadnessCapoRelative;
+
+		// Propagate starting tone rename to every toneChange that referenced the old name
+		final String oldStartingTone = arrangement.startingTone;
+		arrangement.startingTone = startingTone;
+		final boolean startingToneRenamed = !oldStartingTone.equals(startingTone);
+		if (startingToneRenamed) {
+			for (final ToneChange tc : arrangement.toneChanges) {
+				if (oldStartingTone.equals(tc.toneName)) {
+					tc.toneName = startingTone;
+				}
+			}
+		}
+
+		// Apply renames/removals for the other tones
+		final boolean hasTonesOps = tonesRenameMap != null && !tonesRenameMap.isEmpty();
+		if (hasTonesOps) {
+			arrangement.toneChanges.removeIf(tc -> {
+				if (!tonesRenameMap.containsKey(tc.toneName)) {
+					return false;
+				}
+				return tonesRenameMap.get(tc.toneName) == null;
+			});
+			for (final ToneChange tc : arrangement.toneChanges) {
+				final String mapped = tonesRenameMap.get(tc.toneName);
+				if (mapped != null) {
+					tc.toneName = mapped;
+				}
+			}
+		}
+
+		// Rebuild the tones set whenever anything changed
+		if (startingToneRenamed || hasTonesOps) {
+			arrangement.tones = arrangement.toneChanges.stream()//
+					.map(tc -> tc.toneName)//
+					.collect(Collectors.toCollection(HashSet::new));
+		}
 
 		selectionManager.clear();
 
