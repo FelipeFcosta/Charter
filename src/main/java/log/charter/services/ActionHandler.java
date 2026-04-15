@@ -28,6 +28,7 @@ import log.charter.services.audio.ClapsHandler;
 import log.charter.services.audio.MetronomeHandler;
 import log.charter.services.data.BeatsService;
 import log.charter.services.data.ChartItemsHandler;
+import log.charter.services.data.ProjectAudioHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.GuitarSoundsHandler;
 import log.charter.services.data.GuitarSoundsStatusesHandler;
@@ -46,6 +47,7 @@ import log.charter.services.mouseAndKeyboard.MouseHandler;
 public class ActionHandler implements Initiable {
 	private AudioHandler audioHandler;
 	private BeatsService beatsService;
+	private ProjectAudioHandler projectAudioHandler;
 	private BPMDoubler bpmDoubler;
 	private BPMHalver bpmHalver;
 	private ChartData chartData;
@@ -180,6 +182,30 @@ public class ActionHandler implements Initiable {
 		switchTo(currentMode, currentPath);
 	}
 
+	private void nextStem() {
+		final int stemCount = chartData.songChart.stems.size();
+		if (stemCount == 0) {
+			return;
+		}
+
+		final int current = projectAudioHandler.getSelectedStem();
+		final int next = current + 1 >= stemCount ? -1 : current + 1;
+		projectAudioHandler.selectStem(next);
+		chartToolbar.updateValues();
+	}
+
+	private void previousStem() {
+		final int stemCount = chartData.songChart.stems.size();
+		if (stemCount == 0) {
+			return;
+		}
+
+		final int current = projectAudioHandler.getSelectedStem();
+		final int previous = current <= -1 ? stemCount - 1 : current - 1;
+		projectAudioHandler.selectStem(previous);
+		chartToolbar.updateValues();
+	}
+
 	private void cut() {
 		copyManager.copy();
 		chartItemsHandler.delete();
@@ -274,6 +300,8 @@ public class ActionHandler implements Initiable {
 	public void init() {
 		actionHandlers.put(Action.ARRANGEMENT_NEXT, this::nextArrangement);
 		actionHandlers.put(Action.ARRANGEMENT_PREVIOUS, this::previousArrangement);
+		actionHandlers.put(Action.STEM_NEXT, this::nextStem);
+		actionHandlers.put(Action.STEM_PREVIOUS, this::previousStem);
 		actionHandlers.put(Action.BEAT_ADD, beatsService::addBeat);
 		actionHandlers.put(Action.BEAT_REMOVE, beatsService::removeBeat);
 		actionHandlers.put(Action.BPM_DOUBLE, bpmDoubler::doubleBPM);
@@ -409,6 +437,8 @@ public class ActionHandler implements Initiable {
 			Action.PLACE_LYRIC_FROM_TEXT, //
 			Action.PLAY_AUDIO, //
 			Action.PLAY_SELECTED_NOTES_SOUND, //
+			Action.STEM_NEXT, //
+			Action.STEM_PREVIOUS, //
 			Action.SPEED_DECREASE, //
 			Action.SPEED_DECREASE_FAST, //
 			Action.SPEED_DECREASE_PRECISE, //

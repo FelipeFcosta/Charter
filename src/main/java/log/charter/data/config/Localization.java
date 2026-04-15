@@ -35,6 +35,8 @@ public class Localization {
 		ARRANGEMENT_MENU_VOCALS("Vocal path"), //
 		ARRANGEMENT_NEXT("Next arrangement"), //
 		ARRANGEMENT_PREVIOUS("Previous arrangement"), //
+		STEM_NEXT("Next audio stem"), //
+		STEM_PREVIOUS("Previous audio stem"), //
 		ARRANGEMENT_OPTIONS("Arrangement options"), //
 		ARRANGEMENT_SKIP_ARRANGEMENT("Skip arrangement"), //
 		ARRANGEMENT_SUBTYPE_ALTERNATE("Alternate"), //

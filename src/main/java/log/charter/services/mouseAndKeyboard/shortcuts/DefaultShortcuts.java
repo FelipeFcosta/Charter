@@ -11,6 +11,8 @@ public class DefaultShortcuts extends ShortcutList {
 	private DefaultShortcuts() {
 		super.set(Action.ARRANGEMENT_NEXT, new Shortcut(KeyEvent.VK_TAB));
 		super.set(Action.ARRANGEMENT_PREVIOUS, new Shortcut(KeyEvent.VK_TAB).shift());
+		super.set(Action.STEM_NEXT, new Shortcut(KeyEvent.VK_TAB).ctrl());
+		super.set(Action.STEM_PREVIOUS, new Shortcut(KeyEvent.VK_TAB).ctrl().shift());
 		super.set(Action.BEAT_ADD, new Shortcut(KeyEvent.VK_INSERT));
 		super.set(Action.BEAT_REMOVE, new Shortcut(KeyEvent.VK_DELETE));
 		super.set(Action.BPM_DOUBLE, new Shortcut(KeyEvent.VK_PERIOD));

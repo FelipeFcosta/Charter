@@ -194,6 +194,26 @@ public class GuitarModeHandler implements ModeHandler {
 		}
 	}
 
+	private void applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
+		if (!chordTemplate.chordName.isEmpty()) {
+			return;
+		}
+
+		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
+		for (final ChordOrNote sound : chartData.currentSounds()) {
+			if (!sound.isChord()) {
+				continue;
+			}
+
+			final ChordTemplate existing = chordTemplates.get(sound.chord().templateId());
+			if (existing.frets.equals(chordTemplate.frets)) {
+				chordTemplate.chordName = existing.chordName;
+				chordTemplate.fingers = new HashMap2<>(existing.fingers);
+				return;
+			}
+		}
+	}
+
 	private int addOrRemoveSingleNote(final FractionalPosition position, final int string, final Integer id,
 			final ChordOrNote chordOrNote) {
 		if (string < 0 || string >= chartData.currentStrings()) {
@@ -232,6 +252,7 @@ public class GuitarModeHandler implements ModeHandler {
 
 			setSuggestedFingers(chordTemplate);
 			applyHandShapeTemplateIfMatches(position, chordTemplate);
+			applyFirstTimelineChordTemplateIfMatches(chordTemplate);
 
 			final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 			chordOrNote.chord().updateTemplate(newTemplateId, chordTemplate);
@@ -244,6 +265,7 @@ public class GuitarModeHandler implements ModeHandler {
 			chordTemplate.frets.put(string, getDefaultFretForPosition(position, string));
 			setSuggestedFingers(chordTemplate);
 			applyHandShapeTemplateIfMatches(position, chordTemplate);
+			applyFirstTimelineChordTemplateIfMatches(chordTemplate);
 
 			final int chordId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 			sounds.set(id, chordOrNote.asChord(chordId, chordTemplate));

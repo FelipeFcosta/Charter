@@ -11,6 +11,8 @@ public class DefaultEofShortcuts extends ShortcutList {
 	private DefaultEofShortcuts() {
 		super.set(Action.ARRANGEMENT_NEXT, new Shortcut(KeyEvent.VK_UP).ctrl().shift());
 		super.set(Action.ARRANGEMENT_PREVIOUS, new Shortcut(KeyEvent.VK_DOWN).ctrl().shift());
+		super.set(Action.STEM_NEXT, new Shortcut(KeyEvent.VK_TAB).ctrl());
+		super.set(Action.STEM_PREVIOUS, new Shortcut(KeyEvent.VK_TAB).ctrl().shift());
 		super.set(Action.BEAT_ADD, new Shortcut(KeyEvent.VK_INSERT).ctrl());
 		super.set(Action.BEAT_REMOVE, new Shortcut(KeyEvent.VK_DELETE).ctrl());
 		super.set(Action.BPM_DOUBLE, new Shortcut(KeyEvent.VK_PERIOD));
