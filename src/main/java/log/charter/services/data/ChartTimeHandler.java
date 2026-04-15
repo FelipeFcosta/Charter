@@ -14,6 +14,7 @@ import java.util.Optional;
 import org.jcodec.common.logging.Logger;
 
 import log.charter.data.ChartData;
+import log.charter.data.song.Beat;
 import log.charter.data.config.values.AudioConfig;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
@@ -225,7 +226,12 @@ public class ChartTimeHandler {
 	}
 
 	public void moveToBeginning() {
-		nextTime(0);
+		if (chartData.beats().isEmpty()) {
+			nextTime(0);
+			return;
+		}
+
+		nextTime(chartData.beats().get(0).position());
 	}
 
 	public void moveToPreviousGrid() {
@@ -333,7 +339,19 @@ public class ChartTimeHandler {
 	}
 
 	public void moveToEnd() {
-		nextTime(maxTime());
+		final ImmutableBeatsMap beats = chartData.beats();
+		if (beats.isEmpty()) {
+			nextTime(maxTime());
+			return;
+		}
+
+		int lastBarStartId = beats.size() - 1;
+		while (lastBarStartId > 0 && !beats.get(lastBarStartId).firstInMeasure) {
+			lastBarStartId--;
+		}
+
+		final Beat lastBarStart = beats.get(lastBarStartId);
+		nextTime(lastBarStart.position());
 	}
 
 	public void moveToNextBeat() {
