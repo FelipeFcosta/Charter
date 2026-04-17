@@ -585,7 +585,7 @@ public class Localization {
 		SLOW_BACKWARD("Slow backward"), //
 		SLOW_FORWARD("Slow forward"), //
 		TONE_NAME_CANT_BE_EMPTY("Tone name can't be empty"), //
-		TONE_NAME_PAST_LIMIT("There are already 4 tones, can't add another tone"), //
+		TONE_NAME_PAST_LIMIT("There are already 4 timeline tones, can't add another one"), //
 		UNSAVED_CHANGES_POPUP("Unsaved changes"), //
 		UNSAVED_CHANGES_MESSAGE("You have unsaved changes. Do you want to save?"), //
 		UNSUPPORTED_FILE_TYPE("This file type is not supported"), //

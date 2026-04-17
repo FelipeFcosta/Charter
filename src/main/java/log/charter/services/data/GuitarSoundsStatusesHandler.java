@@ -185,20 +185,34 @@ public class GuitarSoundsStatusesHandler {
 				(sound, accent) -> sound.accent = accent);
 	}
 
+	private static boolean hasSustain(final CommonNote note) {
+		return note.position().compareTo(note.endPosition()) < 0;
+	}
+
 	public void toggleVibrato() {
-		cyclicalToggleNotes(booleanCycleMap, CommonNote::vibrato, CommonNote::vibrato, false);
+		cyclicalToggleNotes(booleanCycleMap, //
+				note -> hasSustain(note) ? note.vibrato() : false, //
+				(note, v) -> { if (hasSustain(note)) note.vibrato(v); }, //
+				false);
 	}
 
 	public void toggleVibratoIndependently() {
-		independentCyclicalToggleNotes(booleanCycleMap, CommonNote::vibrato, CommonNote::vibrato);
+		independentCyclicalToggleNotes(booleanCycleMap, //
+				note -> hasSustain(note) ? note.vibrato() : false, //
+				(note, v) -> { if (hasSustain(note)) note.vibrato(v); });
 	}
 
 	public void toggleTremolo() {
-		cyclicalToggleNotes(booleanCycleMap, CommonNote::tremolo, CommonNote::tremolo, false);
+		cyclicalToggleNotes(booleanCycleMap, //
+				note -> hasSustain(note) ? note.tremolo() : false, //
+				(note, v) -> { if (hasSustain(note)) note.tremolo(v); }, //
+				false);
 	}
 
 	public void toggleTremoloIndependently() {
-		independentCyclicalToggleNotes(booleanCycleMap, CommonNote::tremolo, CommonNote::tremolo);
+		independentCyclicalToggleNotes(booleanCycleMap, //
+				note -> hasSustain(note) ? note.tremolo() : false, //
+				(note, v) -> { if (hasSustain(note)) note.tremolo(v); });
 	}
 
 	private void updateLinkedNotesFrets(final CommonNoteWithFret note, final Note nextNote) {

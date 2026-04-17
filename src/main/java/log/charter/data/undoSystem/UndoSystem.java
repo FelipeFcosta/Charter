@@ -1,10 +1,13 @@
 package log.charter.data.undoSystem;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import log.charter.data.ChartData;
 import log.charter.gui.components.utils.TitleUpdater;
 import log.charter.services.data.ChartTimeHandler;
+import log.charter.data.types.PositionType;
 import log.charter.services.data.selection.SelectionManager;
 import log.charter.services.editModes.ModeManager;
 
@@ -49,11 +52,17 @@ public class UndoSystem {
 			return;
 		}
 
+		final PositionType savedType = selectionManager.selectedType();
+		final List<Integer> savedIds = new ArrayList<>(selectionManager.getSelectedIds(savedType));
+		final Integer savedChordNoteString = selectionManager.getSelectedChordNoteString();
+
 		selectionManager.clear();
 		savePosition--;
 		final UndoState lastUndo = undo.removeLast();
 		redo.add(lastUndo.undo(chartData, chartTimeHandler));
 		titleUpdater.updateTitle();
+
+		selectionManager.restoreSelection(savedType, savedIds, savedChordNoteString);
 	}
 
 	public void redo() {
@@ -64,10 +73,16 @@ public class UndoSystem {
 			return;
 		}
 
+		final PositionType savedType = selectionManager.selectedType();
+		final List<Integer> savedIds = new ArrayList<>(selectionManager.getSelectedIds(savedType));
+		final Integer savedChordNoteString = selectionManager.getSelectedChordNoteString();
+
 		selectionManager.clear();
 		savePosition++;
 		undo.add(redo.removeLast().undo(chartData, chartTimeHandler));
 		titleUpdater.updateTitle();
+
+		selectionManager.restoreSelection(savedType, savedIds, savedChordNoteString);
 	}
 
 	public void clear() {

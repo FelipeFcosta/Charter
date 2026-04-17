@@ -14,6 +14,7 @@ import log.charter.data.song.ChordTemplate;
 import log.charter.data.song.FHP;
 import log.charter.data.song.notes.Chord;
 import log.charter.data.song.notes.ChordOrNote;
+import log.charter.util.collections.HashMap2;
 import log.charter.data.types.PositionType;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
@@ -88,6 +89,26 @@ public class GuitarSoundsHandler {
 		}
 	}
 
+	private void applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
+		if (!chordTemplate.chordName.isEmpty()) {
+			return;
+		}
+
+		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
+		for (final ChordOrNote sound : chartData.currentSounds()) {
+			if (!sound.isChord()) {
+				continue;
+			}
+
+			final ChordTemplate existing = chordTemplates.get(sound.chord().templateId());
+			if (existing.frets.equals(chordTemplate.frets)) {
+				chordTemplate.chordName = existing.chordName;
+				chordTemplate.fingers = new HashMap2<>(existing.fingers);
+				return;
+			}
+		}
+	}
+
 	private boolean validFretChange(final List<Selection<ChordOrNote>> selected, final int fretChange) {
 		final IntRange fretRange = new IntRange(max(0, -fretChange), InstrumentConfig.frets - max(0, fretChange));
 
@@ -141,6 +162,7 @@ public class GuitarSoundsHandler {
 		final Chord chord = sound.chord();
 		final ChordTemplate oldTemplate = chartData.currentArrangement().chordTemplates.get(chord.templateId());
 		final ChordTemplate newTemplate = moveTemplateFrets(oldTemplate, fretChange);
+		applyFirstTimelineChordTemplateIfMatches(newTemplate);
 
 		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
 		chord.updateTemplate(newTemplateId, newTemplate);
@@ -242,6 +264,7 @@ public class GuitarSoundsHandler {
 			newTemplate.fingers.remove(string);
 		}
 		setChordName(newTemplate);
+		applyFirstTimelineChordTemplateIfMatches(newTemplate);
 
 		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
 		chord.updateTemplate(newTemplateId, newTemplate);
@@ -290,6 +313,7 @@ public class GuitarSoundsHandler {
 			newTemplate.fingers.remove(string);
 		}
 		setChordName(newTemplate);
+		applyFirstTimelineChordTemplateIfMatches(newTemplate);
 
 		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
 		chord.updateTemplate(newTemplateId, newTemplate);
@@ -335,6 +359,7 @@ public class GuitarSoundsHandler {
 			}
 
 			final ChordTemplate newTemplate = moveTemplateFrets(oldTemplate, fretChange);
+			applyFirstTimelineChordTemplateIfMatches(newTemplate);
 
 			final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
 			chord.updateTemplate(newTemplateId, newTemplate);

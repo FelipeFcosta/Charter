@@ -1,7 +1,6 @@
 package log.charter.gui.components.tabs.selectionEditor;
 
 import static log.charter.data.config.Localization.Label.TONE_NAME_CANT_BE_EMPTY;
-import static log.charter.data.config.Localization.Label.TONE_NAME_PAST_LIMIT;
 import static log.charter.gui.components.tabs.selectionEditor.CurrentSelectionEditor.getSingleValue;
 import static log.charter.gui.components.utils.TextInputSelectAllOnFocus.addSelectTextOnFocus;
 
@@ -92,14 +91,10 @@ public class ToneChangeSelectionEditor {
 			setError(TONE_NAME_CANT_BE_EMPTY);
 			return;
 		}
-		if (arrangement.tones.size() >= 4 && !arrangement.tones.contains(name)) {
-			setError(TONE_NAME_PAST_LIMIT);
-			return;
-		}
-
-		undoSystem.addUndo();
 
 		final List<ToneChange> selected = selectionManager.getSelectedElements(PositionType.TONE_CHANGE);
+		undoSystem.addUndo();
+
 		for (final ToneChange toneChange : selected) {
 			toneChange.toneName = name;
 		}

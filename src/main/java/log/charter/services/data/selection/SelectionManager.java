@@ -312,6 +312,28 @@ public class SelectionManager implements Initiable {
 		currentSelectionEditor.selectionChanged(true);
 	}
 
+	public void restoreSelection(final PositionType type, final List<Integer> ids, final Integer chordNoteString) {
+		if (type == PositionType.NONE || ids.isEmpty()) {
+			return;
+		}
+
+		final int size = type.getPositionsWithIdsAndTypes(chartData).size();
+		final List<Integer> validIds = new ArrayList<>();
+		for (final int id : ids) {
+			if (id >= 0 && id < size) {
+				validIds.add(id);
+			}
+		}
+
+		if (validIds.isEmpty()) {
+			return;
+		}
+
+		selectionLists.get(type).add(validIds);
+		selectedChordNoteString = chordNoteString;
+		currentSelectionEditor.selectionChanged(true);
+	}
+
 	/**
 	 * Gets the currently selected chord note string for individual editing.
 	 * @return the string number (0-based) if a specific chord note is selected, null if whole chord is selected

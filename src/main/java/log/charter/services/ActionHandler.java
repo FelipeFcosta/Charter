@@ -191,6 +191,7 @@ public class ActionHandler implements Initiable {
 		final int current = projectAudioHandler.getSelectedStem();
 		final int next = current + 1 >= stemCount ? -1 : current + 1;
 		projectAudioHandler.selectStem(next);
+		audioHandler.switchAudioMidPlay();
 		chartToolbar.updateValues();
 	}
 
@@ -203,6 +204,7 @@ public class ActionHandler implements Initiable {
 		final int current = projectAudioHandler.getSelectedStem();
 		final int previous = current <= -1 ? stemCount - 1 : current - 1;
 		projectAudioHandler.selectStem(previous);
+		audioHandler.switchAudioMidPlay();
 		chartToolbar.updateValues();
 	}
 

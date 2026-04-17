@@ -2,6 +2,7 @@ package log.charter.gui.panes.songEdits;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +19,6 @@ import log.charter.gui.components.containers.ParamsPane;
 import log.charter.gui.components.simple.AutocompleteInput;
 import log.charter.gui.components.simple.TextInputWithValidation;
 import log.charter.gui.components.utils.PaneSizesBuilder;
-import log.charter.util.CollectionUtils;
 
 public class ToneChangePane extends ParamsPane implements DocumentListener {
 	private static final long serialVersionUID = -4754359602173894487L;
@@ -88,19 +88,7 @@ public class ToneChangePane extends ParamsPane implements DocumentListener {
 			error = false;
 		}
 
-		final String name = toneNameInput.getText();
-
-		final Arrangement arrangement = chartData.currentArrangement();
-		if (arrangement.tones.size() >= 4 && !arrangement.tones.contains(name) && !name.isEmpty()) {
-			error = true;
-			toneNameInputBackgroundColor = toneNameInput.getBackground();
-			toneNameInput.setBackground(TextInputWithValidation.errorBackground);
-			toneNameInput.setToolTipText(Label.TONE_NAME_PAST_LIMIT.label());
-
-			return;
-		}
-
-		toneName = name;
+		toneName = toneNameInput.getText();
 	}
 
 	private void onSelect(final String name) {
@@ -117,15 +105,13 @@ public class ToneChangePane extends ParamsPane implements DocumentListener {
 		final Arrangement arrangement = chartData.currentArrangement();
 		if (toneName.isEmpty()) {
 			arrangement.toneChanges.remove(toneChange);
-			if (!CollectionUtils.contains(arrangement.toneChanges,
-					toneChange -> toneChange.toneName.equals(this.toneChange.toneName))) {
-				arrangement.tones.remove(toneChange.toneName);
-			}
-			return true;
+		} else {
+			toneChange.toneName = toneName;
 		}
 
-		arrangement.tones.add(toneName);
-		toneChange.toneName = toneName;
+		arrangement.tones = arrangement.toneChanges.stream()//
+				.map(t -> t.toneName)//
+				.collect(Collectors.toCollection(HashSet::new));
 		return true;
 	}
 

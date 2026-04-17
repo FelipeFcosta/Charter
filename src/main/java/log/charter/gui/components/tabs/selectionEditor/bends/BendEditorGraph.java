@@ -430,12 +430,26 @@ public class BendEditorGraph extends JComponent implements MouseListener, MouseM
 			final int value = getValueFromY(e.getY());
 			if (selectedBend == null || selectedBend.id == null) {
 				final FractionalPosition position = selectedBend.position;
-				final EditorBendValue newBendValue = new EditorBendValue(position, value);
 
-				bendValues.add(newBendValue);
-				bendValues.sort(IConstantFractionalPosition::compareTo);
+				int existingIndex = -1;
+				for (int i = 0; i < bendValues.size(); i++) {
+					if (bendValues.get(i).position.compareTo(position) == 0) {
+						existingIndex = i;
+						break;
+					}
+				}
 
-				selectedBend = new BendPositionWithId(position, value, bendValues.indexOf(newBendValue));
+				if (existingIndex >= 0) {
+					bendValues.get(existingIndex).value = value;
+					selectedBend = new BendPositionWithId(position, value, existingIndex);
+				} else {
+					final EditorBendValue newBendValue = new EditorBendValue(position, value);
+
+					bendValues.add(newBendValue);
+					bendValues.sort(IConstantFractionalPosition::compareTo);
+
+					selectedBend = new BendPositionWithId(position, value, bendValues.indexOf(newBendValue));
+				}
 			} else {
 				bendValues.get(selectedBend.id).value = value;
 				selectedBend.value = value;

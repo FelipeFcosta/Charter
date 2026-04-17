@@ -278,6 +278,17 @@ public class ArrangementFixer {
 		}
 	}
 
+	private static void stripSustainTechniquesIfNeeded(final CommonNote note) {
+		if (note.position().compareTo(note.endPosition()) < 0) {
+			return;
+		}
+
+		note.vibrato(false);
+		note.tremolo(false);
+		note.slideTo(null);
+		note.unpitchedSlide(false);
+	}
+
 	private void removeBendsOutOfBounds(final CommonNote note) {
 		note.bendValues(note.bendValues().stream()//
 				.filter(b -> b.compareTo(note) >= 0 && b.compareTo(note.endPosition()) <= 0)//
@@ -331,6 +342,7 @@ public class ArrangementFixer {
 		}
 
 		fixNotLinkedNoteLength(note, id, sounds);
+		stripSustainTechniquesIfNeeded(note);
 		removeBendsOutOfBounds(note);
 	}
 
@@ -342,6 +354,7 @@ public class ArrangementFixer {
 
 		fixNotLinkedNoteLength(note, id, sounds);
 		removeNoteTailIfNeeded(note, id, sounds);
+		stripSustainTechniquesIfNeeded(note);
 		removeBendsOutOfBounds(note);
 	}
 

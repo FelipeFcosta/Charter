@@ -243,6 +243,14 @@ public class AudioHandler {
 		return songPlayer != null;
 	}
 
+	public void switchAudioMidPlay() {
+		if (!isPlaying()) {
+			return;
+		}
+
+		playMusic(projectAudioHandler.getAudio());
+	}
+
 	public void previewSounds(final List<ChordOrNote> sounds) {
 		midiChartNotePlayer.previewSounds(sounds);
 	}
