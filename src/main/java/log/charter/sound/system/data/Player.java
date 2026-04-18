@@ -21,6 +21,7 @@ public class Player {
 	private final AudioData musicData;
 	private final AudioFormat audioFormat;
 	private final DoubleSupplier volume;
+	private final DoubleSupplier pan;
 	private final int speed;
 
 	private final ISoundLine line;
@@ -33,10 +34,12 @@ public class Player {
 
 	public volatile long playingStartTime = -1;
 
-	public Player(final AudioData musicData, final DoubleSupplier volume, final int speed, final Effect effect) {
+	public Player(final AudioData musicData, final DoubleSupplier volume, final DoubleSupplier pan, final int speed,
+			final Effect effect) {
 		this.musicData = musicData;
 		audioFormat = musicData.getPlayingFormat();
 		this.volume = volume;
+		this.pan = pan;
 		this.speed = speed;
 
 		this.effect = effect;
@@ -86,6 +89,37 @@ public class Player {
 		for (int channel = 0; channel < samples.length; channel++) {
 			for (int i = 0; i < samples[channel].length; i++) {
 				samples[channel][i] *= volumeValue;
+			}
+		}
+	}
+
+	/**
+	 * Applies stereo channel blending based on the pan value (-1.0 to 1.0).
+	 * Negative pan (toward L) mixes the left channel into the right output,
+	 * making the left audio more audible from both speakers.
+	 * Positive pan (toward R) does the same for the right channel.
+	 * At -1 or +1, only the selected channel is heard (from both speakers).
+	 */
+	private void applyPan(final float[][] samples) {
+		if (samples.length < 2) {
+			return;
+		}
+
+		final float panValue = pan == null ? 0f : (float) pan.getAsDouble();
+		if (panValue == 0f) {
+			return;
+		}
+
+		for (int i = 0; i < samples[0].length; i++) {
+			final float left = samples[0][i];
+			final float right = samples[1][i];
+
+			if (panValue < 0) {
+				final float blend = -panValue;
+				samples[1][i] = left * blend + right * (1f - blend);
+			} else {
+				final float blend = panValue;
+				samples[0][i] = right * blend + left * (1f - blend);
 			}
 		}
 	}
@@ -154,6 +188,7 @@ public class Player {
 
 		float[][] samples = FloatSamplesUtils.splitAudioFloat(buffer, sampleSize, channels);
 		applyEffect(samples);
+		applyPan(samples);
 		setVolume(samples);
 		if (rubberBandStretcher != null) {
 			samples = stretch(samples, lastBlock);

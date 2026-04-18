@@ -34,12 +34,13 @@ public class SoundSystem {
 		return currentSoundSystem;
 	}
 
-	public static Player play(final AudioData audioData, final DoubleSupplier volumeSupplier, final int speed) {
-		return play(audioData, volumeSupplier, speed, 0, Effect.emptyEffect);
+	public static Player play(final AudioData audioData, final DoubleSupplier volumeSupplier,
+			final DoubleSupplier panSupplier, final int speed) {
+		return play(audioData, volumeSupplier, panSupplier, speed, 0, Effect.emptyEffect);
 	}
 
-	public static Player play(final AudioData audioData, final DoubleSupplier volumeSupplier, final int speed,
-			final double startTime, final Effect effect) {
-		return new Player(audioData, volumeSupplier, speed, effect).start(startTime, playerId++);
+	public static Player play(final AudioData audioData, final DoubleSupplier volumeSupplier,
+			final DoubleSupplier panSupplier, final int speed, final double startTime, final Effect effect) {
+		return new Player(audioData, volumeSupplier, panSupplier, speed, effect).start(startTime, playerId++);
 	}
 }

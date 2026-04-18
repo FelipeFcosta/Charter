@@ -31,6 +31,7 @@ public class AudioConfig {
 	public static int midiDelay = 200;
 
 	public static double volume = 1;
+	public static double pan = 0;
 	public static double sfxVolume = 1;
 
 	public static int audioOutputDelay = 0;
@@ -61,6 +62,7 @@ public class AudioConfig {
 		valueAccessors.put(name + ".midiDelay", forInteger(v -> midiDelay = v, () -> midiDelay, midiDelay));
 
 		valueAccessors.put(name + ".volume", forDouble(v -> volume = v, () -> volume, volume));
+		valueAccessors.put(name + ".pan", forDouble(v -> pan = v, () -> pan, pan));
 		valueAccessors.put(name + ".sfxVolume", forDouble(v -> sfxVolume = v, () -> sfxVolume, sfxVolume));
 
 		valueAccessors.put(name + ".audioOutputDelay",

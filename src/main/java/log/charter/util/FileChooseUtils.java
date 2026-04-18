@@ -4,17 +4,19 @@ import static log.charter.gui.components.utils.ComponentUtils.showPopup;
 
 import java.awt.Component;
 import java.awt.Container;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.InputStreamReader;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 
+import org.lwjgl.PointerBuffer;
+import org.lwjgl.system.MemoryStack;
+import org.lwjgl.util.nfd.NFDFilterItem;
+import org.lwjgl.util.nfd.NativeFileDialog;
+
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.Localization.Label;
-import log.charter.data.config.SystemType;
 import log.charter.sound.SoundFileType;
 
 public class FileChooseUtils {
@@ -23,77 +25,77 @@ public class FileChooseUtils {
 		return fileName.substring(dotIndex + 1).toLowerCase();
 	}
 
-	/**
-	 * Runs a PowerShell command and returns the first non-empty line of output.
-	 */
-	private static String runPowerShell(final String command) {
-		try {
-			final ProcessBuilder pb = new ProcessBuilder("powershell", "-noprofile", "-command", command);
-			pb.redirectErrorStream(true);
-			final Process process = pb.start();
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-			String line;
-			String result = null;
-			while ((line = reader.readLine()) != null) {
-				if (!line.isEmpty()) {
-					result = line;
-				}
-			}
-			process.waitFor();
-			return result != null ? result.trim() : null;
-		} catch (final Exception e) {
-			return null;
+	/** Strips the leading dot that the codebase uses, e.g. ".xml" → "xml". */
+	private static String nfdExt(final String extension) {
+		return extension.startsWith(".") ? extension.substring(1) : extension;
+	}
+
+	private static volatile boolean nfdReady = false;
+
+	private static synchronized boolean initNFD() {
+		if (nfdReady) {
+			return true;
 		}
+		if (NativeFileDialog.NFD_Init() == NativeFileDialog.NFD_OKAY) {
+			Runtime.getRuntime().addShutdownHook(new Thread(NativeFileDialog::NFD_Quit));
+			nfdReady = true;
+		}
+		return nfdReady;
 	}
 
 	/**
-	 * Shows the modern Windows Explorer file picker (IFileOpenDialog via
-	 * System.Windows.Forms.OpenFileDialog).
-	 *
-	 * @param startingDir   initial folder shown in the dialog
-	 * @param windowsFilter Windows Forms filter string, e.g.
-	 *                      "Audio Files (*.wav;*.mp3)|*.wav;*.mp3"
+	 * Opens the native file dialog with a single filter group (all extensions
+	 * lumped together under one description).
 	 */
-	private static File showWindowsFileDialog(final String startingDir, final String windowsFilter) {
-		final String escapedDir = startingDir.replace("'", "''");
-		final String escapedFilter = windowsFilter.replace("'", "''");
+	private static File nfdOpenFile(final String startingDir, final String filterName, final String filterSpec) {
+		try (final MemoryStack stack = MemoryStack.stackPush()) {
+			final PointerBuffer outPath = stack.mallocPointer(1);
+			final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(1, stack);
+			filters.get(0).name(stack.UTF8(filterName)).spec(stack.UTF8(filterSpec));
 
-		final String command = "Add-Type -AssemblyName System.Windows.Forms; " +
-				"[System.Windows.Forms.Application]::EnableVisualStyles(); " +
-				"$dlg = New-Object System.Windows.Forms.OpenFileDialog; " +
-				"$dlg.InitialDirectory = '" + escapedDir + "'; " +
-				"$dlg.Filter = '" + escapedFilter + "'; " +
-				"$dlg.AutoUpgradeEnabled = $true; " +
-				"if ($dlg.ShowDialog() -eq 'OK') { Write-Output $dlg.FileName }";
-
-		final String result = runPowerShell(command);
-		return result != null ? new File(result) : null;
+			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, startingDir);
+			if (result == NativeFileDialog.NFD_OKAY) {
+				final String path = outPath.getStringUTF8(0);
+				NativeFileDialog.NFD_FreePath(outPath.get(0));
+				return new File(path);
+			}
+		}
+		return null;
 	}
 
 	/**
-	 * Shows the modern Windows Explorer folder picker. Uses OpenFileDialog in
-	 * folder-selection mode so that the modern IFileOpenDialog COM interface is
-	 * used instead of the old FolderBrowserDialog tree view.
+	 * Opens the native file dialog with one filter entry per name/spec pair.
 	 */
-	private static File showWindowsFolderDialog(final String startingPath) {
-		final String escapedPath = startingPath.replace("'", "''");
+	private static File nfdOpenFile(final String startingDir, final String[] filterNames,
+			final String[] filterSpecs) {
+		try (final MemoryStack stack = MemoryStack.stackPush()) {
+			final PointerBuffer outPath = stack.mallocPointer(1);
+			final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(filterNames.length, stack);
+			for (int i = 0; i < filterNames.length; i++) {
+				filters.get(i).name(stack.UTF8(filterNames[i])).spec(stack.UTF8(filterSpecs[i]));
+			}
 
-		final String command = "Add-Type -AssemblyName System.Windows.Forms; " +
-				"[System.Windows.Forms.Application]::EnableVisualStyles(); " +
-				"$dlg = New-Object System.Windows.Forms.OpenFileDialog; " +
-				"$dlg.InitialDirectory = '" + escapedPath + "'; " +
-				"$dlg.ValidateNames = $false; " +
-				"$dlg.CheckFileExists = $false; " +
-				"$dlg.CheckPathExists = $true; " +
-				"$dlg.FileName = 'Folder Selection.'; " +
-				"$dlg.Filter = 'Folders|.'; " +
-				"$dlg.AutoUpgradeEnabled = $true; " +
-				"if ($dlg.ShowDialog() -eq 'OK') { " +
-				"    Write-Output ([System.IO.Path]::GetDirectoryName($dlg.FileName)) " +
-				"}";
+			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, startingDir);
+			if (result == NativeFileDialog.NFD_OKAY) {
+				final String path = outPath.getStringUTF8(0);
+				NativeFileDialog.NFD_FreePath(outPath.get(0));
+				return new File(path);
+			}
+		}
+		return null;
+	}
 
-		final String result = runPowerShell(command);
-		return result != null ? new File(result) : null;
+	private static File nfdPickFolder(final String startingDir) {
+		try (final MemoryStack stack = MemoryStack.stackPush()) {
+			final PointerBuffer outPath = stack.mallocPointer(1);
+			final int result = NativeFileDialog.NFD_PickFolder(outPath, startingDir);
+			if (result == NativeFileDialog.NFD_OKAY) {
+				final String path = outPath.getStringUTF8(0);
+				NativeFileDialog.NFD_FreePath(outPath.get(0));
+				return new File(path);
+			}
+		}
+		return null;
 	}
 
 	private static File showDialog(final Component parent, final JFileChooser chooser) {
@@ -105,17 +107,17 @@ public class FileChooseUtils {
 	}
 
 	public static File chooseMusicFile(final Component parent, final String startingDir) {
-		if (SystemType.is(SystemType.WINDOWS)) {
-			final StringBuilder exts = new StringBuilder();
-			for (final SoundFileType type : SoundFileType.values()) {
-				if (exts.length() > 0) {
-					exts.append(';');
+		if (initNFD()) {
+			final SoundFileType[] types = SoundFileType.values();
+			final StringBuilder spec = new StringBuilder();
+			for (final SoundFileType type : types) {
+				if (spec.length() > 0) {
+					spec.append(',');
 				}
-				exts.append("*.").append(type.extension);
+				spec.append(type.extension);
 			}
-			final String filter = Label.SUPPORTED_MUSIC_FILE.label() + " (" + exts + ")|" + exts;
 
-			final File file = showWindowsFileDialog(startingDir, filter);
+			final File file = nfdOpenFile(startingDir, Label.SUPPORTED_MUSIC_FILE.label(), spec.toString());
 			if (file == null) {
 				return null;
 			}
@@ -126,6 +128,7 @@ public class FileChooseUtils {
 			return file;
 		}
 
+		// JFileChooser fallback (non-Windows or NFD unavailable)
 		final JFileChooser chooser = new JFileChooser(new File(startingDir));
 		chooser.setFileFilter(new FileFilter() {
 			@Override
@@ -133,7 +136,6 @@ public class FileChooseUtils {
 				if (SoundFileType.fromExtension(extension(f.getName())) != null) {
 					return true;
 				}
-
 				return f.isDirectory();
 			}
 
@@ -151,22 +153,20 @@ public class FileChooseUtils {
 			showPopup(parent, Label.UNSUPPORTED_MUSIC_FORMAT);
 			return null;
 		}
-
 		return file;
 	}
 
 	public static File chooseFile(final Component parent, final String startingDir, final String[] extensions,
 			final String description) {
-		if (SystemType.is(SystemType.WINDOWS)) {
-			final StringBuilder exts = new StringBuilder();
+		if (initNFD()) {
+			final StringBuilder spec = new StringBuilder();
 			for (final String ext : extensions) {
-				if (exts.length() > 0) {
-					exts.append(';');
+				if (spec.length() > 0) {
+					spec.append(',');
 				}
-				exts.append("*").append(ext);
+				spec.append(nfdExt(ext));
 			}
-			final String filter = description + " (" + exts + ")|" + exts;
-			return showWindowsFileDialog(startingDir, filter);
+			return nfdOpenFile(startingDir, description, spec.toString());
 		}
 
 		final JFileChooser chooser = new JFileChooser(new File(startingDir));
@@ -177,13 +177,11 @@ public class FileChooseUtils {
 				if (f.isDirectory()) {
 					return true;
 				}
-
 				for (final String extension : extensions) {
 					if (f.getName().toLowerCase().endsWith(extension)) {
 						return true;
 					}
 				}
-
 				return false;
 			}
 
@@ -198,16 +196,12 @@ public class FileChooseUtils {
 
 	public static File chooseFile(final Component parent, final String startingDir, final String[] extensions,
 			final String[] descriptions) {
-		if (SystemType.is(SystemType.WINDOWS)) {
-			final StringBuilder filter = new StringBuilder();
+		if (initNFD()) {
+			final String[] specs = new String[extensions.length];
 			for (int i = 0; i < extensions.length; i++) {
-				if (filter.length() > 0) {
-					filter.append('|');
-				}
-				final String pattern = "*" + extensions[i];
-				filter.append(descriptions[i]).append(" (").append(pattern).append(")|").append(pattern);
+				specs[i] = nfdExt(extensions[i]);
 			}
-			return showWindowsFileDialog(startingDir, filter.toString());
+			return nfdOpenFile(startingDir, descriptions, specs);
 		}
 
 		final JFileChooser chooser = new JFileChooser(new File(startingDir));
@@ -222,7 +216,6 @@ public class FileChooseUtils {
 					if (f.isDirectory()) {
 						return true;
 					}
-
 					return f.getName().toLowerCase().endsWith(extension);
 				}
 
@@ -248,8 +241,8 @@ public class FileChooseUtils {
 	}
 
 	public static File chooseDirectory(final Component parent, final String startingPath) {
-		if (SystemType.is(SystemType.WINDOWS)) {
-			return showWindowsFolderDialog(startingPath);
+		if (initNFD()) {
+			return nfdPickFolder(startingPath);
 		}
 
 		final JFileChooser chooser = new JFileChooser(new File(startingPath));
@@ -262,7 +255,6 @@ public class FileChooseUtils {
 		if (chosenOption != JFileChooser.APPROVE_OPTION) {
 			return null;
 		}
-
 		return chooser.getSelectedFile();
 	}
 }

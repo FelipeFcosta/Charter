@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>log.program</groupId>
 	<artifactId>Charter</artifactId>
-	<version>0.22.7</version>
+	<version>0.22.8</version>
 	<packaging>jar</packaging>
 	<name>Charter</name>
 	<description>Charting program for guitar</description>
@@ -104,6 +104,10 @@
 		</dependency>
 		<dependency>
 			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-nfd</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
 			<artifactId>lwjgl</artifactId>
 			<classifier>${lwjgl.natives}</classifier>
 			<version>${lwjgl.version}</version>
@@ -123,6 +127,12 @@
 		<dependency>
 			<groupId>org.lwjgl</groupId>
 			<artifactId>lwjgl-opengl</artifactId>
+			<classifier>${lwjgl.natives}</classifier>
+			<version>${lwjgl.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.lwjgl</groupId>
+			<artifactId>lwjgl-nfd</artifactId>
 			<classifier>${lwjgl.natives}</classifier>
 			<version>${lwjgl.version}</version>
 		</dependency>

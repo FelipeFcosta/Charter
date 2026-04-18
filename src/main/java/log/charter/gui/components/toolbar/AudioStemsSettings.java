@@ -15,7 +15,9 @@ import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JSlider;
+import javax.swing.SwingConstants;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.Localization.Label;
@@ -65,6 +67,8 @@ public class AudioStemsSettings extends RowedDialog {
 
 		private String name;
 		private double volume;
+		private double pan;
+		private final double originalPan;
 		private double offset;
 		private boolean deleted;
 
@@ -72,26 +76,32 @@ public class AudioStemsSettings extends RowedDialog {
 		private TextInputWithValidation label;
 		private FieldWithLabel<TextInputWithValidation> offsetField;
 		private JSlider volumeSlider;
+		private JLabel lPanLabel;
+		private JSlider panSlider;
+		private JLabel rPanLabel;
 
 		public AudioStemRow(final RowedPosition position) {
-			this(-1, Label.MAIN_AUDIO.label(), AudioConfig.volume, 0, position);
+			this(-1, Label.MAIN_AUDIO.label(), AudioConfig.volume, AudioConfig.pan, 0, position);
 		}
 
 		public AudioStemRow(final int id, final Stem stem, final RowedPosition position) {
-			this(id, stem.name, stem.volume, stem.offset, position);
+			this(id, stem.name, stem.volume, stem.pan, stem.offset, position);
 		}
 
-		private AudioStemRow(final int id, final String name, final double volume, final double offset,
-				final RowedPosition position) {
+		private AudioStemRow(final int id, final String name, final double volume, final double pan,
+				final double offset, final RowedPosition position) {
 			this.id = id;
 
 			this.name = name;
 			this.volume = volume;
+			this.pan = pan;
+			this.originalPan = pan;
 			this.offset = offset;
 
 			addCheckBox(position);
 			addName(position);
 			addVolume(position);
+			addPan(position);
 			if (id >= 0) {
 				addOffset(position);
 				addDelete(position);
@@ -136,6 +146,47 @@ public class AudioStemsSettings extends RowedDialog {
 			volumeSlider.setUI(new CharterSliderUI());
 		}
 
+		private void applyPanLive() {
+			if (id < 0) {
+				AudioConfig.pan = pan;
+			} else if (!deleted && id < chartData.songChart.stems.size()) {
+				chartData.songChart.stems.get(id).pan = pan;
+			}
+		}
+
+		public void restorePan() {
+			pan = originalPan;
+			if (panSlider != null) {
+				panSlider.setValue((int) (originalPan * 100));
+			}
+			applyPanLive();
+		}
+
+		private void addPan(final RowedPosition position) {
+			final int sliderPosition = (int) (pan * 100);
+
+			lPanLabel = new JLabel("L", SwingConstants.CENTER);
+			panel.addWithSettingSize(lPanLabel, position, 12, 2, 20);
+
+			panSlider = new JSlider(-100, 100, sliderPosition);
+			panSlider.addChangeListener(e -> {
+				final int raw = panSlider.getValue();
+				if (raw != 0 && Math.abs(raw) <= 20) {
+					panSlider.setValue(0);
+					return;
+				}
+				pan = raw / 100.0;
+				applyPanLive();
+			});
+			panSlider.setFocusable(false);
+			panSlider.setBackground(getBackground());
+			panel.addWithSettingSize(panSlider, position, 90, 2, 20);
+			panSlider.setUI(new CharterSliderUI());
+
+			rPanLabel = new JLabel("R", SwingConstants.CENTER);
+			panel.addWithSettingSize(rPanLabel, position, 12, 10, 20);
+		}
+
 		private void addOffset(final RowedPosition position) {
 			final BigDecimal value = BigDecimal.valueOf(offset * 1000).setScale(2, RoundingMode.HALF_UP);
 			final BigDecimalValueValidator validator = new BigDecimalValueValidator(
@@ -157,6 +208,9 @@ public class AudioStemsSettings extends RowedDialog {
 				panel.remove(selected);
 				panel.remove(offsetField);
 				panel.remove(volumeSlider);
+				panel.remove(lPanLabel);
+				panel.remove(panSlider);
+				panel.remove(rPanLabel);
 				panel.remove(deleteButton);
 
 				final Map<TextAttribute, Object> fontAttributes = (Map<TextAttribute, Object>) label.getFont()
@@ -202,7 +256,14 @@ public class AudioStemsSettings extends RowedDialog {
 			position.newRow();
 		}
 
-		addDefaultFinish(position.newRow().y(), SaverWithStatus.defaultFor(this::save), null, true);
+		addDefaultFinish(position.newRow().y(), SaverWithStatus.defaultFor(this::save),
+				SaverWithStatus.defaultFor(this::restore), true);
+	}
+
+	private void restore() {
+		for (final AudioStemRow stemRow : stemRows) {
+			stemRow.restorePan();
+		}
 	}
 
 	private void save() {
@@ -217,9 +278,11 @@ public class AudioStemsSettings extends RowedDialog {
 			} else {
 				if (stemRow.id < 0) {
 					AudioConfig.volume = stemRow.volume;
+					AudioConfig.pan = stemRow.pan;
 				} else {
 					final Stem stem = chartData.songChart.stems.get(id);
 					stem.volume = stemRow.volume;
+					stem.pan = stemRow.pan;
 					stem.name = stemRow.name;
 					if (abs(stemRow.offset - stem.offset) > 0.001) {
 						projectAudioHandler.addStemOffset(id, stemRow.offset - stem.offset);

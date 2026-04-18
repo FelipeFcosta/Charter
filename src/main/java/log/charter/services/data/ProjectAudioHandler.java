@@ -187,6 +187,14 @@ public class ProjectAudioHandler {
 		}
 	}
 
+	public double getPan() {
+		if (selectedStem >= 0 && selectedStem < stems.size()) {
+			return chartData.songChart.stems.get(selectedStem).pan;
+		}
+
+		return AudioConfig.pan;
+	}
+
 	public double audioStemLength(final int stem) {
 		return stem < 0 || stem >= stems.size() ? 0 : stems.get(stem).msLength();
 	}

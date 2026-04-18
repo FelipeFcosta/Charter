@@ -16,6 +16,8 @@ public class Stem {
 	@XStreamAsAttribute
 	public double volume = 1;
 	@XStreamAsAttribute
+	public double pan = 0;
+	@XStreamAsAttribute
 	public double offset = 0;
 
 	public Stem(final String name, final String path, final boolean local) {
