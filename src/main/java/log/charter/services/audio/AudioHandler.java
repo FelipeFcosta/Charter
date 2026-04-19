@@ -166,6 +166,7 @@ public class AudioHandler {
 
 	public void clear() {
 		stopMusic();
+		lastPlayedData = null;
 	}
 
 	public void togglePlaySetSpeed() {
@@ -237,7 +238,7 @@ public class AudioHandler {
 			midiChartNotePlayer.startPlaying(speed);
 		}
 
-		playMusic(lastPlayedData);
+		playMusic(lastPlayedData != null ? lastPlayedData : projectAudioHandler.getAudio());
 	}
 
 	public boolean isPlaying() {

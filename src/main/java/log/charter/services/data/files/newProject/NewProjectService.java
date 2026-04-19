@@ -97,7 +97,7 @@ public class NewProjectService {
 		chartData.setNewSong(projectFolder, songChart, "project.rscp");
 		textTab.setText("");
 
-		projectAudioHandler.setAudio(musicData);
+		projectAudioHandler.changeAudio(musicData);
 		projectAudioHandler.readStems();
 		audioHandler.clear();
 
