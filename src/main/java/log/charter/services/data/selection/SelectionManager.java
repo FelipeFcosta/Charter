@@ -504,17 +504,43 @@ public class SelectionManager implements Initiable {
 		return Objects.equals(hsA, hsB);
 	}
 
-	private int findNextSoundIdOnString(final int string, final int fromId, final List<ChordOrNote> sounds) {
-		for (int i = fromId; i < sounds.size(); i++) {
-			final ChordOrNote sound = sounds.get(i);
-			if (sound.isNote() && sound.note().string == string) {
-				return i;
-			}
-			if (sound.isChord() && sound.chord().chordNotes.containsKey(string)) {
-				return i;
+	private boolean handShapesAreEqual(final HandShape a, final HandShape b,
+			final List<ChordTemplate> chordTemplates) {
+		if (!Objects.equals(a.templateId, b.templateId)) {
+			final ChordTemplate tA = a.templateId != null ? chordTemplates.get(a.templateId) : null;
+			final ChordTemplate tB = b.templateId != null ? chordTemplates.get(b.templateId) : null;
+			if (!Objects.equals(tA, tB)) {
+				return false;
 			}
 		}
-		return -1;
+		return relativeDuration(a.position(), a.endPosition())
+				.equals(relativeDuration(b.position(), b.endPosition()));
+	}
+
+	private void selectAllEqualHandShapes() {
+		final List<Integer> selectedIds = getSelectedIds(PositionType.HAND_SHAPE);
+		if (selectedIds.isEmpty()) {
+			return;
+		}
+
+		final List<HandShape> handShapes = chartData.currentHandShapes();
+		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
+		final int selectedId = selectedIds.get(0);
+		if (selectedId >= handShapes.size()) {
+			return;
+		}
+
+		final HandShape reference = handShapes.get(selectedId);
+		final List<Integer> equalIds = new ArrayList<>();
+		for (int i = 0; i < handShapes.size(); i++) {
+			if (handShapesAreEqual(reference, handShapes.get(i), chordTemplates)) {
+				equalIds.add(i);
+			}
+		}
+
+		clearSelectionsExcept(PositionType.NONE);
+		selectionLists.get(PositionType.HAND_SHAPE).add(equalIds);
+		currentSelectionEditor.selectionChanged(true);
 	}
 
 	public void selectAllEqual() {
@@ -524,6 +550,7 @@ public class SelectionManager implements Initiable {
 
 		final List<Integer> selectedIds = getSelectedIds(PositionType.GUITAR_NOTE);
 		if (selectedIds.isEmpty()) {
+			selectAllEqualHandShapes();
 			return;
 		}
 
@@ -558,13 +585,16 @@ public class SelectionManager implements Initiable {
 			return;
 		}
 
-		// Multiple notes selected: treat them as a link-next chain and find all equal
-		// chains in the song. Each step advances via linkNext on the same string (for
-		// notes) so that notes on other strings interleaved between chain steps are
-		// correctly skipped.
-		//
-		// First validate that the selection actually forms a link-next chain: every
-		// sound except the last must be linked to the next selected sound via linkNext.
+		// Multiple sounds selected: require them to be a contiguous block (consecutive
+		// indices) and find every other contiguous block of the same length where each
+		// element is pairwise equal.
+		final int firstId = selectedIds.get(0);
+		for (int j = 0; j < selectedIds.size(); j++) {
+			if (selectedIds.get(j) != firstId + j) {
+				return;
+			}
+		}
+
 		final List<ChordOrNote> referenceChain = new ArrayList<>(selectedIds.size());
 		for (final int id : selectedIds) {
 			if (id >= sounds.size()) {
@@ -573,42 +603,14 @@ public class SelectionManager implements Initiable {
 			referenceChain.add(sounds.get(id));
 		}
 
-		for (int j = 0; j < referenceChain.size() - 1; j++) {
-			final ChordOrNote current = referenceChain.get(j);
-			final ChordOrNote next = referenceChain.get(j + 1);
-			final int nextId = selectedIds.get(j + 1);
-			if (current.isNote()) {
-				final int string = current.note().string;
-				if (!current.note().linkNext
-						|| findNextSoundIdOnString(string, selectedIds.get(j) + 1, sounds) != nextId) {
-					return;
-				}
-			} else if (current.isChord()) {
-				final boolean anyLinkNext = current.chord().chordNotes.values().stream()
-						.anyMatch(cn -> cn.linkNext);
-				if (!anyLinkNext || selectedIds.get(j) + 1 != nextId) {
-					return;
-				}
-			} else {
-				return;
-			}
-		}
-
 		final int chainLength = referenceChain.size();
 		final List<Integer> equalIds = new ArrayList<>();
 
-		for (int startId = 0; startId < sounds.size(); startId++) {
-			final int[] candidateChainIds = new int[chainLength];
+		for (int startId = 0; startId <= sounds.size() - chainLength; startId++) {
 			boolean chainValid = true;
-			int currentId = startId;
 
 			for (int j = 0; j < chainLength; j++) {
-				if (currentId < 0 || currentId >= sounds.size()) {
-					chainValid = false;
-					break;
-				}
-
-				final ChordOrNote candidate = sounds.get(currentId);
+				final ChordOrNote candidate = sounds.get(startId + j);
 				final ChordOrNote ref = referenceChain.get(j);
 
 				if (ref.isNote() && candidate.isNote()) {
@@ -625,28 +627,11 @@ public class SelectionManager implements Initiable {
 					chainValid = false;
 					break;
 				}
-
-				candidateChainIds[j] = currentId;
-
-				if (j < chainLength - 1) {
-					if (candidate.isNote() && candidate.note().linkNext) {
-						currentId = findNextSoundIdOnString(candidate.note().string, currentId + 1, sounds);
-						if (currentId < 0) {
-							chainValid = false;
-							break;
-						}
-					} else if (candidate.isChord()) {
-						currentId++;
-					} else {
-						chainValid = false;
-						break;
-					}
-				}
 			}
 
 			if (chainValid) {
-				for (final int id : candidateChainIds) {
-					equalIds.add(id);
+				for (int j = 0; j < chainLength; j++) {
+					equalIds.add(startId + j);
 				}
 			}
 		}
