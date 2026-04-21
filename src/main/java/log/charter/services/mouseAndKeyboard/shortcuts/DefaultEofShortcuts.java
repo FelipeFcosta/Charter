@@ -113,6 +113,7 @@ public class DefaultEofShortcuts extends ShortcutList {
 		super.set(Action.TOGGLE_HOPO, null);
 		super.set(Action.TOGGLE_HOPO_INDEPENDENTLY, new Shortcut(KeyEvent.VK_H));
 		super.set(Action.TOGGLE_LINK_NEXT, null);
+		super.set(Action.TOGGLE_LINK_NEXT_BEFORE, null);
 		super.set(Action.TOGGLE_LINK_NEXT_INDEPENDENTLY, new Shortcut(KeyEvent.VK_N).shift());
 		super.set(Action.TOGGLE_METRONOME, new Shortcut(KeyEvent.VK_M));
 		super.set(Action.TOGGLE_MIDI, new Shortcut(KeyEvent.VK_F2));

@@ -345,6 +345,35 @@ public class GuitarSoundsStatusesHandler {
 		currentSelectionEditor.selectionChanged(false);
 	}
 
+	public void toggleLinkNextBefore() {
+		final ISelectionAccessor<ChordOrNote> selectedAccessor = selectionManager.accessor(PositionType.GUITAR_NOTE);
+		if (!selectedAccessor.isSelected()) {
+			return;
+		}
+
+		final List<Selection<ChordOrNote>> selected = selectedAccessor.getSelected();
+		final int firstSelectedId = selected.get(0).id;
+		if (firstSelectedId <= 0) {
+			return;
+		}
+
+		final List<ChordOrNote> sounds = chartData.currentArrangementLevel().sounds;
+		final int previousId = firstSelectedId - 1;
+		final ChordOrNote previousSound = sounds.get(previousId);
+		final Boolean valueToSet = getNewValueNotes(booleanCycleMap, previousSound, CommonNote::linkNext, false);
+
+		undoSystem.addUndo();
+		previousSound.notes().forEach(note -> note.linkNext(valueToSet));
+
+		arrangementFixer.fixNoteLengths(sounds, previousId, previousId);
+
+		final ArrayList<Integer> ids = new ArrayList<>();
+		ids.add(previousId);
+		updateLinkedNotes(ids);
+
+		currentSelectionEditor.selectionChanged(false);
+	}
+
 	public void toggleLinkNextIndependently() {
 		final ISelectionAccessor<ChordOrNote> selectedAccessor = selectionManager.accessor(PositionType.GUITAR_NOTE);
 		if (!selectedAccessor.isSelected()) {

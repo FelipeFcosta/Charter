@@ -402,6 +402,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.TOGGLE_HOPO, guitarSoundsStatusesHandler::toggleHOPO);
 		actionHandlers.put(Action.TOGGLE_HOPO_INDEPENDENTLY, guitarSoundsStatusesHandler::toggleHOPOIndependently);
 		actionHandlers.put(Action.TOGGLE_LINK_NEXT, guitarSoundsStatusesHandler::toggleLinkNext);
+		actionHandlers.put(Action.TOGGLE_LINK_NEXT_BEFORE, guitarSoundsStatusesHandler::toggleLinkNextBefore);
 		actionHandlers.put(Action.TOGGLE_LINK_NEXT_INDEPENDENTLY,
 				guitarSoundsStatusesHandler::toggleLinkNextIndependently);
 		actionHandlers.put(Action.TOGGLE_LOW_PASS_FILTER, audioHandler::toggleLowPassFilter);
