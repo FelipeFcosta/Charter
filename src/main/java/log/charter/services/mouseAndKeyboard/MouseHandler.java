@@ -33,6 +33,7 @@ import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.fixers.ArrangementFixer;
 import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
+import log.charter.services.data.selection.SlideFretLabelHandler;
 import log.charter.services.editModes.ModeManager;
 import log.charter.services.mouseAndKeyboard.MouseButtonPressReleaseHandler.MouseButtonPressReleaseData;
 
@@ -48,6 +49,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 	private ModeManager modeManager;
 	private MouseButtonPressReleaseHandler mouseButtonPressReleaseHandler;
 	private SelectionManager selectionManager;
+	private SlideFretLabelHandler slideFretLabelHandler;
 	private UndoSystem undoSystem;
 
 	private boolean pressCancelsRelease = false;
@@ -101,6 +103,18 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 
 			if (chartData.isEmpty) {
 				return;
+			}
+
+			if (e.getButton() == MouseEvent.BUTTON1) {
+				if (slideFretLabelHandler.handleClick(e.getX(), e.getY())) {
+					if (slideFretLabelHandler.hasSelection()) {
+						selectionManager.clear();
+					}
+					pressCancelsRelease = true;
+					releaseCancelled = true;
+					return;
+				}
+				slideFretLabelHandler.clearSelection();
 			}
 
 			cancelAllActions();

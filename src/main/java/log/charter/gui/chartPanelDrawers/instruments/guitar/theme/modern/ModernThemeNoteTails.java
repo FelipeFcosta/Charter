@@ -3,7 +3,6 @@ package log.charter.gui.chartPanelDrawers.instruments.guitar.theme.modern;
 import static log.charter.data.config.ChartPanelColors.getStringBasedColor;
 import static log.charter.data.config.GraphicalConfig.noteHeight;
 import static log.charter.gui.chartPanelDrawers.common.DrawerUtils.tailHeight;
-import static log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShape.centeredTextWithBackground;
 import static log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShape.filledPolygon;
 import static log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShape.filledRectangle;
 import static log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShape.sine;
@@ -17,8 +16,11 @@ import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.ChartPanelColors.StringColorLabelType;
 import log.charter.data.config.values.InstrumentConfig;
 import log.charter.gui.chartPanelDrawers.data.EditorNoteDrawingData;
+import log.charter.gui.chartPanelDrawers.drawableShapes.FadingFilledRectangle;
+import log.charter.gui.chartPanelDrawers.drawableShapes.FadingLine;
 import log.charter.gui.chartPanelDrawers.drawableShapes.Line;
 import log.charter.gui.chartPanelDrawers.drawableShapes.ShapePositionWithSize;
+import log.charter.gui.chartPanelDrawers.drawableShapes.SlideFretLabelShape;
 import log.charter.gui.chartPanelDrawers.drawableShapes.StrokedTriangle;
 import log.charter.gui.chartPanelDrawers.instruments.guitar.theme.HighwayDrawData;
 import log.charter.util.data.IntRange;
@@ -66,15 +68,21 @@ public class ModernThemeNoteTails {
 		final Position2D slideStart = new Position2D(slideStartX, slideStartY);
 		final Position2D slideEnd = new Position2D(slideEndX, slideEndY);
 
-		data.noteTails.add(new Line(slideStart, slideEnd, Color.WHITE, lineThickness));
+		if (note.unpitchedSlide) {
+			data.noteTails.add(new FadingLine(slideStart, slideEnd, Color.WHITE, lineThickness, 1.0f, 0.5f));
+		} else {
+			data.noteTails.add(new Line(slideStart, slideEnd, Color.WHITE, lineThickness));
+		}
 
 		final int tailEndFretTextY = note.slideTo < note.fretNumber ? topBottom.max + noteHeight / 3
 				: topBottom.min - noteHeight / 3;
 		final Position2D fretTextPosition = new Position2D(note.x + note.length, tailEndFretTextY);
 		final Color color = noteTailColors[stringId(note.string, data.strings)];
-		data.slideFrets.add(centeredTextWithBackground(fretTextPosition, slideFretFont, note.slideTo + "",
-				color.darker().darker().darker(), Color.WHITE,
-				noteTailColors[stringId(note.string, data.strings)]));
+		if (!note.linkNext) {
+			data.slideFrets.add(new SlideFretLabelShape(note.noteId, note.string, fretTextPosition, slideFretFont,
+					note.slideTo + "", Color.WHITE, color.darker().darker().darker(),
+					noteTailColors[stringId(note.string, data.strings)]));
+		}
 	}
 
 	private void addSlideNoteTailShape(final EditorNoteDrawingData note, final int y) {
@@ -166,7 +174,11 @@ public class ModernThemeNoteTails {
 		} else {
 			final ShapePositionWithSize position = new ShapePositionWithSize(x, topBottom.min, length,
 					topBottom.max - topBottom.min);
-			data.noteTails.add(filledRectangle(position, color));
+			if (note.slideTo != null && note.unpitchedSlide) {
+				data.noteTails.add(new FadingFilledRectangle(position, color, 1.0f, 0.5f));
+			} else {
+				data.noteTails.add(filledRectangle(position, color));
+			}
 		}
 
 		// Define vibrato appearance

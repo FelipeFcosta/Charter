@@ -38,6 +38,7 @@ import log.charter.services.data.GuitarSoundsHandler;
 import log.charter.services.data.GuitarSoundsStatusesHandler;
 import log.charter.services.data.fixers.ArrangementFixer;
 import log.charter.services.data.selection.SelectionManager;
+import log.charter.services.data.selection.SlideFretLabelHandler;
 import log.charter.services.mouseAndKeyboard.HighlightManager;
 import log.charter.services.mouseAndKeyboard.KeyboardHandler;
 import log.charter.services.mouseAndKeyboard.MouseButtonPressReleaseHandler.MouseButtonPressReleaseData;
@@ -58,6 +59,7 @@ public class GuitarModeHandler implements ModeHandler {
 	private HighlightManager highlightManager;
 	private KeyboardHandler keyboardHandler;
 	private SelectionManager selectionManager;
+	private SlideFretLabelHandler slideFretLabelHandler;
 	private UndoSystem undoSystem;
 
 	private long lastScrollTime = -scrollTimeoutForUndo;
@@ -408,6 +410,10 @@ public class GuitarModeHandler implements ModeHandler {
 
 	@Override
 	public void handleNumber(final int number) {
+		if (slideFretLabelHandler.hasSelection() && slideFretLabelHandler.handleNumber(number)) {
+			return;
+		}
+
 		if (nanoTime() / 1_000_000 <= fretNumberTimer && lastFretNumber * 10 + number <= InstrumentConfig.frets) {
 			lastFretNumber = lastFretNumber * 10 + number;
 		} else {

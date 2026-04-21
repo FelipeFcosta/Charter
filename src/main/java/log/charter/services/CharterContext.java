@@ -67,6 +67,7 @@ import log.charter.services.data.files.newProject.NewProjectFromRSXMLCreator;
 import log.charter.services.data.files.newProject.NewProjectService;
 import log.charter.services.data.fixers.ArrangementFixer;
 import log.charter.services.data.selection.SelectionManager;
+import log.charter.services.data.selection.SlideFretLabelHandler;
 import log.charter.services.data.validation.ChartValidator;
 import log.charter.services.editModes.ModeManager;
 import log.charter.services.mouseAndKeyboard.HighlightManager;
@@ -125,6 +126,7 @@ public class CharterContext {
 	private final RepeatManager repeatManager = new RepeatManager();
 	private final RSXMLImporter rsXMLImporter = new RSXMLImporter();
 	private final SelectionManager selectionManager = new SelectionManager();
+	private final SlideFretLabelHandler slideFretLabelHandler = new SlideFretLabelHandler();
 	private final SongFileHandler songFileHandler = new SongFileHandler();
 	private final SongFilesBackuper songFilesBackuper = new SongFilesBackuper();
 	private final StemAddService stemAddService = new StemAddService();

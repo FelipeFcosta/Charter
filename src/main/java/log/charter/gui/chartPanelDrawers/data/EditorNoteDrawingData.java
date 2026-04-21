@@ -30,15 +30,15 @@ public class EditorNoteDrawingData {
 		}
 	}
 
-	public static EditorNoteDrawingData fromNote(final ImmutableBeatsMap beats, final double time, final Note note,
-			final boolean selected, final boolean highlighted, final boolean lastWasLinkNext,
+	public static EditorNoteDrawingData fromNote(final ImmutableBeatsMap beats, final double time, final int noteId,
+			final Note note, final boolean selected, final boolean highlighted, final boolean lastWasLinkNext,
 			final boolean wrongLinkNext) {
 		final int x = positionToX(note.position(beats), time);
 		final int length = positionToX(note.endPosition(beats), time) - x;
 		final List<EditorBendValueDrawingData> bends = map(note.bendValues,
 				b -> new EditorBendValueDrawingData(positionToX(b.position(beats), time), b.bendValue));
 
-		return new EditorNoteDrawingData(x, length, //
+		return new EditorNoteDrawingData(noteId, x, length, //
 				note.string, note.fret, note.fret + "", //
 				note.accent, note.mute, note.hopo, note.harmonic, note.bassPicking, //
 				bends, note.slideTo, note.unpitchedSlide, note.vibrato, note.tremolo, //
@@ -46,7 +46,7 @@ public class EditorNoteDrawingData {
 	}
 
 	public static EditorNoteDrawingData fromChordNote(final ImmutableBeatsMap beats, final double time,
-			final Chord chord, final ChordTemplate chordTemplate, final int x, final int string,
+			final int noteId, final Chord chord, final ChordTemplate chordTemplate, final int x, final int string,
 			final ChordNote chordNote, final boolean selected, final boolean highlighted, final boolean lastWasLinkNext,
 			final boolean wrongLinkNext, final boolean ctrl) {
 		final int length = positionToX(chordNote.endPosition(beats), time) - x;
@@ -57,7 +57,7 @@ public class EditorNoteDrawingData {
 		final List<EditorBendValueDrawingData> bends = map(chordNote.bendValues,
 				b -> new EditorBendValueDrawingData(positionToX(b.position(beats), time), b.bendValue));
 
-		return new EditorNoteDrawingData(x, length, //
+		return new EditorNoteDrawingData(noteId, x, length, //
 				string, fret, fretDescription, //
 				chord.accent, chordNote.mute, chordNote.hopo, chordNote.harmonic, BassPickingTechnique.NONE, //
 				bends, chordNote.slideTo, chordNote.unpitchedSlide, chordNote.vibrato, chordNote.tremolo, //
@@ -65,9 +65,9 @@ public class EditorNoteDrawingData {
 	}
 
 	public static List<EditorNoteDrawingData> fromChord(final ImmutableBeatsMap beats, final double time,
-			final Chord chord, final ChordTemplate chordTemplate, final int x, final boolean selected,
-			final int highlightedString, final boolean editingChordNote, final boolean lastWasLinkNext, 
-			final boolean wrongLinkNext, final boolean ctrl) {
+			final int noteId, final Chord chord, final ChordTemplate chordTemplate, final int x,
+			final boolean selected, final int highlightedString, final boolean editingChordNote,
+			final boolean lastWasLinkNext, final boolean wrongLinkNext, final boolean ctrl) {
 		final List<EditorNoteDrawingData> notes = new ArrayList<>();
 
 		for (final Entry<Integer, ChordNote> chordNoteEntry : chord.chordNotes.entrySet()) {
@@ -83,13 +83,14 @@ public class EditorNoteDrawingData {
 				noteSelected = selected;
 				noteHighlighted = (highlightedString == string);
 			}
-			notes.add(fromChordNote(beats, time, chord, chordTemplate, x, string, chordNoteEntry.getValue(), noteSelected,
-					noteHighlighted, lastWasLinkNext, wrongLinkNext, ctrl));
+			notes.add(fromChordNote(beats, time, noteId, chord, chordTemplate, x, string, chordNoteEntry.getValue(),
+					noteSelected, noteHighlighted, lastWasLinkNext, wrongLinkNext, ctrl));
 		}
 
 		return notes;
 	}
 
+	public final int noteId;
 	public final int x;
 	public final int length;
 
@@ -114,13 +115,14 @@ public class EditorNoteDrawingData {
 	public final boolean linkNext;
 	public final double prebend;
 
-	private EditorNoteDrawingData(final int x, final int length, //
+	private EditorNoteDrawingData(final int noteId, final int x, final int length, //
 			final int string, final int fretNumber, final String fret, //
 			final boolean accent, final Mute mute, final HOPO hopo, final Harmonic harmonic,
 			final BassPickingTechnique bassPickingTech, final List<EditorBendValueDrawingData> bendValues,
 			final Integer slideTo, final boolean unpitchedSlide, final boolean vibrato, final boolean tremolo,
 			final boolean selected, final boolean highlighted, final boolean lastWasLinkNext, final boolean wrongLink,
 			final boolean linkNext) {
+		this.noteId = noteId;
 		this.x = x;
 		this.length = lastWasLinkNext ? max(5, length) : length;
 

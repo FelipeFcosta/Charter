@@ -25,6 +25,7 @@ import log.charter.data.config.ChartPanelColors.StringColorLabelType;
 import log.charter.gui.chartPanelDrawers.data.EditorNoteDrawingData;
 import log.charter.gui.chartPanelDrawers.drawableShapes.CenteredTextWithBackgroundAndBorder;
 import log.charter.gui.chartPanelDrawers.drawableShapes.ShapePositionWithSize;
+import log.charter.gui.chartPanelDrawers.drawableShapes.SlideFretLabelShape;
 import log.charter.util.collections.ArrayList2;
 import log.charter.util.data.IntRange;
 import log.charter.util.data.Position2D;
@@ -260,7 +261,9 @@ class SquareHighwayDrawer extends DefaultHighwayDrawer {
 		final int lineEndYOffset = -lineStartYOffset;
 		notes.add(line(slideStart.move(0, lineStartYOffset), slideEnd.move(0, lineEndYOffset), Color.BLACK, 2));
 
-		slideFrets.add(new CenteredTextWithBackgroundAndBorder(slideEnd, fretFont, note.slideTo + "", fretColor,
-				outlineColor, Color.BLACK));
+		if (!note.linkNext) {
+			slideFrets.add(new SlideFretLabelShape(note.noteId, note.string, slideEnd, fretFont, note.slideTo + "",
+					fretColor, outlineColor, Color.BLACK));
+		}
 	}
 }

@@ -69,6 +69,7 @@ import log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShapeList;
 import log.charter.gui.chartPanelDrawers.drawableShapes.Line;
 import log.charter.gui.chartPanelDrawers.drawableShapes.ShapePositionWithSize;
 import log.charter.gui.chartPanelDrawers.drawableShapes.ShapeSize;
+import log.charter.gui.chartPanelDrawers.drawableShapes.SlideFretLabelShape;
 import log.charter.gui.chartPanelDrawers.drawableShapes.StrokedTriangle;
 import log.charter.gui.chartPanelDrawers.drawableShapes.Text;
 import log.charter.gui.chartPanelDrawers.drawableShapes.TextWithBackground;
@@ -493,8 +494,10 @@ public class DefaultHighwayDrawer implements HighwayDrawer {
 			noteTails.add(filledTriangle(a, b, c, color));
 		}
 
-		slideFrets.add(
-				centeredTextWithBackground(c, fretFont, note.slideTo + "", fretColor, backgroundColor, Color.BLACK));
+		if (!note.linkNext) {
+			slideFrets.add(new SlideFretLabelShape(note.noteId, note.string, c, fretFont, note.slideTo + "",
+					backgroundColor, fretColor, Color.BLACK));
+		}
 
 		if (note.highlighted) {
 			noteTailSelects.add(new StrokedTriangle(a, b, c, ColorLabel.HIGHLIGHT));
