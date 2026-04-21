@@ -199,7 +199,13 @@ public class ChartToolbar extends JToolBar implements IChartToolbar, Initiable {
 
 	private void addGridSizeInput(final AtomicInteger x) {
 		gridSize = createNumberField(Label.TOOLBAR_GRID_SIZE, LabelPosition.LEFT_PACKED, 25, //
-				GridConfig.gridSize, 1, 128, false, newGridSize -> {
+				GridConfig.gridSize, 1, GridConfig.hardMaxGridSize, false, newGridSize -> {
+					if (newGridSize > GridConfig.gridSize
+							&& newGridSize > GridConfig.maxGridSize(chartData.beats())) {
+						updateValues();
+						return;
+					}
+
 					GridConfig.gridSize = newGridSize;
 					Config.markChanged();
 				});
@@ -227,11 +233,15 @@ public class ChartToolbar extends JToolBar implements IChartToolbar, Initiable {
 	}
 
 	private void doubleGridSize() {
-		if (GridConfig.gridSize > 64) {
+		final int newGridSize = GridConfig.gridSize * 2;
+		if (newGridSize > GridConfig.hardMaxGridSize) {
+			return;
+		}
+		if (newGridSize > GridConfig.maxGridSize(chartData.beats())) {
 			return;
 		}
 
-		GridConfig.gridSize *= 2;
+		GridConfig.gridSize = newGridSize;
 		Config.markChanged();
 		updateValues();
 	}

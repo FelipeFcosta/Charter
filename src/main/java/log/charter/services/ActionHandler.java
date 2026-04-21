@@ -218,12 +218,18 @@ public class ActionHandler implements Initiable {
 	}
 
 	private void doubleGridSize() {
-		if (GridConfig.gridSize <= 512) {
-			GridConfig.gridSize *= 2;
-			Config.markChanged();
-
-			chartToolbar.updateValues();
+		final int newGridSize = GridConfig.gridSize * 2;
+		if (newGridSize > GridConfig.hardMaxGridSize) {
+			return;
 		}
+		if (newGridSize > GridConfig.maxGridSize(chartData.beats())) {
+			return;
+		}
+
+		GridConfig.gridSize = newGridSize;
+		Config.markChanged();
+
+		chartToolbar.updateValues();
 	}
 
 	private void halveGridSize() {

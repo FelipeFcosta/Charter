@@ -320,17 +320,7 @@ public class BeatsMap {
 		}
 
 		public IVirtualConstantPosition getMaxPositionBefore(final IVirtualConstantPosition position) {
-			final int factor = NoteDistanceConfig.minSpaceFactor;
-			switch (NoteDistanceConfig.minSpaceType) {
-				case MILISECONDS:
-					return addMiliseconds(position, -factor);
-				case BEATS:
-					return addBeats(position, new FractionalPosition(new Fraction(-1, factor)));
-				case NOTES:
-					return removeNote(position, new Fraction(1, factor));
-				default:
-					return position;
-			}
+			return addGrid(position, -1);
 		}
 
 		public IVirtualConstantPosition getMinEndPositionAfter(final IVirtualConstantPosition position) {

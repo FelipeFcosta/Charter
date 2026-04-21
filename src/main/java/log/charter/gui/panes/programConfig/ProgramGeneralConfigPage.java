@@ -38,8 +38,6 @@ public class ProgramGeneralConfigPage implements Page {
 
 	private SoundFileType baseAudioFormat = Config.baseAudioFormat;
 
-	private int minSpaceFactor = NoteDistanceConfig.minSpaceFactor;
-	private DistanceType minSpaceType = NoteDistanceConfig.minSpaceType;
 	private int minLengthFactor = NoteDistanceConfig.minLengthFactor;
 	private DistanceType minLengthType = NoteDistanceConfig.minLengthType;
 
@@ -55,8 +53,6 @@ public class ProgramGeneralConfigPage implements Page {
 
 	private FieldWithLabel<CharterSelect<SoundFileType>> baseAudioFormatField;
 
-	private FieldWithLabel<TextInputWithValidation> minSpaceFactorField;
-	private CharterSelect<DistanceType> minSpaceTypeField;
 	private FieldWithLabel<TextInputWithValidation> minLengthFactorField;
 	private CharterSelect<DistanceType> minLengthTypeField;
 
@@ -77,9 +73,6 @@ public class ProgramGeneralConfigPage implements Page {
 		addBaseAudioFormatSelect(panel, position);
 
 		position.newRow();
-		position.newRow();
-		addMinNoteDistance(panel, position);
-
 		position.newRow();
 		addMinTailLength(panel, position);
 
@@ -180,12 +173,6 @@ public class ProgramGeneralConfigPage implements Page {
 		return select;
 	}
 
-	private void addMinNoteDistance(final RowedPanel panel, final RowedPosition position) {
-		minSpaceFactorField = addDistanceValue(panel, position, Label.MINIMAL_NOTE_SPACE, minSpaceFactor,
-				v -> minSpaceFactor = v);
-		minSpaceTypeField = addDistanceTypeSelect(panel, position, minSpaceType, t -> minSpaceType = t);
-	}
-
 	private void addMinTailLength(final RowedPanel panel, final RowedPosition position) {
 		minLengthFactorField = addDistanceValue(panel, position, Label.MINIMAL_NOTE_LENGTH, minLengthFactor,
 				v -> minLengthFactor = v);
@@ -224,8 +211,6 @@ public class ProgramGeneralConfigPage implements Page {
 		gpFilesPathField.setVisible(visibility);
 		gpFilesFolderPickerButton.setVisible(visibility);
 		baseAudioFormatField.setVisible(visibility);
-		minSpaceFactorField.setVisible(visibility);
-		minSpaceTypeField.setVisible(visibility);
 		minLengthFactorField.setVisible(visibility);
 		minLengthTypeField.setVisible(visibility);
 		selectNotesByTailsField.setVisible(visibility);
@@ -239,8 +224,6 @@ public class ProgramGeneralConfigPage implements Page {
 
 		Config.baseAudioFormat = baseAudioFormat;
 
-		NoteDistanceConfig.minSpaceType = minSpaceType;
-		NoteDistanceConfig.minSpaceFactor = minSpaceFactor;
 		NoteDistanceConfig.minLengthType = minLengthType;
 		NoteDistanceConfig.minLengthFactor = minLengthFactor;
 

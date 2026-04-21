@@ -195,7 +195,6 @@ public class Localization {
 		MEASURE_REMOVE("Remove measure"), //
 		MIDI_SOUND_DELAY("Midi sound delay (ms)"), //
 		MINIMAL_NOTE_LENGTH("Minimal note length"), //
-		MINIMAL_NOTE_SPACE("Minimal space between notes"), //
 		MOVE_FRET_DOWN("Move notes one fret down"), //
 		MOVE_FRET_DOWN_OCTAVE("Move notes twelve frets down"), //
 		MOVE_FRET_UP("Move notes one fret up"), //
