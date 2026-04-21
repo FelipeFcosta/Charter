@@ -174,7 +174,7 @@ public class ModernThemeNoteTails {
 		// Define vibrato appearance
 		if (note.vibrato) {
 			final Position2D from = new Position2D(x, y);
-			data.noteTails.add(sine(from, length, tailHeight / 2 - 2, -8, 10, Color.GRAY.brighter(), 2));
+			data.noteTails.add(sine(from, length, tailHeight / 2 - 2, -8, 20, Color.GRAY.brighter(), 2));
 		}
 
 		if (!note.tremolo) {

@@ -124,7 +124,7 @@ public class MidiChartNotePlayer implements Initiable {
 		if (vibrato) {
 			final FractionalPosition inNotePosition = position
 					.distance(FractionalPosition.fromTime(chartData.beats(), time));
-			bendValue += (1 + Math.cos(inNotePosition.fraction.doubleValue() * Math.PI * 4)) * 0.25;
+			bendValue += (1 + Math.cos(inNotePosition.fraction.doubleValue() * Math.PI * 8)) * 0.25;
 		}
 
 		midiNotePlayer.updateBend(string, fret, bendValue);

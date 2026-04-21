@@ -319,8 +319,7 @@ public class ArrangementFixer {
 		}
 
 		if (nextNotePosition != null) {
-			IConstantFractionalPosition maximumPositionBeforeNextNote = beats.getMaxPositionBefore(nextNotePosition)
-					.toFraction(beats);
+			IConstantFractionalPosition maximumPositionBeforeNextNote = nextNotePosition.toFraction(beats);
 
 			if (ChordOrNote.isLinkedToPrevious(note.string(), id, sounds)) {
 				maximumPositionBeforeNextNote = max(maximumPositionBeforeNextNote,
