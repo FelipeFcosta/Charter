@@ -232,7 +232,8 @@ public class SelectionManager implements Initiable {
 			return findHandShapeForHighlight(x, positions);
 		}
 
-		if (positionType == PositionType.VOCAL || positionType == PositionType.GUITAR_NOTE) {
+		if (positionType == PositionType.VOCAL//
+				|| (positionType == PositionType.GUITAR_NOTE && selectNotesByTails)) {
 			return findWithLengthExisting(x, generateLinksWithLength(positions));
 		}
 
@@ -244,7 +245,20 @@ public class SelectionManager implements Initiable {
 			return;
 		}
 
-		if (!clickData.pressHighlight.existingPosition) {
+		PositionWithIdAndType highlight = clickData.pressHighlight;
+		if (!highlight.existingPosition) {
+			final PositionType positionType = PositionType.fromY(clickData.pressPosition.y, modeManager.getMode());
+			if (positionType == PositionType.GUITAR_NOTE) {
+				final List<PositionWithIdAndType> positions = positionType.getPositionsWithIdsAndTypes(chartData);
+				final PositionWithIdAndType bodyHit = findWithLengthExisting(clickData.pressPosition.x,
+						generateLinksWithLength(positions));
+				if (bodyHit != null) {
+					highlight = bodyHit;
+				}
+			}
+		}
+
+		if (!highlight.existingPosition) {
 			if (!ctrl) {
 				clearSelectionsExcept(PositionType.NONE);
 			}
@@ -255,14 +269,14 @@ public class SelectionManager implements Initiable {
 		}
 
 		// Check if clicking on an already-selected chord to select a specific note
-		if (clickData.pressHighlight.type == PositionType.GUITAR_NOTE && !ctrl && !shift) {
+		if (highlight.type == PositionType.GUITAR_NOTE && !ctrl && !shift) {
 			final Set<Integer> selectedIds = accessor(PositionType.GUITAR_NOTE).getSelectedIdsSet(PositionType.GUITAR_NOTE);
-			if (selectedIds.contains(clickData.pressHighlight.id) && clickData.pressHighlight.chordOrNote != null
-					&& clickData.pressHighlight.chordOrNote.isChord()) {
+			if (selectedIds.contains(highlight.id) && highlight.chordOrNote != null
+					&& highlight.chordOrNote.isChord()) {
 				// Clicking on an already-selected chord - select specific string
 				final int clickedString = yToString(clickData.pressPosition.y, chartData.currentStrings());
 				// Verify the chord has a note on this string
-				if (clickData.pressHighlight.chordOrNote.chord().chordNotes.containsKey(clickedString)) {
+				if (highlight.chordOrNote.chord().chordNotes.containsKey(clickedString)) {
 					// If clicking the same string again, deselect it (go back to whole chord selection)
 					if (selectedChordNoteString != null && selectedChordNoteString == clickedString) {
 						selectedChordNoteString = null;
@@ -279,7 +293,7 @@ public class SelectionManager implements Initiable {
 		selectedChordNoteString = null;
 
 		// Special handling for handshapes - cycle through overlapping ones on click
-		if (clickData.pressHighlight.type == PositionType.HAND_SHAPE && !ctrl && !shift) {
+		if (highlight.type == PositionType.HAND_SHAPE && !ctrl && !shift) {
 			final PositionWithIdAndType cycledHandShape = cycleHandShapeOnClick(
 					clickData.pressPosition.x, clickData.pressPosition.y);
 			if (cycledHandShape != null && cycledHandShape.id != null) {
@@ -293,15 +307,15 @@ public class SelectionManager implements Initiable {
 			}
 		}
 
-		clearSelectionsExcept(clickData.pressHighlight.type);
+		clearSelectionsExcept(highlight.type);
 
-		final SelectionList<?, ?, ?> selectionList = selectionLists.get(clickData.pressHighlight.type);
+		final SelectionList<?, ?, ?> selectionList = selectionLists.get(highlight.type);
 		if (selectionList == null) {
 			currentSelectionEditor.selectionChanged(true);
 			return;
 		}
 
-		selectionList.addSelectablesWithModifiers(clickData.pressHighlight.id, ctrl, shift);
+		selectionList.addSelectablesWithModifiers(highlight.id, ctrl, shift);
 		currentSelectionEditor.selectionChanged(true);
 	}
 
