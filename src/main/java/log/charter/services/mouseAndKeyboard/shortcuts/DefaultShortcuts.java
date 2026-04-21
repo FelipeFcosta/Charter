@@ -103,6 +103,7 @@ public class DefaultShortcuts extends ShortcutList {
 		super.set(Action.SPEED_INCREASE, new Shortcut(KeyEvent.VK_PLUS));
 		super.set(Action.SPEED_INCREASE_FAST, new Shortcut(KeyEvent.VK_PLUS).shift());
 		super.set(Action.SPEED_INCREASE_PRECISE, new Shortcut(KeyEvent.VK_PLUS).ctrl());
+		super.set(Action.SPEED_TOGGLE, new Shortcut(KeyEvent.VK_R).shift());
 		super.set(Action.SWITCH_TS_TYPING_PART, new Shortcut(KeyEvent.VK_SLASH));
 		super.set(Action.TOGGLE_ACCENT, new Shortcut(KeyEvent.VK_A));
 		super.set(Action.TOGGLE_ACCENT_INDEPENDENTLY, new Shortcut(KeyEvent.VK_A).alt());

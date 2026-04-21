@@ -253,6 +253,19 @@ public class ActionHandler implements Initiable {
 		chartTimeHandler.nextTime(bookmark);
 	}
 
+	private int lastNonFullSpeed = 50;
+
+	private void toggleSpeed() {
+		if (Config.stretchedMusicSpeed == 100) {
+			Config.stretchedMusicSpeed = lastNonFullSpeed;
+		} else {
+			lastNonFullSpeed = Config.stretchedMusicSpeed;
+			Config.stretchedMusicSpeed = 100;
+		}
+
+		chartToolbar.updateValues();
+	}
+
 	private void changeSpeed(final int change) {
 		final int divideRest = Config.stretchedMusicSpeed % abs(change);
 		if (divideRest != 0) {
@@ -388,6 +401,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.SPEED_INCREASE, () -> changeSpeed(5));
 		actionHandlers.put(Action.SPEED_INCREASE_FAST, () -> changeSpeed(25));
 		actionHandlers.put(Action.SPEED_INCREASE_PRECISE, () -> changeSpeed(1));
+		actionHandlers.put(Action.SPEED_TOGGLE, this::toggleSpeed);
 		actionHandlers.put(Action.SWITCH_TS_TYPING_PART,
 				() -> modeManager.getTempoMapModeHandler().switchTSTypingPart());
 		actionHandlers.put(Action.TOGGLE_ACCENT, guitarSoundsStatusesHandler::toggleAccent);
@@ -448,6 +462,7 @@ public class ActionHandler implements Initiable {
 			Action.SPEED_INCREASE, //
 			Action.SPEED_INCREASE_FAST, //
 			Action.SPEED_INCREASE_PRECISE, //
+			Action.SPEED_TOGGLE, //
 			Action.TOGGLE_CLAPS, //
 			Action.TOGGLE_METRONOME, //
 			Action.TOGGLE_MIDI, //

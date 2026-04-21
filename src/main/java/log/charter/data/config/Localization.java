@@ -308,6 +308,7 @@ public class Localization {
 		SPEED_INCREASE("Increase speed"), //
 		SPEED_INCREASE_FAST("Increase speed fast"), //
 		SPEED_INCREASE_PRECISE("Increase speed precise"), //
+		SPEED_TOGGLE("Toggle speed 100%"), //
 		SQUASH_LEVELS("Squash levels"), //
 		STARTING_TONE("Starting tone"), //
 		STUDYING_AUDIO("Studying audio: %s"), //
@@ -404,6 +405,7 @@ public class Localization {
 		TOGGLE_TREMOLO("Toggle tremolo"), //
 		TOGGLE_TREMOLO_INDEPENDENTLY("Toggle tremolo independently"), //
 		TOGGLE_LINK_NEXT("Toggle link next"), //
+		TOGGLE_LINK_NEXT_BEFORE("Toggle link next before"), //
 		TOGGLE_LINK_NEXT_INDEPENDENTLY("Toggle link next independently"), //
 		MARK_HAND_SHAPE("Mark hand shape"), //
 		GUITAR_MENU_EDIT_HAND_SHAPE("Edit hand shape"), //
