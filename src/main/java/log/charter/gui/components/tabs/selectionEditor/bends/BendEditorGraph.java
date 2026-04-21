@@ -33,7 +33,7 @@ import log.charter.util.data.Fraction;
 import log.charter.util.data.Position2D;
 
 public class BendEditorGraph extends JComponent implements MouseListener, MouseMotionListener {
-	private static final int beatWidth = 100;
+	private static final int beatWidth = 200;
 	private static final int labelsWidth = 30;
 	private static final int bendValueDenominator = 2;
 	private static final int maxBendInternalValue = InstrumentConfig.maxBendValue * bendValueDenominator;

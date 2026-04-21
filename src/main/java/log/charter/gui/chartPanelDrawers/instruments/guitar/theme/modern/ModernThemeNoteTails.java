@@ -68,15 +68,13 @@ public class ModernThemeNoteTails {
 
 		data.noteTails.add(new Line(slideStart, slideEnd, Color.WHITE, lineThickness));
 
-		if (note.unpitchedSlide) {
-			final int tailEndFretTextY = note.slideTo < note.fretNumber ? topBottom.max + noteHeight / 3
-					: topBottom.min - noteHeight / 3;
-			final Position2D fretTextPosition = new Position2D(note.x + note.length, tailEndFretTextY);
-			final Color color = noteTailColors[stringId(note.string, data.strings)];
-			data.slideFrets.add(centeredTextWithBackground(fretTextPosition, slideFretFont, note.slideTo + "",
-					color.darker().darker().darker(), Color.WHITE,
-					noteTailColors[stringId(note.string, data.strings)]));
-		}
+		final int tailEndFretTextY = note.slideTo < note.fretNumber ? topBottom.max + noteHeight / 3
+				: topBottom.min - noteHeight / 3;
+		final Position2D fretTextPosition = new Position2D(note.x + note.length, tailEndFretTextY);
+		final Color color = noteTailColors[stringId(note.string, data.strings)];
+		data.slideFrets.add(centeredTextWithBackground(fretTextPosition, slideFretFont, note.slideTo + "",
+				color.darker().darker().darker(), Color.WHITE,
+				noteTailColors[stringId(note.string, data.strings)]));
 	}
 
 	private void addSlideNoteTailShape(final EditorNoteDrawingData note, final int y) {
