@@ -27,7 +27,8 @@ public class GP5FileToSongChart {
 			}
 
 			final List<GPBar> trackBars = gp5File.trackBars.get(trackId);
-			final Arrangement arrangement = makeArrangement(chart.beatsMap, barsOrder, trackData, trackBars);
+			final Arrangement arrangement = makeArrangement(chart.beatsMap, barsOrder, trackData, trackBars,
+					gp5File.masterBars);
 			chart.arrangements.add(arrangement);
 		}
 	}

@@ -8,15 +8,19 @@ import java.util.List;
 import log.charter.data.config.values.InstrumentConfig;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.BeatsMap;
+import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.Level;
 import log.charter.data.song.configs.Tuning;
 import log.charter.data.song.configs.Tuning.TuningType;
+import log.charter.data.song.position.FractionalPosition;
 import log.charter.io.gp.gp5.GP5FractionalPosition;
 import log.charter.io.gp.gp5.data.GPBar;
 import log.charter.io.gp.gp5.data.GPBeat;
+import log.charter.io.gp.gp5.data.GPMasterBar;
 import log.charter.io.gp.gp5.data.GPNote;
 import log.charter.io.gp.gp5.data.GPTrackData;
 import log.charter.io.rs.xml.song.ArrangementType;
+import log.charter.util.data.Fraction;
 
 public class GP5ArrangementTransformer {
 	private static ArrangementType getGPArrangementType(final GPTrackData trackData) {
@@ -71,23 +75,42 @@ public class GP5ArrangementTransformer {
 		}
 	}
 
+	/**
+	 * Advances the given fractional bar-start position by the duration of a GP5 master bar,
+	 * expressed in charter-beat units. This keeps the imported notes aligned to the actual
+	 * time the GP5 bar takes, even when the project's beats map has a different time
+	 * signature at the same bar (e.g. a 2/4 GP5 bar imported into a 4/4 project previously
+	 * caused a 2-beat silent gap after that bar).
+	 */
+	private static FractionalPosition advanceByGPBar(final ImmutableBeatsMap beats,
+			final FractionalPosition barStart, final GPMasterBar masterBar) {
+		final int charterDenominator = beats.get(barStart.beatId).noteDenominator;
+		final Fraction barLength = new Fraction(
+				(long) masterBar.timeSignatureNumerator * charterDenominator,
+				masterBar.timeSignatureDenominator);
+
+		return barStart.add(barLength);
+	}
+
 	private static Level generateLevel(final BeatsMap beatsMap, final Arrangement arrangement,
-			final List<Integer> barsOrder, final List<GPBar> bars) {
+			final List<Integer> barsOrder, final List<GPBar> bars, final List<GPMasterBar> masterBars) {
 		final Level level = new Level();
 		final GP5SoundsTransformer noteTransformer = new GP5SoundsTransformer(level, arrangement);
 
 		final boolean[] wasHOPOStart = new boolean[InstrumentConfig.maxStrings];
 		final int[] hopoFrom = new int[InstrumentConfig.maxStrings];
 
-		int barBeatId = 0;
+		FractionalPosition barStart = new FractionalPosition(0, new Fraction(0, 1));
 		for (final int barId : barsOrder) {
+			final GPMasterBar masterBar = masterBars.get(barId - 1);
+
 			if (bars.size() <= barId - 1) {
-				barBeatId += beatsMap.getBeatSafe(barBeatId).beatsInMeasure;
+				barStart = advanceByGPBar(beatsMap.immutable, barStart, masterBar);
 				continue;
 			}
 
 			for (final List<GPBeat> voice : bars.get(barId - 1).voices) {
-				GP5FractionalPosition position = new GP5FractionalPosition(beatsMap.immutable, barBeatId);
+				GP5FractionalPosition position = new GP5FractionalPosition(beatsMap.immutable, barStart);
 				for (final GPBeat gpBeat : voice) {
 					final GP5FractionalPosition endPosition = position.move(gpBeat.duration, gpBeat.tupletNumerator,
 							gpBeat.tupletDenominator, gpBeat.dots);
@@ -96,7 +119,7 @@ public class GP5ArrangementTransformer {
 				}
 			}
 
-			barBeatId += beatsMap.getBeatSafe(barBeatId).beatsInMeasure;
+			barStart = advanceByGPBar(beatsMap.immutable, barStart, masterBar);
 		}
 
 		createFHPs(beatsMap.immutable, arrangement.chordTemplates, level.sounds, level.fhps);
@@ -105,14 +128,14 @@ public class GP5ArrangementTransformer {
 	}
 
 	public static Arrangement makeArrangement(final BeatsMap beatsMap, final List<Integer> barsOrder,
-			final GPTrackData trackData, final List<GPBar> bars) {
+			final GPTrackData trackData, final List<GPBar> bars, final List<GPMasterBar> masterBars) {
 		final ArrangementType arrangementType = getGPArrangementType(trackData);
 		final Arrangement arrangement = new Arrangement(arrangementType);
 
 		arrangement.capo = trackData.capo;
 		arrangement.tuning = getTuningFromGPTuning(trackData.tuning, arrangement.capo,
 				arrangementType == ArrangementType.Bass);
-		arrangement.setLevel(0, generateLevel(beatsMap, arrangement, barsOrder, bars));
+		arrangement.setLevel(0, generateLevel(beatsMap, arrangement, barsOrder, bars, masterBars));
 
 		return arrangement;
 	}
