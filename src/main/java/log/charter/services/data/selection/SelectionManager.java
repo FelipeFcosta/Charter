@@ -232,8 +232,7 @@ public class SelectionManager implements Initiable {
 			return findHandShapeForHighlight(x, positions);
 		}
 
-		if (positionType == PositionType.VOCAL//
-				|| (positionType == PositionType.GUITAR_NOTE && selectNotesByTails)) {
+		if (positionType == PositionType.VOCAL || positionType == PositionType.GUITAR_NOTE) {
 			return findWithLengthExisting(x, generateLinksWithLength(positions));
 		}
 

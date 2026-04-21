@@ -8,8 +8,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JRadioButton;
+import javax.swing.JCheckBox;
 import javax.swing.JScrollPane;
 
 import log.charter.data.ChartData;
@@ -23,7 +22,7 @@ import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.components.containers.CharterScrollPane;
 import log.charter.gui.components.containers.RowedPanel;
 import log.charter.gui.components.utils.PaneSizesBuilder;
-import log.charter.gui.lookAndFeel.CharterRadioButton;
+import log.charter.gui.lookAndFeel.CharterCheckBox;
 import log.charter.services.data.GuitarSoundsStatusesHandler;
 import log.charter.services.data.selection.ISelectionAccessor;
 import log.charter.services.data.selection.Selection;
@@ -45,8 +44,8 @@ public class SelectionBendEditor extends RowedPanel {
 
 	private final BendEditorGraph bendEditorGraph;
 
-	private ButtonGroup stringsGroup;
-	private List<JRadioButton> strings;
+	private List<JCheckBox> strings;
+	private final List<Integer> selectedStrings = new ArrayList<>();
 	private int lastStringsAmount = InstrumentConfig.maxStrings;
 
 	private Selection<ChordOrNote> getCurrentSelection() {
@@ -64,7 +63,7 @@ public class SelectionBendEditor extends RowedPanel {
 		this.selectionManager = selectionManager;
 		this.undoSystem = undoSystem;
 
-		addRadioButtons();
+		addCheckBoxes();
 
 		bendEditorGraph = new BendEditorGraph(this::onChangeBends);
 
@@ -79,29 +78,39 @@ public class SelectionBendEditor extends RowedPanel {
 		setMaximumSize(getSize());
 	}
 
-	private void addRadioButtons() {
-		stringsGroup = new ButtonGroup();
+	private void addCheckBoxes() {
 		strings = new ArrayList<>();
 		for (int i = 0; i < InstrumentConfig.maxStrings; i++) {
 			final int string = i;
-			final JRadioButton radioButton = new JRadioButton((string + 1) + "");
-			radioButton.addActionListener(e -> onSelectString(string));
-			this.addWithSettingSize(radioButton, 20 + 40 * i, sizes.getY(0), 40, 20);
-
-			stringsGroup.add(radioButton);
-			strings.add(radioButton);
+			final JCheckBox checkBox = new JCheckBox((string + 1) + "");
+			checkBox.addActionListener(e -> onToggleString(string));
+			this.addWithSettingSize(checkBox, 20 + 40 * i, sizes.getY(0), 40, 20);
+			strings.add(checkBox);
 		}
 	}
 
-	private void onSelectString(final int string) {
-		final Selection<ChordOrNote> selection = getCurrentSelection();
-		if (selection.selectable.isChord()) {
-			bendEditorGraph.setBendValues(string, selection.selectable.chord().chordNotes.get(string).bendValues);
+	private void onToggleString(final int string) {
+		if (strings.get(string).isSelected()) {
+			if (!selectedStrings.contains(string)) {
+				selectedStrings.add(string);
+			}
+			// Graph stays on the reference (first selected) string; no update needed
+		} else {
+			final boolean wasReference = !selectedStrings.isEmpty() && selectedStrings.get(0).equals(string);
+			selectedStrings.remove((Integer) string);
+			if (wasReference && !selectedStrings.isEmpty()) {
+				final int newReference = selectedStrings.get(0);
+				final Selection<ChordOrNote> selection = getCurrentSelection();
+				if (selection.selectable.isChord()) {
+					bendEditorGraph.setBendValues(newReference,
+							selection.selectable.chord().chordNotes.get(newReference).bendValues);
+				}
+			}
 		}
 	}
 
 	private void doActionOnStringButtons(final boolean[] shouldActionBeDone,
-			final BiConsumer<JRadioButton, Integer> action) {
+			final BiConsumer<JCheckBox, Integer> action) {
 		for (int i = 0; i < InstrumentConfig.maxStrings; i++) {
 			if (shouldActionBeDone[i]) {
 				action.accept(strings.get(i), i);
@@ -109,7 +118,7 @@ public class SelectionBendEditor extends RowedPanel {
 		}
 	}
 
-	private void doActionOnStringButtons(final boolean[] shouldActionBeDone, final Consumer<JRadioButton> action) {
+	private void doActionOnStringButtons(final boolean[] shouldActionBeDone, final Consumer<JCheckBox> action) {
 		for (int i = 0; i < InstrumentConfig.maxStrings; i++) {
 			if (shouldActionBeDone[i]) {
 				action.accept(strings.get(i));
@@ -118,6 +127,9 @@ public class SelectionBendEditor extends RowedPanel {
 	}
 
 	public void enableAndSelectStrings(final ChordOrNote sound) {
+		selectedStrings.clear();
+		strings.forEach(cb -> cb.setSelected(false));
+
 		final boolean[] stringsForAction = new boolean[InstrumentConfig.maxStrings];
 		final int lowestString = sound.notesWithFrets(chartData.currentArrangement().chordTemplates)//
 				.map(CommonNoteWithFret::string)//
@@ -129,6 +141,7 @@ public class SelectionBendEditor extends RowedPanel {
 		doActionOnStringButtons(stringsForAction, button -> button.setEnabled(false));
 
 		strings.get(lowestString).setSelected(true);
+		selectedStrings.add(lowestString);
 
 		if (sound.isNote()) {
 			bendEditorGraph.setNote(sound.note(), chartData.currentStrings());
@@ -146,7 +159,7 @@ public class SelectionBendEditor extends RowedPanel {
 				stringsForAction[i] = true;
 			}
 			doActionOnStringButtons(stringsForAction, (button, i) -> {
-				button.setIcon(new CharterRadioButton.RadioIcon(
+				button.setIcon(new CharterCheckBox.CheckBoxIcon(
 						getStringBasedColor(StringColorLabelType.NOTE, i, lastStringsAmount)));
 			});
 		}
@@ -176,7 +189,9 @@ public class SelectionBendEditor extends RowedPanel {
 		undoSystem.addUndo();
 
 		final Selection<ChordOrNote> selection = getCurrentSelection();
-		selection.selectable.getString(string).ifPresent(note -> note.bendValues(newBends));
+		for (final int selectedString : selectedStrings) {
+			selection.selectable.getString(selectedString).ifPresent(note -> note.bendValues(newBends));
+		}
 		guitarSoundsStatusesHandler.updateLinkedNote(selection.id);
 	}
 }
