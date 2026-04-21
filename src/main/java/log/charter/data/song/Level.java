@@ -11,6 +11,7 @@ import com.thoughtworks.xstream.annotations.XStreamInclude;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.notes.Chord;
 import log.charter.data.song.notes.ChordOrNote;
+import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 
 @XStreamAlias("level")
 @XStreamInclude({ FHP.class, ChordOrNote.class, HandShape.class })
@@ -24,6 +25,18 @@ public class Level {
 	public Level() {
 	}
 
+	private HandShape findContainingHandShape(final IConstantFractionalPosition position) {
+		Integer id = lastBeforeEqual(handShapes, position).findId();
+		while (id != null) {
+			final HandShape handShape = handShapes.get(id);
+			if (handShape.templateId != null && handShape.endPosition().compareTo(position) >= 0) {
+				return handShape;
+			}
+			id = id > 0 ? id - 1 : null;
+		}
+		return null;
+	}
+
 	public boolean shouldChordShowNotes(final ImmutableBeatsMap beats, final int id) {
 		final ChordOrNote sound = sounds.get(id);
 		if (sound.isNote()) {
@@ -31,7 +44,7 @@ public class Level {
 		}
 
 		final Chord chord = sound.chord();
-		final HandShape handShape = lastBeforeEqual(handShapes, chord).find();
+		final HandShape handShape = findContainingHandShape(chord);
 		if (handShape == null) {
 			return true;
 		}

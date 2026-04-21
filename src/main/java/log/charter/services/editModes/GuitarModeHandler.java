@@ -154,12 +154,23 @@ public class GuitarModeHandler implements ModeHandler {
 		return sound;
 	}
 
-	private int getDefaultFretForPosition(final FractionalPosition position, final int string) {
+	private HandShape findContainingHandShape(final FractionalPosition position) {
 		final List<HandShape> handShapes = chartData.currentHandShapes();
-		final HandShape handShape = lastBeforeEqual(handShapes, position).find();
+		Integer id = lastBeforeEqual(handShapes, position).findId();
+		while (id != null) {
+			final HandShape handShape = handShapes.get(id);
+			if (handShape.templateId != null && handShape.endPosition().compareTo(position) >= 0) {
+				return handShape;
+			}
+			id = id > 0 ? id - 1 : null;
+		}
+		return null;
+	}
 
-		if (handShape != null && handShape.templateId != null
-				&& handShape.endPosition().compareTo(position) >= 0) {
+	private int getDefaultFretForPosition(final FractionalPosition position, final int string) {
+		final HandShape handShape = findContainingHandShape(position);
+
+		if (handShape != null) {
 			final ChordTemplate template = chartData.currentChordTemplates().get(handShape.templateId);
 			final Integer fret = template.frets.get(string);
 			if (fret != null) {
@@ -171,11 +182,9 @@ public class GuitarModeHandler implements ModeHandler {
 	}
 
 	private ChordTemplate getHandShapeTemplate(final FractionalPosition position) {
-		final List<HandShape> handShapes = chartData.currentHandShapes();
-		final HandShape handShape = lastBeforeEqual(handShapes, position).find();
+		final HandShape handShape = findContainingHandShape(position);
 
-		if (handShape != null && handShape.templateId != null
-				&& handShape.endPosition().compareTo(position) >= 0) {
+		if (handShape != null) {
 			return chartData.currentChordTemplates().get(handShape.templateId);
 		}
 

@@ -36,6 +36,12 @@ public class HandShapeDrawData implements IConstantPosition {
 		}
 		if (handShapesFrom == null) {
 			handShapesFrom = 0;
+		} else {
+			// Walk backwards to include outer handshapes that started earlier but extend into the view window
+			while (handShapesFrom > 0
+					&& handShapes.get(handShapesFrom - 1).endPosition().position(beats) > timeFrom) {
+				handShapesFrom--;
+			}
 		}
 		if (handShapesTo == null) {
 			handShapesTo = handShapes.size() - 1;

@@ -162,10 +162,21 @@ public class GuitarSoundsValidator {
 					});
 		}
 
+		private HandShape findContainingHandShape(final ChordOrNote sound) {
+			Integer id = CollectionUtils.lastBeforeEqual(level.handShapes, sound).findId();
+			while (id != null) {
+				final HandShape handShape = level.handShapes.get(id);
+				if (handShape.templateId != null && handShape.endPosition().compareTo(sound) >= 0) {
+					return handShape;
+				}
+				id = id > 0 ? id - 1 : null;
+			}
+			return null;
+		}
+
 		private void validateCorrectHandshape(final int id, final ChordOrNote sound) {
-			final HandShape lastHandShape = CollectionUtils.lastBeforeEqual(level.handShapes, sound).find();
-			if (lastHandShape == null || lastHandShape.templateId == null
-					|| lastHandShape.endPosition().compareTo(sound) < 0) {
+			final HandShape lastHandShape = findContainingHandShape(sound);
+			if (lastHandShape == null || lastHandShape.templateId == null) {
 				return;
 			}
 
