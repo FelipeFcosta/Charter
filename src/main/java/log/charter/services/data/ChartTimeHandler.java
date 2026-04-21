@@ -72,6 +72,18 @@ public class ChartTimeHandler {
 	private double nextTime = 0;
 	private FractionalPosition nextFractionalTime = new FractionalPosition();
 
+	/**
+	 * Resets the playback/display position back to the very start. Used when switching to a
+	 * brand-new project so that lingering state from the previously opened project doesn't
+	 * leak into the fresh one.
+	 */
+	public void reset() {
+		time = 0;
+		fractionalTime = new FractionalPosition();
+		nextTime = 0;
+		nextFractionalTime = new FractionalPosition();
+	}
+
 	public double nextTime() {
 		return nextTime;
 	}

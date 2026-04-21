@@ -46,6 +46,19 @@ public class ChartData {
 
 	public void setSong(final String dir, final SongChart song, final String projectFileName, final EditMode editMode,
 			final int arrangement, final int level) {
+		// Update path and project file name FIRST, before anything that might throw.
+		// Previously these were assigned at the end of this method, which meant that if
+		// any of the UI/selection/mode updates below failed partway through, the next
+		// file write (audio save, project save) would still target the PREVIOUS project's
+		// folder and silently corrupt it. Assigning up-front guarantees that any
+		// subsequent writes go to the new project's folder.
+		path = dir;
+		this.projectFileName = projectFileName;
+		PathsConfig.lastDir = path;
+		PathsConfig.lastPath = new File(path, projectFileName).getAbsolutePath();
+		PathsConfig.addRecentPath(PathsConfig.lastPath);
+		Config.markChanged();
+
 		currentArrangement = arrangement;
 		isEmpty = false;
 
@@ -57,13 +70,6 @@ public class ChartData {
 
 		charterMenuBar.refreshMenus();
 		charterFrame.updateSizes();
-
-		path = dir;
-		this.projectFileName = projectFileName;
-		PathsConfig.lastDir = path;
-		PathsConfig.lastPath = new File(path, projectFileName).getAbsolutePath();
-		PathsConfig.addRecentPath(PathsConfig.lastPath);
-		Config.markChanged();
 
 		selectionManager.clear();
 		undoSystem.clear();

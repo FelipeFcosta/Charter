@@ -15,6 +15,7 @@ import log.charter.gui.components.simple.ChartingTimerPanel;
 import log.charter.gui.components.tabs.TextTab;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
 import log.charter.services.audio.AudioHandler;
+import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.ChartingTimerHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.services.data.files.SongFileHandler;
@@ -24,6 +25,7 @@ import log.charter.sound.data.AudioData;
 public class NewProjectService {
 	private AudioHandler audioHandler;
 	private ChartData chartData;
+	private ChartTimeHandler chartTimeHandler;
 	private ChartingTimerHandler chartingTimerHandler;
 	private CharterFrame charterFrame;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
@@ -91,6 +93,19 @@ public class NewProjectService {
 	}
 
 	public void setDataForNewProject(final File projectFolder, final SongChart songChart, final AudioData musicData) {
+		// Belt-and-suspenders: redirect chartData's write target to the new folder up-front.
+		// ChartData.setSong also does this as its first step, but assigning here too ensures
+		// that even if setNewSong isn't reached (e.g. a later helper throws first), any
+		// subsequent audio/project write still lands in the new folder rather than in the
+		// previously-opened project's folder. This was the root cause of new-project
+		// creation silently corrupting the previous project.
+		chartData.path = projectFolder.getAbsolutePath();
+		chartData.projectFileName = "project.rscp";
+
+		// Clear state carried over from the previously opened project so the new project
+		// starts from a clean slate (playback position, selected stem, charting timer, etc.).
+		chartTimeHandler.reset();
+		projectAudioHandler.selectStem(-1);
 		chartingTimerHandler.reset();
 		chartingTimerPanel.refresh();
 
