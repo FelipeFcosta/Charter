@@ -24,6 +24,7 @@ import log.charter.gui.components.containers.RowedPanel;
 import log.charter.gui.components.utils.PaneSizesBuilder;
 import log.charter.gui.lookAndFeel.CharterCheckBox;
 import log.charter.services.data.GuitarSoundsStatusesHandler;
+import log.charter.services.data.fixers.BendValuesDeduplicator;
 import log.charter.services.data.selection.ISelectionAccessor;
 import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
@@ -188,9 +189,12 @@ public class SelectionBendEditor extends RowedPanel {
 	private void onChangeBends(final int string, final List<BendValue> newBends) {
 		undoSystem.addUndo();
 
+		final ArrayList<BendValue> deduped = new ArrayList<>(newBends);
+		BendValuesDeduplicator.deduplicateInPlace(deduped);
+
 		final Selection<ChordOrNote> selection = getCurrentSelection();
 		for (final int selectedString : selectedStrings) {
-			selection.selectable.getString(selectedString).ifPresent(note -> note.bendValues(newBends));
+			selection.selectable.getString(selectedString).ifPresent(note -> note.bendValues(deduped));
 		}
 		guitarSoundsStatusesHandler.updateLinkedNote(selection.id);
 	}

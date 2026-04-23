@@ -22,6 +22,7 @@ import log.charter.data.song.HandShape;
 import log.charter.data.song.Level;
 import log.charter.data.song.SectionType;
 import log.charter.data.song.notes.Chord;
+import log.charter.data.song.notes.ChordNote;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.notes.CommonNote;
 import log.charter.data.song.notes.Note;
@@ -454,6 +455,18 @@ public class ArrangementFixer {
 		fixSameTemplateHandShapeOverlaps(chartData.currentHandShapes());
 	}
 
+	private void deduplicateBendValuesInLevel(final Level level) {
+		for (final ChordOrNote sound : level.sounds) {
+			if (sound.isNote()) {
+				BendValuesDeduplicator.deduplicateInPlace(sound.note().bendValues);
+			} else {
+				for (final ChordNote chordNote : sound.chord().chordNotes.values()) {
+					BendValuesDeduplicator.deduplicateInPlace(chordNote.bendValues);
+				}
+			}
+		}
+	}
+
 	private void addMissingBends(final List<ChordOrNote> sounds) {
 		for (int i = 0; i < sounds.size(); i++) {
 			final int id = i;
@@ -540,6 +553,7 @@ public class ArrangementFixer {
 		// in time (endTime of one can extend past startTime of another)
 		fixSlides(level.sounds);
 		addMissingBends(level.sounds);
+		deduplicateBendValuesInLevel(level);
 	}
 
 	public void fixArrangements() {

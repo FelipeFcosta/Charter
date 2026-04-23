@@ -31,6 +31,7 @@ import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
 import log.charter.gui.components.tabs.selectionEditor.CurrentSelectionEditor;
 import log.charter.services.data.fixers.ArrangementFixer;
+import log.charter.services.data.fixers.BendValuesDeduplicator;
 import log.charter.services.data.selection.ISelectionAccessor;
 import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
@@ -255,6 +256,8 @@ public class GuitarSoundsStatusesHandler {
 		} else if (firstBend.bendValue.compareTo(lastBendValue) != 0) {
 			firstBend.bendValue = lastBendValue;
 		}
+
+		BendValuesDeduplicator.deduplicateInPlace(nextNote.bendValues());
 	}
 
 	private void updateLinkedNote(final List<ChordOrNote> sounds, final int id) {
