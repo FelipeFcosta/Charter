@@ -24,6 +24,7 @@ import log.charter.data.config.ChartPanelColors.StringColorLabelType;
 import log.charter.data.config.GraphicalConfig;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.EventPoint;
+import log.charter.data.song.ToneChange;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.vocals.Vocal;
 import log.charter.data.song.vocals.Vocal.VocalFlag;
@@ -73,6 +74,10 @@ public class ChartMap extends Component implements Initiable, MouseListener, Mou
 				break;
 			default:
 				break;
+		}
+
+		if (modeManager.getMode() != EditMode.EMPTY) {
+			drawEventPointsAndToneChanges(g);
 		}
 
 		drawBookmarks(g);
@@ -223,6 +228,28 @@ public class ChartMap extends Component implements Initiable, MouseListener, Mou
 		chartData.currentArrangementLevel().sounds.stream()//
 				.flatMap(ChordOrNote::notes)//
 				.forEach(note -> drawNote(g, note.string(), note.position(beats), note.length(beats)));
+	}
+
+	/**
+	 * Full-height gray lines only for gameplay {@link EventPoint#events} (crowd SFX, ticks, etc.) and for
+	 * {@link ToneChange}s. Sections and phrases are already shown by the colored bands above — they are not
+	 * duplicated here (their {@link EventPoint}s often carry {@code section} together with {@code phrase}).
+	 */
+	private void drawEventPointsAndToneChanges(final Graphics g) {
+		final ImmutableBeatsMap beats = chartData.beats();
+		g.setColor(ColorLabel.BASE_BG_4.color());
+
+		for (final EventPoint ep : chartData.currentArrangement().eventPoints) {
+			if (ep.events.isEmpty()) {
+				continue;
+			}
+			final int x = timeToPosition(ep.position(beats));
+			g.drawLine(x, 0, x, getHeight() - 1);
+		}
+		for (final ToneChange tc : chartData.currentToneChanges()) {
+			final int x = timeToPosition(tc.position(beats));
+			g.drawLine(x, 0, x, getHeight() - 1);
+		}
 	}
 
 	private void drawBookmarks(final Graphics g) {

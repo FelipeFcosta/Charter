@@ -206,10 +206,6 @@ public class GuitarModeHandler implements ModeHandler {
 	}
 
 	private void applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
-		if (!chordTemplate.chordName.isEmpty()) {
-			return;
-		}
-
 		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
 		for (final ChordOrNote sound : chartData.currentSounds()) {
 			if (!sound.isChord()) {
