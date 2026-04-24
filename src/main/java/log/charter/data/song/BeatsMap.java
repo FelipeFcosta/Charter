@@ -18,6 +18,7 @@ import log.charter.data.song.notes.ChordNote;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.notes.Note;
 import log.charter.data.song.position.FractionalPosition;
+import log.charter.data.song.position.time.ConstantPosition;
 import log.charter.data.song.position.time.IConstantPosition;
 import log.charter.data.song.position.time.Position;
 import log.charter.data.song.position.virtual.IVirtualConstantPosition;
@@ -29,6 +30,14 @@ import log.charter.util.data.Fraction;
 import log.charter.util.grid.GridPosition;
 
 public class BeatsMap {
+	/**
+	 * When trimming sustain so it does not cross the next note, the latest allowed end
+	 * is this many milliseconds before the next note's start. Using time (not
+	 * {@link GridPosition}) keeps saved note lengths stable when the editor grid
+	 * size changes.
+	 */
+	private static final double MIN_GAP_BEFORE_NEXT_NOTE_MS = 1.0;
+
 	public enum DistanceType {
 		MILISECONDS(Label.DISTANCE_TYPE_MILISECONDS), //
 		BEATS(Label.DISTANCE_TYPE_BEATS), //
@@ -320,7 +329,7 @@ public class BeatsMap {
 		}
 
 		public IVirtualConstantPosition getMaxPositionBefore(final IVirtualConstantPosition position) {
-			return addGrid(position, -1);
+			return IVirtualConstantPosition.add(this, position, new ConstantPosition(-MIN_GAP_BEFORE_NEXT_NOTE_MS));
 		}
 
 		public IVirtualConstantPosition getMinEndPositionAfter(final IVirtualConstantPosition position) {
