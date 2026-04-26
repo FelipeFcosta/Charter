@@ -157,11 +157,9 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		}
 
 		if (isDoubleClick && clickData.pressHighlight.handShape != null) {
+			// No addUndo for edit-only: cancel must not call undo (same pattern as FHP / event point panes).
 			new HandShapePane(chartData, charterFrame, chordTemplatesEditorTab, clickData.pressHighlight.handShape,
-					() -> {
-						undoSystem.undo();
-						undoSystem.removeRedo();
-					});
+					() -> {});
 		}
 	}
 
