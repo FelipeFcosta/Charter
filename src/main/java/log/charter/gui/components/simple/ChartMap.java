@@ -76,7 +76,7 @@ public class ChartMap extends Component implements Initiable, MouseListener, Mou
 				break;
 		}
 
-		if (modeManager.getMode() != EditMode.EMPTY) {
+		if (modeManager.getMode() != EditMode.EMPTY && modeManager.getMode() != EditMode.VOCALS) {
 			drawEventPointsAndToneChanges(g);
 		}
 
