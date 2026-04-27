@@ -193,16 +193,36 @@ public class GuitarModeHandler implements ModeHandler {
 		return null;
 	}
 
-	private void applyHandShapeTemplateIfMatches(final FractionalPosition position, final ChordTemplate chordTemplate) {
+	private boolean applyHandShapeTemplateIfMatches(final FractionalPosition position, final ChordTemplate chordTemplate) {
 		final ChordTemplate handShapeTemplate = getHandShapeTemplate(position);
 		if (handShapeTemplate == null) {
-			return;
+			return false;
 		}
 
-		if (handShapeTemplate.frets.equals(chordTemplate.frets)) {
-			chordTemplate.chordName = handShapeTemplate.chordName;
-			chordTemplate.fingers = new HashMap2<>(handShapeTemplate.fingers);
+		boolean isSubset = true;
+		for (final int string : chordTemplate.frets.keySet()) {
+			if (!handShapeTemplate.frets.containsKey(string)
+					|| !handShapeTemplate.frets.get(string).equals(chordTemplate.frets.get(string))) {
+				isSubset = false;
+				break;
+			}
 		}
+
+		if (isSubset) {
+			chordTemplate.fingers.clear();
+			for (final int string : chordTemplate.frets.keySet()) {
+				if (handShapeTemplate.fingers.containsKey(string)) {
+					chordTemplate.fingers.put(string, handShapeTemplate.fingers.get(string));
+				}
+			}
+
+			if (handShapeTemplate.frets.equals(chordTemplate.frets)) {
+				chordTemplate.chordName = handShapeTemplate.chordName;
+			}
+			return true;
+		}
+		
+		return false;
 	}
 
 	private void applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
@@ -258,8 +278,9 @@ public class GuitarModeHandler implements ModeHandler {
 			}
 
 			setSuggestedFingers(chordTemplate);
-			applyHandShapeTemplateIfMatches(position, chordTemplate);
-			applyFirstTimelineChordTemplateIfMatches(chordTemplate);
+			if (!applyHandShapeTemplateIfMatches(position, chordTemplate)) {
+				applyFirstTimelineChordTemplateIfMatches(chordTemplate);
+			}
 
 			final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 			chordOrNote.chord().updateTemplate(newTemplateId, chordTemplate);
@@ -271,8 +292,9 @@ public class GuitarModeHandler implements ModeHandler {
 			chordTemplate.frets.put(chordOrNote.note().string, chordOrNote.note().fret);
 			chordTemplate.frets.put(string, getDefaultFretForPosition(position, string));
 			setSuggestedFingers(chordTemplate);
-			applyHandShapeTemplateIfMatches(position, chordTemplate);
-			applyFirstTimelineChordTemplateIfMatches(chordTemplate);
+			if (!applyHandShapeTemplateIfMatches(position, chordTemplate)) {
+				applyFirstTimelineChordTemplateIfMatches(chordTemplate);
+			}
 
 			final int chordId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
 			sounds.set(id, chordOrNote.asChord(chordId, chordTemplate));
