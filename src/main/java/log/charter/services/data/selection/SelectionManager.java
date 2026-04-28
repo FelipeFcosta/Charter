@@ -271,7 +271,7 @@ public class SelectionManager implements Initiable {
 		// Check if clicking on an already-selected chord to select a specific note
 		if (highlight.type == PositionType.GUITAR_NOTE && !ctrl && !shift) {
 			final Set<Integer> selectedIds = accessor(PositionType.GUITAR_NOTE).getSelectedIdsSet(PositionType.GUITAR_NOTE);
-			if (selectedIds.contains(highlight.id) && highlight.chordOrNote != null
+			if (selectedIds.size() == 1 && selectedIds.contains(highlight.id) && highlight.chordOrNote != null
 					&& highlight.chordOrNote.isChord()) {
 				// Clicking on an already-selected chord - select specific string
 				final int clickedString = yToString(clickData.pressPosition.y, chartData.currentStrings());
