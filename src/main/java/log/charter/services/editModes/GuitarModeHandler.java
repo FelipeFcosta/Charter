@@ -225,7 +225,7 @@ public class GuitarModeHandler implements ModeHandler {
 		return false;
 	}
 
-	private void applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
+	private boolean applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
 		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
 		for (final ChordOrNote sound : chartData.currentSounds()) {
 			if (!sound.isChord()) {
@@ -236,9 +236,23 @@ public class GuitarModeHandler implements ModeHandler {
 			if (existing.frets.equals(chordTemplate.frets)) {
 				chordTemplate.chordName = existing.chordName;
 				chordTemplate.fingers = new HashMap2<>(existing.fingers);
-				return;
+				return true;
 			}
 		}
+		
+		return false;
+	}
+
+	private boolean applyChordLibraryTemplateIfMatches(final ChordTemplate chordTemplate) {
+		for (final ChordTemplate libraryChord : log.charter.data.ChordLibrary.getInstance().getChords()) {
+			if (libraryChord.frets.equals(chordTemplate.frets)) {
+				chordTemplate.chordName = libraryChord.chordName;
+				chordTemplate.fingers = new HashMap2<>(libraryChord.fingers);
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	private int addOrRemoveSingleNote(final FractionalPosition position, final int string, final Integer id,
@@ -279,7 +293,9 @@ public class GuitarModeHandler implements ModeHandler {
 
 			setSuggestedFingers(chordTemplate);
 			if (!applyHandShapeTemplateIfMatches(position, chordTemplate)) {
-				applyFirstTimelineChordTemplateIfMatches(chordTemplate);
+				if (!applyFirstTimelineChordTemplateIfMatches(chordTemplate)) {
+					applyChordLibraryTemplateIfMatches(chordTemplate);
+				}
 			}
 
 			final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);
@@ -293,7 +309,9 @@ public class GuitarModeHandler implements ModeHandler {
 			chordTemplate.frets.put(string, getDefaultFretForPosition(position, string));
 			setSuggestedFingers(chordTemplate);
 			if (!applyHandShapeTemplateIfMatches(position, chordTemplate)) {
-				applyFirstTimelineChordTemplateIfMatches(chordTemplate);
+				if (!applyFirstTimelineChordTemplateIfMatches(chordTemplate)) {
+					applyChordLibraryTemplateIfMatches(chordTemplate);
+				}
 			}
 
 			final int chordId = chartData.currentArrangement().getChordTemplateIdWithSave(chordTemplate);

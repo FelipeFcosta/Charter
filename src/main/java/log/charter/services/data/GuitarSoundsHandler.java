@@ -139,7 +139,7 @@ public class GuitarSoundsHandler {
 		return false;
 	}
 
-	private void applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
+	private boolean applyFirstTimelineChordTemplateIfMatches(final ChordTemplate chordTemplate) {
 		final List<ChordTemplate> chordTemplates = chartData.currentChordTemplates();
 		for (final ChordOrNote sound : chartData.currentSounds()) {
 			if (!sound.isChord()) {
@@ -150,9 +150,23 @@ public class GuitarSoundsHandler {
 			if (existing.frets.equals(chordTemplate.frets)) {
 				chordTemplate.chordName = existing.chordName;
 				chordTemplate.fingers = new HashMap2<>(existing.fingers);
-				return;
+				return true;
 			}
 		}
+		
+		return false;
+	}
+
+	private boolean applyChordLibraryTemplateIfMatches(final ChordTemplate chordTemplate) {
+		for (final ChordTemplate libraryChord : log.charter.data.ChordLibrary.getInstance().getChords()) {
+			if (libraryChord.frets.equals(chordTemplate.frets)) {
+				chordTemplate.chordName = libraryChord.chordName;
+				chordTemplate.fingers = new HashMap2<>(libraryChord.fingers);
+				return true;
+			}
+		}
+		
+		return false;
 	}
 
 	private boolean validFretChange(final List<Selection<ChordOrNote>> selected, final int fretChange) {
@@ -209,7 +223,9 @@ public class GuitarSoundsHandler {
 		final ChordTemplate oldTemplate = chartData.currentArrangement().chordTemplates.get(chord.templateId());
 		final ChordTemplate newTemplate = moveTemplateFrets(oldTemplate, fretChange);
 		if (!applyHandShapeTemplateIfMatches(sound.position(), newTemplate)) {
-			applyFirstTimelineChordTemplateIfMatches(newTemplate);
+			if (!applyFirstTimelineChordTemplateIfMatches(newTemplate)) {
+				applyChordLibraryTemplateIfMatches(newTemplate);
+			}
 		}
 
 		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
@@ -313,7 +329,9 @@ public class GuitarSoundsHandler {
 		}
 		setChordName(newTemplate);
 		if (!applyHandShapeTemplateIfMatches(sound.position(), newTemplate)) {
-			applyFirstTimelineChordTemplateIfMatches(newTemplate);
+			if (!applyFirstTimelineChordTemplateIfMatches(newTemplate)) {
+				applyChordLibraryTemplateIfMatches(newTemplate);
+			}
 		}
 
 		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
@@ -364,7 +382,9 @@ public class GuitarSoundsHandler {
 		}
 		setChordName(newTemplate);
 		if (!applyHandShapeTemplateIfMatches(sound.position(), newTemplate)) {
-			applyFirstTimelineChordTemplateIfMatches(newTemplate);
+			if (!applyFirstTimelineChordTemplateIfMatches(newTemplate)) {
+				applyChordLibraryTemplateIfMatches(newTemplate);
+			}
 		}
 
 		final int newTemplateId = chartData.currentArrangement().getChordTemplateIdWithSave(newTemplate);
