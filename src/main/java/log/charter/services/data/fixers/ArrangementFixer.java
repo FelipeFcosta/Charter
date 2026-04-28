@@ -448,6 +448,48 @@ public class ArrangementFixer {
 	}
 
 	/**
+	 * Makes sure that distinct handshapes that touch each other exactly
+	 * have a small gap (5 ms) so they don't merge visually.
+	 */
+	private void separateDistinctTouchingHandShapes(final List<HandShape> handShapes) {
+		if (handShapes.size() < 2) {
+			return;
+		}
+
+		handShapes.sort(IConstantFractionalPosition::compareTo);
+
+		for (int i = 0; i < handShapes.size(); i++) {
+			final HandShape current = handShapes.get(i);
+			if (current.templateId == null) {
+				continue;
+			}
+
+			double currentEndMs = current.endPosition().getPosition(chartData.beats());
+
+			for (int j = i + 1; j < handShapes.size(); j++) {
+				final HandShape next = handShapes.get(j);
+				if (next.templateId == null) {
+					continue;
+				}
+
+				if (current.templateId.equals(next.templateId)) {
+					continue;
+				}
+
+				double nextStartMs = next.position().getPosition(chartData.beats());
+
+				if (Math.abs(currentEndMs - nextStartMs) < 1.0) {
+					double newEndMs = nextStartMs - 5.0;
+					if (newEndMs > current.position().getPosition(chartData.beats())) {
+						current.endPosition(FractionalPosition.fromTime(chartData.beats(), newEndMs));
+						currentEndMs = newEndMs;
+					}
+				}
+			}
+		}
+	}
+
+	/**
 	 * Public method to fix same-template handshape overlaps.
 	 * Called when handshapes are modified (scroll extend, drag, etc.)
 	 */
@@ -541,11 +583,14 @@ public class ArrangementFixer {
 		// Note: fixSameTemplateHandShapeOverlaps will sort handshapes internally
 		fixSameTemplateHandShapeOverlaps(level.handShapes);
 		
-		// Remove any zero-duration handshapes that may have been created by truncation
-		level.handShapes.removeIf(hs -> hs.position().compareTo(hs.endPosition()) >= 0);
-
 		addMissingFHPs(arrangement, level);
 		addMissingHandShapes(arrangement, level);
+
+		// Separate touching distinct handshapes so they won't seamlessly join
+		separateDistinctTouchingHandShapes(level.handShapes);
+
+		// Remove any zero-duration handshapes that may have been created by truncation
+		level.handShapes.removeIf(hs -> hs.position().compareTo(hs.endPosition()) >= 0);
 
 		joinSimilarLinkedNotes(level);
 		fixNoteLengths(level.sounds);
