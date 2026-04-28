@@ -403,6 +403,7 @@ public class Localization {
 		TOGGLE_VIBRATO_INDEPENDENTLY("Toggle vibrato independently"), //
 		TOGGLE_TREMOLO("Toggle tremolo"), //
 		TOGGLE_TREMOLO_INDEPENDENTLY("Toggle tremolo independently"), //
+		TOGGLE_UNPITCHED_SLIDE("Toggle unpitched slide"), //
 		TOGGLE_LINK_NEXT("Toggle link next"), //
 		TOGGLE_LINK_NEXT_BEFORE("Toggle link next before"), //
 		TOGGLE_LINK_NEXT_INDEPENDENTLY("Toggle link next independently"), //

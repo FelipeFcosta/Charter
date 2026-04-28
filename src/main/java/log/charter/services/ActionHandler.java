@@ -438,6 +438,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.TOGGLE_TREMOLO, guitarSoundsStatusesHandler::toggleTremolo);
 		actionHandlers.put(Action.TOGGLE_TREMOLO_INDEPENDENTLY,
 				guitarSoundsStatusesHandler::toggleTremoloIndependently);
+		actionHandlers.put(Action.TOGGLE_UNPITCHED_SLIDE, guitarSoundsStatusesHandler::toggleUnpitchedSlide);
 		actionHandlers.put(Action.TOGGLE_VIBRATO, guitarSoundsStatusesHandler::toggleVibrato);
 		actionHandlers.put(Action.TOGGLE_VIBRATO_INDEPENDENTLY,
 				guitarSoundsStatusesHandler::toggleVibratoIndependently);

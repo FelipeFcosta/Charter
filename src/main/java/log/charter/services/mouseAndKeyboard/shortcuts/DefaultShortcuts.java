@@ -126,8 +126,7 @@ public class DefaultShortcuts extends ShortcutList {
 		super.set(Action.TOGGLE_REPEAT_START, new Shortcut(KeyEvent.VK_OPEN_BRACKET));
 		super.set(Action.TOGGLE_REPEATER, new Shortcut(KeyEvent.VK_F6));
 		super.set(Action.TOGGLE_TREMOLO, new Shortcut(KeyEvent.VK_T));
-		super.set(Action.TOGGLE_TREMOLO_INDEPENDENTLY, new Shortcut(KeyEvent.VK_T).alt());
-		super.set(Action.TOGGLE_VIBRATO, new Shortcut(KeyEvent.VK_V));
+		super.set(Action.TOGGLE_TREMOLO_INDEPENDENTLY, new Shortcut(KeyEvent.VK_T).alt());		super.set(Action.TOGGLE_UNPITCHED_SLIDE, new Shortcut(KeyEvent.VK_U));		super.set(Action.TOGGLE_VIBRATO, new Shortcut(KeyEvent.VK_V));
 		super.set(Action.TOGGLE_VIBRATO_INDEPENDENTLY, new Shortcut(KeyEvent.VK_V).alt());
 		super.set(Action.TOGGLE_WAVEFORM_GRAPH, new Shortcut(KeyEvent.VK_F5));
 		super.set(Action.TOGGLE_WORD_PART, new Shortcut(KeyEvent.VK_W));

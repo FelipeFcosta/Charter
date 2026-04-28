@@ -348,6 +348,43 @@ public class GuitarSoundsStatusesHandler {
 		currentSelectionEditor.selectionChanged(false);
 	}
 
+	public void toggleUnpitchedSlide() {
+		final ISelectionAccessor<ChordOrNote> selectedAccessor = selectionManager.accessor(PositionType.GUITAR_NOTE);
+		if (!selectedAccessor.isSelected()) {
+			return;
+		}
+
+		undoSystem.addUndo();
+
+		boolean changed = false;
+		for (final Selection<ChordOrNote> selection : selectedAccessor.getSelected()) {
+			final ChordOrNote sound = selection.selectable;
+			if (sound.length().equals(log.charter.data.song.position.FractionalPosition.zero)) {
+				continue;
+			}
+			if (sound.isNote()) {
+				if (sound.note().slideTo != null) {
+					sound.note().unpitchedSlide = !sound.note().unpitchedSlide;
+					changed = true;
+				}
+			} else {
+				for (final log.charter.data.song.notes.ChordNote chordNote : sound.chord().chordNotes.values()) {
+					if (chordNote.slideTo != null) {
+						chordNote.unpitchedSlide = !chordNote.unpitchedSlide;
+						changed = true;
+					}
+				}
+			}
+		}
+
+		if (changed) {
+			currentSelectionEditor.selectionChanged(false);
+		} else {
+			undoSystem.undo();
+			undoSystem.removeRedo();
+		}
+	}
+
 	public void toggleLinkNextBefore() {
 		final ISelectionAccessor<ChordOrNote> selectedAccessor = selectionManager.accessor(PositionType.GUITAR_NOTE);
 		if (!selectedAccessor.isSelected()) {

@@ -127,6 +127,7 @@ public class DefaultEofShortcuts extends ShortcutList {
 		super.set(Action.TOGGLE_REPEATER, null);
 		super.set(Action.TOGGLE_TREMOLO, null);
 		super.set(Action.TOGGLE_TREMOLO_INDEPENDENTLY, new Shortcut(KeyEvent.VK_O).ctrl().shift());
+		super.set(Action.TOGGLE_UNPITCHED_SLIDE, new Shortcut(KeyEvent.VK_U));
 		super.set(Action.TOGGLE_VIBRATO, null);
 		super.set(Action.TOGGLE_VIBRATO_INDEPENDENTLY, new Shortcut(KeyEvent.VK_V).shift());
 		super.set(Action.TOGGLE_WAVEFORM_GRAPH, new Shortcut(KeyEvent.VK_F5));

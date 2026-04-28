@@ -81,6 +81,7 @@ public enum ShortcutConfigGroup {
 			Action.TOGGLE_MUTE_INDEPENDENTLY, //
 			Action.TOGGLE_TREMOLO, //
 			Action.TOGGLE_TREMOLO_INDEPENDENTLY, //
+			Action.TOGGLE_UNPITCHED_SLIDE, //
 			Action.TOGGLE_VIBRATO, //
 			Action.TOGGLE_VIBRATO_INDEPENDENTLY), //
 	OTHER(Label.OTHER, //

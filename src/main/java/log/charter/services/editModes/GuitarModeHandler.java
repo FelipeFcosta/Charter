@@ -478,7 +478,7 @@ public class GuitarModeHandler implements ModeHandler {
 				}
 			} else if (sound.isChord()) {
 				final Chord chord = sound.chord();
-				final ChordTemplate template = chartData.currentArrangementLevel().chordTemplates.get(chord.templateId());
+				final ChordTemplate template = chartData.currentChordTemplates().get(chord.templateId());
 				for (final Map.Entry<Integer, ChordNote> entry : chord.chordNotes.entrySet()) {
 					final int string = entry.getKey();
 					final ChordNote chordNote = entry.getValue();
