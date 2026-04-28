@@ -8,6 +8,7 @@ import static log.charter.util.CollectionUtils.lastBeforeEqual;
 import static log.charter.util.Utils.nvl;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import log.charter.data.ChartData;
@@ -19,6 +20,8 @@ import log.charter.data.song.EventPoint;
 import log.charter.data.song.FHP;
 import log.charter.data.song.HandShape;
 import log.charter.data.song.ToneChange;
+import log.charter.data.song.notes.Chord;
+import log.charter.data.song.notes.ChordNote;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.notes.Note;
 import log.charter.data.song.position.FractionalPosition;
@@ -37,6 +40,7 @@ import log.charter.services.data.ChartItemsHandler;
 import log.charter.services.data.GuitarSoundsHandler;
 import log.charter.services.data.GuitarSoundsStatusesHandler;
 import log.charter.services.data.fixers.ArrangementFixer;
+import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
 import log.charter.services.data.selection.SlideFretLabelHandler;
 import log.charter.services.mouseAndKeyboard.HighlightManager;
@@ -442,6 +446,71 @@ public class GuitarModeHandler implements ModeHandler {
 
 		currentSelectionEditor.selectionChanged(false);
 		lastScrollTime = System.currentTimeMillis();
+	}
+
+	@Override
+	public void changeSlideFret(final int change) {
+		if (System.currentTimeMillis() - lastScrollTime > scrollTimeoutForUndo) {
+			undoSystem.addUndo();
+		}
+
+		boolean changed = false;
+		final List<Selection<ChordOrNote>> selected = selectionManager.getSelected(PositionType.GUITAR_NOTE);
+		for (final Selection<ChordOrNote> selection : selected) {
+			final ChordOrNote sound = selection.selectable;
+			if (sound.isNote()) {
+				final Note note = sound.note();
+				if (note.slideTo != null) {
+					final int newSlide = note.slideTo + change;
+					if (newSlide == note.fret) {
+						note.slideTo = null;
+					} else {
+						note.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+					}
+					changed = true;
+				} else if (change != 0) {
+					final int newSlide = note.fret + change;
+					note.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+					if (note.slideTo == note.fret) {
+						note.slideTo = null;
+					}
+					changed = true;
+				}
+			} else if (sound.isChord()) {
+				final Chord chord = sound.chord();
+				final ChordTemplate template = chartData.currentArrangementLevel().chordTemplates.get(chord.templateId());
+				for (final Map.Entry<Integer, ChordNote> entry : chord.chordNotes.entrySet()) {
+					final int string = entry.getKey();
+					final ChordNote chordNote = entry.getValue();
+					final Integer fret = template.frets.get(string);
+					if (fret == null) {
+						continue;
+					}
+
+					if (chordNote.slideTo != null) {
+						final int newSlide = chordNote.slideTo + change;
+						if (newSlide == fret) {
+							chordNote.slideTo = null;
+						} else {
+							chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+						}
+						changed = true;
+					} else if (change != 0) {
+						final int newSlide = fret + change;
+						chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+						if (chordNote.slideTo.equals(fret)) {
+							chordNote.slideTo = null;
+						}
+						changed = true;
+					}
+				}
+			}
+		}
+
+		if (changed) {
+			currentSelectionEditor.selectionChanged(false);
+			lastScrollTime = System.currentTimeMillis();
+		}
 	}
 
 	@Override

@@ -7,6 +7,8 @@ public interface ModeHandler {
 
 	public void changeLength(int change);
 
+	public default void changeSlideFret(int change) {}
+
 	public void handleNumber(int number);
 
 	public void clearNumbers();

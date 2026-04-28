@@ -392,6 +392,11 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 				return;
 			}
 
+			if (keyboardHandler.alt()) {
+				modeManager.getHandler().changeSlideFret(change);
+				return;
+			}
+
 			modeManager.getHandler().changeLength(change);
 		} catch (final Exception ex) {
 			Logger.error("Exception on mouse wheel moved", ex);
