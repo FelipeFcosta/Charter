@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import log.charter.data.ChartData;
 import log.charter.data.song.Beat;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
+import log.charter.data.song.ChordTemplate;
 import log.charter.data.song.EventPoint;
 import log.charter.data.song.FHP;
 import log.charter.data.song.HandShape;
@@ -367,7 +368,8 @@ public class HighlightData {
 
 	private static HighlightData getNoteAdditionHighlight(final ImmutableBeatsMap beats, final double time,
 			final HighlightManager highlightManager, final ModeManager modeManager,
-			final MouseButtonPressReleaseHandler mouseButtonPressReleaseHandler, final int x, final int y) {
+			final MouseButtonPressReleaseHandler mouseButtonPressReleaseHandler, final int x, final int y,
+			final ChartData chartData, final KeyboardHandler keyboardHandler) {
 		if (modeManager.getMode() != EditMode.GUITAR) {
 			return null;
 		}
@@ -388,8 +390,20 @@ public class HighlightData {
 
 		final List<PositionWithStringOrNoteId> positionsWithStrings = highlightManager
 				.getPositionsWithStrings(pressXTime, highlight.toPosition(beats).position(), pressY, y);
-		final List<HighlightPosition> dragPositions = map(positionsWithStrings,
-				h -> new HighlightPosition(beats, h.position(beats), 0, null, h.string, false));
+		final List<HighlightPosition> dragPositions = new ArrayList<>();
+		for (final PositionWithStringOrNoteId h : positionsWithStrings) {
+			if (keyboardHandler.ctrl() && h.sound == null) {
+				final HandShape hs = chartData.findContainingHandShapeWithTemplate(h.position);
+				if (hs != null && hs.templateId != null) {
+					final ChordTemplate template = chartData.currentChordTemplates().get(hs.templateId);
+					for (final Integer string : template.frets.keySet().stream().sorted().toList()) {
+						dragPositions.add(new HighlightPosition(beats, h.position(beats), 0, null, string, false));
+					}
+					continue;
+				}
+			}
+			dragPositions.add(new HighlightPosition(beats, h.position(beats), 0, null, h.string, false));
+		}
 
 		return new HighlightData(PositionType.GUITAR_NOTE, dragPositions,
 				new HighlightLine(startPosition, endPosition));
@@ -412,7 +426,7 @@ public class HighlightData {
 		final int x = mouseHandler.getMouseX();
 		final int y = mouseHandler.getMouseY();
 		final HighlightData noteAddDragHighlight = getNoteAdditionHighlight(chartData.beats(), time, highlightManager,
-				modeManager, mouseButtonPressReleaseHandler, x, y);
+				modeManager, mouseButtonPressReleaseHandler, x, y, chartData, keyboardHandler);
 		if (noteAddDragHighlight != null) {
 			return noteAddDragHighlight;
 		}
@@ -424,6 +438,24 @@ public class HighlightData {
 				default -> new IdHighlightPosition(highlight.id);
 			};
 			return new HighlightData(highlight.type, id);
+		}
+
+		if (!highlight.existingPosition && keyboardHandler.ctrl()//
+				&& highlight.type == PositionType.GUITAR_NOTE) {
+			final FractionalPosition atGrid = highlight.toFraction(chartData.beats()).position();
+			final HandShape containingHs = chartData.findContainingHandShapeWithTemplate(atGrid);
+			if (containingHs != null && containingHs.templateId != null) {
+				final ChordTemplate template = chartData.currentChordTemplates()
+						.get(containingHs.templateId);
+				final ImmutableBeatsMap beats = chartData.beats();
+				final double hoverPosition = highlight.toPosition(beats).position();
+				final List<HighlightPosition> stringHighlights = template.frets.keySet().stream().sorted()
+						.map(string -> new HighlightPosition(beats, hoverPosition, 0, null, string, false))//
+						.collect(Collectors.toList());
+				if (!stringHighlights.isEmpty()) {
+					return new HighlightData(PositionType.GUITAR_NOTE, stringHighlights);
+				}
+			}
 		}
 
 		final PositionType type = highlight.type;

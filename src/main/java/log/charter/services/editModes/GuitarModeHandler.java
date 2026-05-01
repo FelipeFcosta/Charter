@@ -4,7 +4,6 @@ import static java.lang.System.nanoTime;
 import static log.charter.data.ChordTemplateFingerSetter.setSuggestedFingers;
 import static log.charter.gui.chartPanelDrawers.common.DrawerUtils.yToString;
 import static log.charter.util.CollectionUtils.lastBefore;
-import static log.charter.util.CollectionUtils.lastBeforeEqual;
 import static log.charter.util.Utils.nvl;
 
 import java.util.List;
@@ -161,16 +160,30 @@ public class GuitarModeHandler implements ModeHandler {
 	}
 
 	private HandShape findContainingHandShape(final FractionalPosition position) {
-		final List<HandShape> handShapes = chartData.currentHandShapes();
-		Integer id = lastBeforeEqual(handShapes, position).findId();
-		while (id != null) {
-			final HandShape handShape = handShapes.get(id);
-			if (handShape.templateId != null && handShape.endPosition().compareTo(position) >= 0) {
-				return handShape;
-			}
-			id = id > 0 ? id - 1 : null;
+		return chartData.findContainingHandShapeWithTemplate(position);
+	}
+
+	private ChordOrNote addChordSound(final Chord chord) {
+		final List<ChordOrNote> sounds = chartData.currentSounds();
+		final ChordOrNote sound = ChordOrNote.from(chord);
+		final Integer previousId = lastBefore(sounds, sound).findId();
+		final int id = nvl(previousId, -1) + 1;
+		sounds.add(id, sound);
+
+		if (previousId != null) {
+			arrangementFixer.fixSoundLength(previousId, sounds);
 		}
-		return null;
+		selectionManager.addSoundSelection(id);
+
+		for (final int string : chord.chordNotes.keySet()) {
+			final Pair<Integer, ChordOrNote> previousSound = ChordOrNote.findPreviousSoundWithIdOnString(string, id - 1,
+					sounds);
+			if (previousSound != null) {
+				guitarSoundsStatusesHandler.updateLinkedNote(previousSound.a);
+			}
+		}
+
+		return sound;
 	}
 
 	private int getDefaultFretForPosition(final FractionalPosition position, final int string) {
@@ -328,8 +341,18 @@ public class GuitarModeHandler implements ModeHandler {
 
 	private void addSingleNote(final MouseButtonPressReleaseData clickData) {
 		final FractionalPosition position = clickData.pressHighlight.toFraction(chartData.beats()).position();
+		final ChordOrNote existing = clickData.pressHighlight.chordOrNote;
+		if (keyboardHandler.ctrl() && existing == null) {
+			final HandShape hs = chartData.findContainingHandShapeWithTemplate(position);
+			if (hs != null && hs.templateId != null) {
+				final ChordTemplate templateCopy = new ChordTemplate(chartData.currentChordTemplates().get(hs.templateId));
+				final Chord chord = new Chord(position, hs.templateId, templateCopy);
+				addChordSound(chord);
+				return;
+			}
+		}
 		final int string = yToString(clickData.pressPosition.y, chartData.currentStrings());
-		addOrRemoveSingleNote(position, string, clickData.pressHighlight.id, clickData.pressHighlight.chordOrNote);
+		addOrRemoveSingleNote(position, string, clickData.pressHighlight.id, existing);
 	}
 
 	private void addMultipleNotes(final MouseButtonPressReleaseData clickData) {

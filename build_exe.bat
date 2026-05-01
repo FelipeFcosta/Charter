@@ -2,7 +2,7 @@
 
 REM Prompt for version if not provided
 if "%1"=="" (
-    set /p VERSION="Enter version number (e.g., 0.22.16): "
+    set /p VERSION="Enter version number (e.g., 0.22.17): "
 ) else (
     set VERSION=%1
 )

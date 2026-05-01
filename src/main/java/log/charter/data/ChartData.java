@@ -1,5 +1,7 @@
 package log.charter.data;
 
+import static log.charter.util.CollectionUtils.lastBeforeEqual;
+
 import java.io.File;
 import java.util.List;
 
@@ -15,6 +17,7 @@ import log.charter.data.song.HandShape;
 import log.charter.data.song.Level;
 import log.charter.data.song.SongChart;
 import log.charter.data.song.ToneChange;
+import log.charter.data.song.position.FractionalPosition;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.vocals.VocalPath;
 import log.charter.data.undoSystem.UndoSystem;
@@ -142,5 +145,22 @@ public class ChartData {
 
 	public List<HandShape> currentHandShapes() {
 		return currentArrangementLevel().handShapes;
+	}
+
+	/**
+	 * Handshape whose time range covers {@code position} and has a chord template (same resolution as default frets
+	 * when placing notes).
+	 */
+	public HandShape findContainingHandShapeWithTemplate(final FractionalPosition position) {
+		final List<HandShape> handShapes = currentHandShapes();
+		Integer id = lastBeforeEqual(handShapes, position).findId();
+		while (id != null) {
+			final HandShape handShape = handShapes.get(id);
+			if (handShape.templateId != null && handShape.endPosition().compareTo(position) >= 0) {
+				return handShape;
+			}
+			id = id > 0 ? id - 1 : null;
+		}
+		return null;
 	}
 }
