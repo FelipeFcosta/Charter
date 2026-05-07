@@ -72,6 +72,7 @@ public enum ShortcutConfigGroup {
 			Action.SNAP_ALL, //
 			Action.TOGGLE_ACCENT, //
 			Action.TOGGLE_ACCENT_INDEPENDENTLY, //
+			Action.TOGGLE_IGNORE, //
 			Action.TOGGLE_HARMONIC, //
 			Action.TOGGLE_HARMONIC_INDEPENDENTLY, //
 			Action.TOGGLE_HOPO, //

@@ -208,6 +208,7 @@ TOGGLE_HARMONIC=Alternar harmônico
 TOGGLE_HARMONIC_INDEPENDENTLY=Alternar harmônico independentemente
 TOGGLE_ACCENT=Alternar acento
 TOGGLE_ACCENT_INDEPENDENTLY=Alternar acento independentemente
+TOGGLE_IGNORE=Alternar ignorar
 TOGGLE_VIBRATO=Alternar vibrato
 TOGGLE_VIBRATO_INDEPENDENTLY=Alternar vibrato independentemente
 TOGGLE_TREMOLO=Alternar tremolo

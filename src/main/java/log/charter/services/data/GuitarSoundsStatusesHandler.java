@@ -186,6 +186,10 @@ public class GuitarSoundsStatusesHandler {
 				(sound, accent) -> sound.accent = accent);
 	}
 
+	public void toggleIgnore() {
+		cyclicalToggleSound(booleanCycleMap, GuitarSound::ignore, (sound, v) -> sound.ignore(v));
+	}
+
 	private static boolean hasSustain(final CommonNote note) {
 		return note.position().compareTo(note.endPosition()) < 0;
 	}

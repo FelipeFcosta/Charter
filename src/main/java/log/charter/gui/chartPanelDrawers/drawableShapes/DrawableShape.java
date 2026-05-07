@@ -12,6 +12,13 @@ import log.charter.util.data.Position2D;
 public interface DrawableShape {
 	public void draw(final Graphics2D g);
 
+	static DrawableShape withAlpha(final float alpha, final DrawableShape shape) {
+		if (alpha >= 0.999f) {
+			return shape;
+		}
+		return new AlphaCompositeShape(shape, alpha);
+	}
+
 	// Lines
 	public static DrawableShape line(final Position2D startPosition, final Position2D endPosition, final Color color) {
 		return new Line(startPosition, endPosition, color);

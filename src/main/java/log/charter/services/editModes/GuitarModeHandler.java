@@ -8,7 +8,7 @@ import static log.charter.util.Utils.nvl;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
 
 import log.charter.data.ChartData;
 import log.charter.util.collections.HashMap2;
@@ -454,6 +454,52 @@ public class GuitarModeHandler implements ModeHandler {
 				selectionManager.getSelectedElements(PositionType.HAND_SHAPE), chartData.currentHandShapes(), change, false);
 	}
 
+	/**
+	 * After applying {@code change} to slide targets, each string would have this {@code slideTo} (null = none).
+	 * Mirrors {@link #changeSlideFret} chord branch without mutating.
+	 */
+	private static Integer previewChordNoteSlideTarget(final int fret, final Integer slideTo, final int change) {
+		if (slideTo != null) {
+			final int newSlide = slideTo + change;
+			if (newSlide == fret) {
+				return null;
+			}
+			return Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+		}
+		if (change == 0) {
+			return null;
+		}
+		final int newSlide = fret + change;
+		final int clamped = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+		if (clamped == fret) {
+			return null;
+		}
+		return clamped;
+	}
+
+	/**
+	 * Alt+scroll slide edit moves every string in the chord together. If any string cannot move (e.g. slide
+	 * already at 1 and scrolling down), skip the whole chord so strings do not desync.
+	 */
+	private static boolean allChordNotesAllowSlideScroll(final Chord chord, final ChordTemplate template,
+			final int change) {
+		if (change == 0) {
+			return true;
+		}
+		for (final Map.Entry<Integer, ChordNote> entry : chord.chordNotes.entrySet()) {
+			final Integer fret = template.frets.get(entry.getKey());
+			if (fret == null) {
+				continue;
+			}
+			final ChordNote chordNote = entry.getValue();
+			final Integer next = previewChordNoteSlideTarget(fret, chordNote.slideTo, change);
+			if (Objects.equals(chordNote.slideTo, next)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	@Override
 	public void changeLength(int change) {
 		if (keyboardHandler.shift()) {
@@ -502,6 +548,9 @@ public class GuitarModeHandler implements ModeHandler {
 			} else if (sound.isChord()) {
 				final Chord chord = sound.chord();
 				final ChordTemplate template = chartData.currentChordTemplates().get(chord.templateId());
+				if (!allChordNotesAllowSlideScroll(chord, template, change)) {
+					continue;
+				}
 				for (final Map.Entry<Integer, ChordNote> entry : chord.chordNotes.entrySet()) {
 					final int string = entry.getKey();
 					final ChordNote chordNote = entry.getValue();

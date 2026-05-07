@@ -413,6 +413,7 @@ public class ActionHandler implements Initiable {
 				() -> modeManager.getTempoMapModeHandler().switchTSTypingPart());
 		actionHandlers.put(Action.TOGGLE_ACCENT, guitarSoundsStatusesHandler::toggleAccent);
 		actionHandlers.put(Action.TOGGLE_ACCENT_INDEPENDENTLY, guitarSoundsStatusesHandler::toggleAccentIndependently);
+		actionHandlers.put(Action.TOGGLE_IGNORE, guitarSoundsStatusesHandler::toggleIgnore);
 		actionHandlers.put(Action.TOGGLE_ANCHOR, beatsService::toggleAnchor);
 		actionHandlers.put(Action.TOGGLE_BAND_PASS_FILTER, audioHandler::toggleBandPassFilter);
 		actionHandlers.put(Action.TOGGLE_CLAPS, clapsHandler::toggleClaps);

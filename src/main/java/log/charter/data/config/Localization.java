@@ -399,6 +399,7 @@ public class Localization {
 		TOGGLE_HARMONIC_INDEPENDENTLY("Toggle harmonic independently"), //
 		TOGGLE_ACCENT("Toggle accent"), //
 		TOGGLE_ACCENT_INDEPENDENTLY("Toggle accent independently"), //
+		TOGGLE_IGNORE("Toggle ignore"), //
 		TOGGLE_VIBRATO("Toggle vibrato"), //
 		TOGGLE_VIBRATO_INDEPENDENTLY("Toggle vibrato independently"), //
 		TOGGLE_TREMOLO("Toggle tremolo"), //

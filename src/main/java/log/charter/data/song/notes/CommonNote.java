@@ -51,6 +51,16 @@ public class CommonNote implements NoteInterface {
 		return passOtherNotes;
 	}
 
+	public boolean ignore() {
+		if (note instanceof ChordNote chordNote) {
+			return chordNote.parent.ignore;
+		}
+		if (note instanceof Note n) {
+			return n.ignore;
+		}
+		return false;
+	}
+
 	@Override
 	public BassPickingTechnique bassPicking() {
 		return note.bassPicking();

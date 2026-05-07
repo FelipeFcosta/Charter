@@ -38,6 +38,8 @@ import log.charter.gui.chartPanelDrawers.data.EditorNoteDrawingData;
 import log.charter.gui.chartPanelDrawers.drawableShapes.CenteredImage;
 import log.charter.gui.chartPanelDrawers.drawableShapes.CenteredText;
 import log.charter.gui.chartPanelDrawers.drawableShapes.CenteredTextWithBackgroundAndBorder;
+import log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShape;
+import log.charter.gui.chartPanelDrawers.drawableShapes.IgnoredNoteOpacity;
 import log.charter.gui.chartPanelDrawers.drawableShapes.Line;
 import log.charter.gui.chartPanelDrawers.drawableShapes.Text;
 import log.charter.gui.chartPanelDrawers.instruments.guitar.theme.HighwayDrawData;
@@ -135,6 +137,10 @@ public class ModernThemeNotes implements ThemeNotes {
 		noteTails = new ModernThemeNoteTails(data);
 	}
 
+	private void addHeadShape(final DrawableShape shape, final boolean ignore) {
+		data.notes.add(DrawableShape.withAlpha(ignore ? IgnoredNoteOpacity.VALUE : 1f, shape));
+	}
+
 	private void addHopoOrBassTechIcon(final EditorNoteDrawingData note, final int noteY) {
 		BufferedImage img = switch (note.bassPickingTech) {
 			case POP -> popIcon;
@@ -142,7 +148,8 @@ public class ModernThemeNotes implements ThemeNotes {
 			default -> null;
 		};
 		if (img != null) {
-			data.notes.add(centeredImage(new Position2D(note.x + noteHeight / 2, noteY - (int) (noteHeight / 3)), img), note.ignored);
+			addHeadShape(centeredImage(new Position2D(note.x + noteHeight / 2, noteY - (int) (noteHeight / 3)), img),
+					note.ignore);
 			return;
 		}
 
@@ -158,39 +165,39 @@ public class ModernThemeNotes implements ThemeNotes {
 
 		final int iconX = note.x - noteHeight / 2;
 		final int iconY = noteY - (note.hopo == HOPO.PULL_OFF ? noteHeight / 2 : noteHeight / 3);
-		data.notes.add(centeredImage(new Position2D(iconX, iconY), img), note.ignored);
+		addHeadShape(centeredImage(new Position2D(iconX, iconY), img), note.ignore);
 	}
 
-	private void addNoteHighlight(final Harmonic harmonic, final int x, final int y) {
+	private void addNoteHighlight(final Harmonic harmonic, final int x, final int y, final boolean ignore) {
 		final BufferedImage icon = switch (harmonic) {
 			case NORMAL -> harmonicNoteHighlightIcon;
 			case PINCH -> harmonicNoteHighlightIcon;
 			default -> noteHighlightIcon;
 		};
 
-		data.notes.add(new CenteredImage(new Position2D(x, y), icon), note.ignored);
+		addHeadShape(new CenteredImage(new Position2D(x, y), icon), ignore);
 	}
 
-	private void addNoteSelection(final Harmonic harmonic, final int x, final int y) {
+	private void addNoteSelection(final Harmonic harmonic, final int x, final int y, final boolean ignore) {
 		final BufferedImage icon = switch (harmonic) {
 			case NORMAL -> harmonicNoteSelectIcon;
 			case PINCH -> harmonicNoteSelectIcon;
 			default -> noteSelectIcon;
 		};
 
-		data.notes.add(new CenteredImage(new Position2D(x, y), icon), note.ignored);
+		addHeadShape(new CenteredImage(new Position2D(x, y), icon), ignore);
 	}
 
 	private void addLinkedNoteHeadShape(final EditorNoteDrawingData note, final int y) {
 		final int stringId = stringId(note.string, data.strings);
 		final BufferedImage icon = noteIcons[stringId];
 
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon), note.ignored);
+		addHeadShape(new CenteredImage(new Position2D(note.x, y), icon), note.ignore);
 
 		if (note.highlighted) {
-			addNoteHighlight(note.harmonic, note.x, y);
+			addNoteHighlight(note.harmonic, note.x, y, note.ignore);
 		} else if (note.selected) {
-			addNoteSelection(note.harmonic, note.x, y);
+			addNoteSelection(note.harmonic, note.x, y, note.ignore);
 		}
 	}
 
@@ -201,7 +208,7 @@ public class ModernThemeNotes implements ThemeNotes {
 
 		final int stringId = stringId(note.string, data.strings);
 		final BufferedImage accentIcon = (note.harmonic == Harmonic.NONE ? accentIcons : harmonicAccentIcons)[stringId];
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), accentIcon), note.ignored);
+		addHeadShape(new CenteredImage(new Position2D(note.x, y), accentIcon), note.ignore);
 	}
 
 	private void addNoteHeadShape(final EditorNoteDrawingData note, final int y) {
@@ -212,12 +219,12 @@ public class ModernThemeNotes implements ThemeNotes {
 			default -> noteIcons[stringId];
 		};
 
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon), note.ignored);
+		addHeadShape(new CenteredImage(new Position2D(note.x, y), icon), note.ignore);
 
 		if (note.highlighted) {
-			addNoteHighlight(note.harmonic, note.x, y);
+			addNoteHighlight(note.harmonic, note.x, y, note.ignore);
 		} else if (note.selected) {
-			addNoteSelection(note.harmonic, note.x, y);
+			addNoteSelection(note.harmonic, note.x, y, note.ignore);
 		}
 
 		if (note.harmonic == Harmonic.PINCH) {
@@ -225,7 +232,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			final int y0 = y - noteHeight / 2;
 			final int y1 = y + noteHeight / 2;
 			final Color color = getStringBasedColor(StringColorLabelType.LANE, note.string, data.strings).brighter();
-			data.notes.add(new Line(new Position2D(x0, y0), new Position2D(x0, y1), color, 3), note.ignored);
+			addHeadShape(new Line(new Position2D(x0, y0), new Position2D(x0, y1), color, 3), note.ignore);
 		}
 	}
 
@@ -240,17 +247,18 @@ public class ModernThemeNotes implements ThemeNotes {
 			return;
 		}
 
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon), note.ignored);
+		addHeadShape(new CenteredImage(new Position2D(note.x, y), icon), note.ignore);
 	}
 
 	private void addFretNumber(final EditorNoteDrawingData note, final int y) {
 		final Font font = note.fretNumber < 10 ? fretFont : smallFretFont;
 
 		if (note.mute == Mute.FULL) {
-			data.notes.add(new CenteredTextWithBackgroundAndBorder(new Position2D(note.x, y), font,
-					note.fretNumber + "", Color.WHITE, Color.GRAY, Color.LIGHT_GRAY));
+			addHeadShape(new CenteredTextWithBackgroundAndBorder(new Position2D(note.x, y), font,
+					note.fretNumber + "", Color.WHITE, Color.GRAY, Color.LIGHT_GRAY), note.ignore);
 		} else {
-			data.notes.add(new CenteredText(new Position2D(note.x, y), font, note.fretNumber + "", Color.WHITE), note.ignored);
+			addHeadShape(new CenteredText(new Position2D(note.x, y), font, note.fretNumber + "", Color.WHITE),
+					note.ignore);
 		}
 	}
 
@@ -293,11 +301,11 @@ public class ModernThemeNotes implements ThemeNotes {
 		final boolean slideUp = slide && note.slideTo() >= note.fret();
 
 		noteTails.addTailShapeBox(x, length, y, ColorLabel.HIGHLIGHT, slide, slideUp);
-		addNoteHighlight(note.harmonic(), x, y);
+		addNoteHighlight(note.harmonic(), x, y, note.ignore());
 	}
 
 	private void drawHighlightWithoutNote(final int x, final int string) {
-		addNoteHighlight(Harmonic.NONE, x, stringPositions[string]);
+		addNoteHighlight(Harmonic.NONE, x, stringPositions[string], false);
 	}
 
 	@Override
@@ -313,6 +321,6 @@ public class ModernThemeNotes implements ThemeNotes {
 
 	@Override
 	public void addNoteAdditionLine(final Position2D from, final Position2D to) {
-		data.notes.add(new Line(from, to, ColorLabel.NOTE_ADD_LINE), note.ignored);
+		data.notes.add(new Line(from, to, ColorLabel.NOTE_ADD_LINE));
 	}
 }

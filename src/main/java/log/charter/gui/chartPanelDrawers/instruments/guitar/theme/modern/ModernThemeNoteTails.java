@@ -16,8 +16,10 @@ import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.ChartPanelColors.StringColorLabelType;
 import log.charter.data.config.values.InstrumentConfig;
 import log.charter.gui.chartPanelDrawers.data.EditorNoteDrawingData;
+import log.charter.gui.chartPanelDrawers.drawableShapes.DrawableShape;
 import log.charter.gui.chartPanelDrawers.drawableShapes.FadingFilledRectangle;
 import log.charter.gui.chartPanelDrawers.drawableShapes.FadingLine;
+import log.charter.gui.chartPanelDrawers.drawableShapes.IgnoredNoteOpacity;
 import log.charter.gui.chartPanelDrawers.drawableShapes.Line;
 import log.charter.gui.chartPanelDrawers.drawableShapes.ShapePositionWithSize;
 import log.charter.gui.chartPanelDrawers.drawableShapes.SlideFretLabelShape;
@@ -27,6 +29,11 @@ import log.charter.util.data.IntRange;
 import log.charter.util.data.Position2D;
 
 public class ModernThemeNoteTails {
+	private static final float UNPITCHED_TAIL_FILL_START_ALPHA = 1.0f;
+	private static final float UNPITCHED_TAIL_FILL_END_ALPHA = 0.5f;
+	private static final float UNPITCHED_SLIDE_LINE_START_ALPHA = 1.0f;
+	private static final float UNPITCHED_SLIDE_LINE_END_ALPHA = 0.5f;
+
 	private static final Color[] noteTailColors = new Color[InstrumentConfig.maxPossibleStrings];
 	private static Font slideFretFont = new Font(Font.SANS_SERIF, Font.BOLD, noteHeight / 2);
 
@@ -43,6 +50,35 @@ public class ModernThemeNoteTails {
 
 	public ModernThemeNoteTails(final HighwayDrawData data) {
 		this.data = data;
+	}
+
+	private void addTail(final EditorNoteDrawingData note, final DrawableShape shape) {
+		data.noteTails.add(
+				note.ignore ? DrawableShape.withAlpha(IgnoredNoteOpacity.VALUE, shape) : shape);
+	}
+
+	private static float unpitchedFillStartAlpha(final EditorNoteDrawingData note) {
+		return note.ignore
+				? IgnoredNoteOpacity.combineWithFading(IgnoredNoteOpacity.VALUE, UNPITCHED_TAIL_FILL_START_ALPHA)
+				: UNPITCHED_TAIL_FILL_START_ALPHA;
+	}
+
+	private static float unpitchedFillEndAlpha(final EditorNoteDrawingData note) {
+		return note.ignore
+				? IgnoredNoteOpacity.combineWithFading(IgnoredNoteOpacity.VALUE, UNPITCHED_TAIL_FILL_END_ALPHA)
+				: UNPITCHED_TAIL_FILL_END_ALPHA;
+	}
+
+	private static float unpitchedSlideLineStartAlpha(final EditorNoteDrawingData note) {
+		return note.ignore
+				? IgnoredNoteOpacity.combineWithFading(IgnoredNoteOpacity.VALUE, UNPITCHED_SLIDE_LINE_START_ALPHA)
+				: UNPITCHED_SLIDE_LINE_START_ALPHA;
+	}
+
+	private static float unpitchedSlideLineEndAlpha(final EditorNoteDrawingData note) {
+		return note.ignore
+				? IgnoredNoteOpacity.combineWithFading(IgnoredNoteOpacity.VALUE, UNPITCHED_SLIDE_LINE_END_ALPHA)
+				: UNPITCHED_SLIDE_LINE_END_ALPHA;
 	}
 
 	private IntRange getDefaultTailTopBottom(final int y) {
@@ -69,9 +105,10 @@ public class ModernThemeNoteTails {
 		final Position2D slideEnd = new Position2D(slideEndX, slideEndY);
 
 		if (note.unpitchedSlide) {
-			data.noteTails.add(new FadingLine(slideStart, slideEnd, Color.WHITE, lineThickness, 1.0f, 0.5f));
+			data.noteTails.add(new FadingLine(slideStart, slideEnd, Color.WHITE, lineThickness,
+					unpitchedSlideLineStartAlpha(note), unpitchedSlideLineEndAlpha(note)));
 		} else {
-			data.noteTails.add(new Line(slideStart, slideEnd, Color.WHITE, lineThickness));
+			addTail(note, new Line(slideStart, slideEnd, Color.WHITE, lineThickness));
 		}
 
 		final int tailEndFretTextY = note.slideTo < note.fretNumber ? topBottom.max + noteHeight / 3
@@ -94,16 +131,18 @@ public class ModernThemeNoteTails {
 				ColorLabel.SLIDE_UNPITCHED_FRET_TEXT.color());
 	}
 
-	private void addTailBox(final int x, final int length, final int y, final Color color) {
-		addTailBox(x, length, y, color, 1);
+	private void addTailBox(final EditorNoteDrawingData note, final int x, final int length, final int y,
+			final Color color) {
+		addTailBox(note, x, length, y, color, 1);
 	}
 
-	private void addTailBox(final int x, final int length, final int y, final Color color, final int thickness) {
+	private void addTailBox(final EditorNoteDrawingData note, final int x, final int length, final int y,
+			final Color color, final int thickness) {
 		final IntRange topBottom = getDefaultTailTopBottom(y);
 
 		final ShapePositionWithSize position = new ShapePositionWithSize(x, topBottom.min - 1, length,
 				topBottom.max - topBottom.min + 1);
-		data.noteTails.add(strokedRectangle(position, color, thickness));
+		addTail(note, strokedRectangle(position, color, thickness));
 	}
 
 	private void addNormalNoteTailShape(final EditorNoteDrawingData note, final int y) {
@@ -123,14 +162,14 @@ public class ModernThemeNoteTails {
 
 			final int fragmentSize = 8;
 			while (fragmentX <= x + length - fragmentSize) {
-				data.noteTails.add(filledPolygon(color.brighter(), //
+				addTail(note, filledPolygon(color.brighter(), //
 						new Position2D(fragmentX, y0), //
 						new Position2D(fragmentX + fragmentSize / 2, y1), //
 						new Position2D(fragmentX + fragmentSize, y0), //
 						new Position2D(fragmentX + fragmentSize, y2), //
 						new Position2D(fragmentX + fragmentSize / 2, y3), //
 						new Position2D(fragmentX, y2)));
-				data.noteTails.add(filledPolygon(color, //
+				addTail(note, filledPolygon(color, //
 						new Position2D(fragmentX, y0 - 2), //
 						new Position2D(fragmentX + fragmentSize / 2, y1 - 2), //
 						new Position2D(fragmentX + fragmentSize, y0 - 2), //
@@ -142,14 +181,14 @@ public class ModernThemeNoteTails {
 
 			// Add another partial fragment
 			if (fragmentX <= x + length - fragmentSize / 2) {
-				data.noteTails.add(filledPolygon(color.brighter(), //
+				addTail(note, filledPolygon(color.brighter(), //
 						new Position2D(fragmentX, y0), //
 						new Position2D(fragmentX + fragmentSize / 2, y1), //
 						new Position2D(x + length, y0), //
 						new Position2D(x + length, y2), //
 						new Position2D(fragmentX + fragmentSize / 2, y3), //
 						new Position2D(fragmentX, y2)));
-				data.noteTails.add(filledPolygon(color, //
+				addTail(note, filledPolygon(color, //
 						new Position2D(fragmentX, y0 - 2), //
 						new Position2D(fragmentX + fragmentSize / 2, y1 - 2), //
 						new Position2D(x + length - 1, y0 - 2), //
@@ -160,12 +199,12 @@ public class ModernThemeNoteTails {
 
 			// Add another partial half fragment
 			else {
-				data.noteTails.add(filledPolygon(color.brighter(), //
+				addTail(note, filledPolygon(color.brighter(), //
 						new Position2D(fragmentX, y0), //
 						new Position2D(x + length, y1), //
 						new Position2D(x + length, y3), //
 						new Position2D(fragmentX, y2)));
-				data.noteTails.add(filledPolygon(color, //
+				addTail(note, filledPolygon(color, //
 						new Position2D(fragmentX, y0 - 2), //
 						new Position2D(x + length - 1, y1 - 2), //
 						new Position2D(x + length - 1, y3 + 2), //
@@ -175,26 +214,27 @@ public class ModernThemeNoteTails {
 			final ShapePositionWithSize position = new ShapePositionWithSize(x, topBottom.min, length,
 					topBottom.max - topBottom.min);
 			if (note.slideTo != null && note.unpitchedSlide) {
-				data.noteTails.add(new FadingFilledRectangle(position, color, 1.0f, 0.5f));
+				data.noteTails.add(new FadingFilledRectangle(position, color, unpitchedFillStartAlpha(note),
+						unpitchedFillEndAlpha(note)));
 			} else {
-				data.noteTails.add(filledRectangle(position, color));
+				addTail(note, filledRectangle(position, color));
 			}
 		}
 
 		// Define vibrato appearance
 		if (note.vibrato) {
 			final Position2D from = new Position2D(x, y);
-			data.noteTails.add(sine(from, length, tailHeight / 2 - 2, -8, 20, Color.GRAY.brighter(), 2));
+			addTail(note, sine(from, length, tailHeight / 2 - 2, -8, 20, Color.GRAY.brighter(), 2));
 		}
 
 		if (!note.tremolo) {
-			addTailBox(note.x, note.length, y, color.brighter());
+			addTailBox(note, note.x, note.length, y, color.brighter());
 		}
 
 		if (note.highlighted) {
-			addTailBox(note.x, note.length, y, ColorLabel.HIGHLIGHT.color(), 2);
+			addTailBox(note, note.x, note.length, y, ColorLabel.HIGHLIGHT.color(), 2);
 		} else if (note.selected) {
-			addTailBox(note.x, note.length, y, ColorLabel.SELECT.color(), 2);
+			addTailBox(note, note.x, note.length, y, ColorLabel.SELECT.color(), 2);
 		}
 	}
 

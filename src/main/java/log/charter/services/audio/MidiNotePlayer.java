@@ -45,6 +45,13 @@ public class MidiNotePlayer {
 		}
 	}
 
+	/**
+	 * Pitch bend sensitivity sent via RPN (Data Entry MSB = whole semitones up/down). Must be large enough for
+	 * single-string slides (up to {@link log.charter.data.config.values.InstrumentConfig#frets}) plus typical
+	 * bends, vibrato, and cent offset. Was ±12 which capped slides (e.g. 3→24 = 21 semitones) far below the chart.
+	 */
+	private static final int PITCH_BEND_SEMITONE_RANGE = 48;
+
 	private static final int midiZeroDistanceFromC0 = -12;
 	private static final int pitchBendBaseValue = 8192;
 	private static final int pitchBendRange = 8191;
@@ -78,11 +85,10 @@ public class MidiNotePlayer {
 				// Set volume to maximum
 				channels[i].controlChange(7, 127);
 				
-				// Configure pitch bend range to ±12 semitones (1 octave) using RPN
-				// RPN MSB (101) = 0, RPN LSB (100) = 0 selects pitch bend sensitivity
+				// Pitch bend range: enough for max fret span on one string + bends (see PITCH_BEND_SEMITONE_RANGE)
 				channels[i].controlChange(101, 0);  // RPN MSB
 				channels[i].controlChange(100, 0);  // RPN LSB
-				channels[i].controlChange(6, 12);   // Data Entry MSB - semitones (12 = 1 octave)
+				channels[i].controlChange(6, PITCH_BEND_SEMITONE_RANGE);
 				channels[i].controlChange(38, 0);   // Data Entry LSB - cents
 				// Reset RPN to null to avoid accidentally changing settings
 				channels[i].controlChange(101, 127);
@@ -105,15 +111,14 @@ public class MidiNotePlayer {
 	}
 
 	private int getPitchBend(double bendStep) {
-		// Clamp to ±12 semitones (1 octave) which we configured via RPN
-		if (bendStep < -12) {
-			bendStep = -12;
+		if (bendStep < -PITCH_BEND_SEMITONE_RANGE) {
+			bendStep = -PITCH_BEND_SEMITONE_RANGE;
 		}
-		if (bendStep > 12) {
-			bendStep = 12;
+		if (bendStep > PITCH_BEND_SEMITONE_RANGE) {
+			bendStep = PITCH_BEND_SEMITONE_RANGE;
 		}
 
-		return pitchBendBaseValue + (int) (bendStep * pitchBendRange / 12);
+		return pitchBendBaseValue + (int) (bendStep * pitchBendRange / PITCH_BEND_SEMITONE_RANGE);
 	}
 
 	private void playMidiNote(final GuitarSoundType soundType, final int string, final int note, double bendValue) {
@@ -164,13 +169,12 @@ public class MidiNotePlayer {
 				+ chartData.currentArrangement().tuning.getTuning()[string] - actualNote;
 		bendValue += chartData.currentArrangement().centOffset.multiply(new BigDecimal("0.01")).doubleValue();
 
-		// Simply apply pitch bend - no note switching to avoid clicks
-		// Clamp to configured pitch bend range (±12 semitones / 1 octave)
-		if (bendValue > 12.0) {
-			bendValue = 12.0;
+		// Clamp to configured pitch bend range (see PITCH_BEND_SEMITONE_RANGE)
+		if (bendValue > PITCH_BEND_SEMITONE_RANGE) {
+			bendValue = PITCH_BEND_SEMITONE_RANGE;
 		}
-		if (bendValue < -12.0) {
-			bendValue = -12.0;
+		if (bendValue < -PITCH_BEND_SEMITONE_RANGE) {
+			bendValue = -PITCH_BEND_SEMITONE_RANGE;
 		}
 
 		final int pitchBend = getPitchBend(bendValue);

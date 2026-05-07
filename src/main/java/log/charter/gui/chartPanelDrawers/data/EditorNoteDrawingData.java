@@ -42,7 +42,7 @@ public class EditorNoteDrawingData {
 				note.string, note.fret, note.fret + "", //
 				note.accent, note.mute, note.hopo, note.harmonic, note.bassPicking, //
 				bends, note.slideTo, note.unpitchedSlide, note.vibrato, note.tremolo, //
-				selected, highlighted, lastWasLinkNext, wrongLinkNext, note.linkNext);
+				selected, highlighted, lastWasLinkNext, wrongLinkNext, note.linkNext, note.ignore);
 	}
 
 	public static EditorNoteDrawingData fromChordNote(final ImmutableBeatsMap beats, final double time,
@@ -61,7 +61,7 @@ public class EditorNoteDrawingData {
 				string, fret, fretDescription, //
 				chord.accent, chordNote.mute, chordNote.hopo, chordNote.harmonic, BassPickingTechnique.NONE, //
 				bends, chordNote.slideTo, chordNote.unpitchedSlide, chordNote.vibrato, chordNote.tremolo, //
-				selected, highlighted, lastWasLinkNext, wrongLinkNext, chordNote.linkNext);
+				selected, highlighted, lastWasLinkNext, wrongLinkNext, chordNote.linkNext, chord.ignore);
 	}
 
 	public static List<EditorNoteDrawingData> fromChord(final ImmutableBeatsMap beats, final double time,
@@ -113,6 +113,7 @@ public class EditorNoteDrawingData {
 	public final boolean linkPrevious;
 	public final boolean wrongLink;
 	public final boolean linkNext;
+	public final boolean ignore;
 	public final double prebend;
 
 	private EditorNoteDrawingData(final int noteId, final int x, final int length, //
@@ -121,7 +122,7 @@ public class EditorNoteDrawingData {
 			final BassPickingTechnique bassPickingTech, final List<EditorBendValueDrawingData> bendValues,
 			final Integer slideTo, final boolean unpitchedSlide, final boolean vibrato, final boolean tremolo,
 			final boolean selected, final boolean highlighted, final boolean lastWasLinkNext, final boolean wrongLink,
-			final boolean linkNext) {
+			final boolean linkNext, final boolean ignore) {
 		this.noteId = noteId;
 		this.x = x;
 		this.length = lastWasLinkNext ? max(5, length) : length;
@@ -145,6 +146,7 @@ public class EditorNoteDrawingData {
 		linkPrevious = lastWasLinkNext;
 		this.wrongLink = wrongLink;
 		this.linkNext = linkNext;
+		this.ignore = ignore;
 
 		if (this.bendValues.isEmpty()) {
 			prebend = 0;
