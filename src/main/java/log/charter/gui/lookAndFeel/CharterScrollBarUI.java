@@ -18,10 +18,17 @@ import javax.swing.plaf.basic.BasicScrollBarUI;
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 
 public class CharterScrollBarUI extends BasicScrollBarUI {
-	private static final int SCROLLBAR_WIDTH = 17;
+	/** Track / thumb thickness (vertical width and horizontal height). Formerly 17; ~3× thinner. */
+	private static final int SCROLLBAR_WIDTH = Math.round(17f / 3f);
 
 	public static ComponentUI createUI(final JComponent c) {
 		return new CharterScrollBarUI();
+	}
+
+	@Override
+	protected void installDefaults() {
+		super.installDefaults();
+		scrollBarWidth = SCROLLBAR_WIDTH;
 	}
 
 	@Override
@@ -44,14 +51,13 @@ public class CharterScrollBarUI extends BasicScrollBarUI {
 
 		g2d.setColor(ColorLabel.BASE_HIGHLIGHT.color());
 
-		final int thumbWidth = (scrollbar.getOrientation() == JScrollBar.VERTICAL) ? SCROLLBAR_WIDTH
-				: thumbBounds.width;
-		final int thumbHeight = (scrollbar.getOrientation() == JScrollBar.VERTICAL) ? thumbBounds.height
-				: SCROLLBAR_WIDTH;
+		final boolean vertical = scrollbar.getOrientation() == JScrollBar.VERTICAL;
+		final int thumbW = vertical ? SCROLLBAR_WIDTH : thumbBounds.width;
+		final int thumbH = vertical ? thumbBounds.height : SCROLLBAR_WIDTH;
+		final int thumbX = vertical ? thumbBounds.x + (thumbBounds.width - thumbW) / 2 : thumbBounds.x;
+		final int thumbY = vertical ? thumbBounds.y : thumbBounds.y + (thumbBounds.height - thumbH) / 2;
 
-		// thumb
-		final RoundRectangle2D thumbRect = new RoundRectangle2D.Double(thumbBounds.x, thumbBounds.y, thumbWidth,
-				thumbHeight, 0, 0);
+		final RoundRectangle2D thumbRect = new RoundRectangle2D.Double(thumbX, thumbY, thumbW, thumbH, 0, 0);
 		g2d.fill(thumbRect);
 
 		g2d.dispose();
@@ -89,5 +95,6 @@ public class CharterScrollBarUI extends BasicScrollBarUI {
 
 	public static void install() {
 		UIManager.put("ScrollBarUI", CharterScrollBarUI.class.getName());
+		UIManager.put("ScrollBar.width", SCROLLBAR_WIDTH);
 	}
 }
