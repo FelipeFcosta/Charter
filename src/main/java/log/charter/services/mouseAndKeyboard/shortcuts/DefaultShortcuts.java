@@ -48,6 +48,7 @@ public class DefaultShortcuts extends ShortcutList {
 		super.set(Action.MARK_BOOKMARK_8, new Shortcut(KeyEvent.VK_8).ctrl());
 		super.set(Action.MARK_BOOKMARK_9, new Shortcut(KeyEvent.VK_9).ctrl());
 		super.set(Action.MARK_HAND_SHAPE, new Shortcut(KeyEvent.VK_H).ctrl());
+		super.set(Action.MARK_HAND_SHAPE_FROM_NOTES, new Shortcut(KeyEvent.VK_H).ctrl().shift());
 		super.set(Action.MEASURE_ADD, new Shortcut(KeyEvent.VK_INSERT).shift());
 		super.set(Action.MEASURE_REMOVE, new Shortcut(KeyEvent.VK_DELETE).shift());
 		super.set(Action.MOVE_BACKWARD, new Shortcut(KeyEvent.VK_LEFT));

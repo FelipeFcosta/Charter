@@ -85,6 +85,7 @@ class GuitarMenuHandler extends CharterMenuHandler {
 
 		menu.addSeparator();
 		menu.add(createItem(Action.MARK_HAND_SHAPE));
+		menu.add(createItem(Action.MARK_HAND_SHAPE_FROM_NOTES));
 
 		menu.addSeparator();
 		menu.add(createItem(Label.GUITAR_MENU_AUTOCREATE_FHP, this::addFHP));

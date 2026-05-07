@@ -65,6 +65,7 @@ public enum ShortcutConfigGroup {
 			Action.MOVE_FRET_UP, //
 			Action.MOVE_FRET_DOWN, //
 			Action.MARK_HAND_SHAPE, //
+			Action.MARK_HAND_SHAPE_FROM_NOTES, //
 			Action.DOUBLE_GRID, //
 			Action.HALVE_GRID, //
 			Action.SNAP_SELECTED, //

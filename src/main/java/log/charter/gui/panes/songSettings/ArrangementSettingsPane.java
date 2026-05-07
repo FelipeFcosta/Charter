@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -32,6 +33,9 @@ import log.charter.data.song.ChordTemplate;
 import log.charter.data.song.ToneChange;
 import log.charter.data.song.configs.Tuning;
 import log.charter.data.song.configs.Tuning.TuningType;
+import log.charter.data.song.FHP;
+import log.charter.data.song.notes.ChordOrNote;
+import log.charter.data.song.position.FractionalPosition;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.containers.ParamsPane;
 import log.charter.gui.components.simple.CharterSelect;
@@ -517,18 +521,77 @@ public class ArrangementSettingsPane extends ParamsPane {
 						: tuningBefore[string] - tuningAfter[string];
 			}
 
+			// calculate general fret diff for FHPs by averaging out differences as fallback
+			double avgDiffDouble = 0;
+			for (int string = 0; string < tuning.strings(); string++) {
+				avgDiffDouble += fretsDifference[string];
+			}
+			final int avgDiff = (int) Math.round(avgDiffDouble / tuning.strings());
+
+			// pre-calculate FHP shifts before modifying sounds and templates
+			arrangement.levels.forEach(level -> {
+				final int[] fhpDiffs = new int[level.fhps.size()];
+				for (int i = 0; i < level.fhps.size(); i++) {
+					final FHP fhp = level.fhps.get(i);
+					final FractionalPosition endPos = (i + 1 < level.fhps.size()) ? level.fhps.get(i + 1).position() : null;
+
+					int targetString = -1;
+					for (final ChordOrNote sound : level.sounds) {
+						if (sound.position().compareTo(fhp.position()) < 0) {
+							continue;
+						}
+						if (endPos != null && sound.position().compareTo(endPos) >= 0) {
+							break;
+						}
+
+						if (sound.isNote()) {
+							if (sound.note().fret > 0) {
+								targetString = sound.note().string;
+								break;
+							}
+						} else if (sound.isChord()) {
+							final ChordTemplate template = arrangement.chordTemplates.get(sound.chord().templateId());
+							int minFret = Integer.MAX_VALUE;
+							for (final Entry<Integer, Integer> stringAndFret : template.frets.entrySet()) {
+								if (stringAndFret.getValue() > 0 && stringAndFret.getValue() < minFret) {
+									minFret = stringAndFret.getValue();
+									targetString = stringAndFret.getKey();
+								}
+							}
+							if (targetString != -1) {
+								break;
+							}
+						}
+					}
+
+					fhpDiffs[i] = targetString != -1 ? fretsDifference[targetString] : avgDiff;
+				}
+
+				for (int i = 0; i < level.fhps.size(); i++) {
+					level.fhps.get(i).fret = max(1, level.fhps.get(i).fret + fhpDiffs[i]);
+				}
+			});
+
 			arrangement.chordTemplates.forEach(chordTemplate -> changeChordTemplate(chordTemplate, fretsDifference));
 
 			arrangement.levels.forEach(level -> {
 				level.sounds.forEach(sound -> {
-					if (!sound.isNote()) {
-						return;
-					}
-
-					if (sound.note().string >= tuning.strings()) {
-						sound.note().string = tuning.strings() - 1;
-					} else {
-						sound.note().fret = max(0, sound.note().fret + fretsDifference[sound.note().string]);
+					if (sound.isNote()) {
+						if (sound.note().string >= tuning.strings()) {
+							sound.note().string = tuning.strings() - 1;
+						} else {
+							final int diff = fretsDifference[sound.note().string];
+							sound.note().fret = max(0, sound.note().fret + diff);
+							if (sound.note().slideTo != null) {
+								sound.note().slideTo = max(1, sound.note().slideTo + diff);
+							}
+						}
+					} else if (sound.isChord()) {
+						sound.chord().chordNotes.forEach((string, chordNote) -> {
+							if (chordNote.slideTo != null && string < tuning.strings()) {
+								chordNote.slideTo = max(1, chordNote.slideTo + fretsDifference[string]);
+							}
+						});
 					}
 				});
 			});

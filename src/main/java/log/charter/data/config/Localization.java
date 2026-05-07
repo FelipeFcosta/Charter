@@ -408,6 +408,7 @@ public class Localization {
 		TOGGLE_LINK_NEXT_BEFORE("Toggle link next before"), //
 		TOGGLE_LINK_NEXT_INDEPENDENTLY("Toggle link next independently"), //
 		MARK_HAND_SHAPE("Mark hand shape"), //
+		MARK_HAND_SHAPE_FROM_NOTES("Create hand shape from notes"), //
 		GUITAR_MENU_EDIT_HAND_SHAPE("Edit hand shape"), //
 		GUITAR_MENU_AUTOCREATE_FHP("Autocreate Fret Hand Positions"), //
 		TOGGLE_PREVIEW_WINDOW("Windowed preview"), //

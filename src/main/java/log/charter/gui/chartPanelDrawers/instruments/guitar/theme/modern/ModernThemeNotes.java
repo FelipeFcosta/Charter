@@ -142,7 +142,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			default -> null;
 		};
 		if (img != null) {
-			data.notes.add(centeredImage(new Position2D(note.x + noteHeight / 2, noteY - (int) (noteHeight / 3)), img));
+			data.notes.add(centeredImage(new Position2D(note.x + noteHeight / 2, noteY - (int) (noteHeight / 3)), img), note.ignored);
 			return;
 		}
 
@@ -158,7 +158,7 @@ public class ModernThemeNotes implements ThemeNotes {
 
 		final int iconX = note.x - noteHeight / 2;
 		final int iconY = noteY - (note.hopo == HOPO.PULL_OFF ? noteHeight / 2 : noteHeight / 3);
-		data.notes.add(centeredImage(new Position2D(iconX, iconY), img));
+		data.notes.add(centeredImage(new Position2D(iconX, iconY), img), note.ignored);
 	}
 
 	private void addNoteHighlight(final Harmonic harmonic, final int x, final int y) {
@@ -168,7 +168,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			default -> noteHighlightIcon;
 		};
 
-		data.notes.add(new CenteredImage(new Position2D(x, y), icon));
+		data.notes.add(new CenteredImage(new Position2D(x, y), icon), note.ignored);
 	}
 
 	private void addNoteSelection(final Harmonic harmonic, final int x, final int y) {
@@ -178,14 +178,14 @@ public class ModernThemeNotes implements ThemeNotes {
 			default -> noteSelectIcon;
 		};
 
-		data.notes.add(new CenteredImage(new Position2D(x, y), icon));
+		data.notes.add(new CenteredImage(new Position2D(x, y), icon), note.ignored);
 	}
 
 	private void addLinkedNoteHeadShape(final EditorNoteDrawingData note, final int y) {
 		final int stringId = stringId(note.string, data.strings);
 		final BufferedImage icon = noteIcons[stringId];
 
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon));
+		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon), note.ignored);
 
 		if (note.highlighted) {
 			addNoteHighlight(note.harmonic, note.x, y);
@@ -201,7 +201,7 @@ public class ModernThemeNotes implements ThemeNotes {
 
 		final int stringId = stringId(note.string, data.strings);
 		final BufferedImage accentIcon = (note.harmonic == Harmonic.NONE ? accentIcons : harmonicAccentIcons)[stringId];
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), accentIcon));
+		data.notes.add(new CenteredImage(new Position2D(note.x, y), accentIcon), note.ignored);
 	}
 
 	private void addNoteHeadShape(final EditorNoteDrawingData note, final int y) {
@@ -212,7 +212,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			default -> noteIcons[stringId];
 		};
 
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon));
+		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon), note.ignored);
 
 		if (note.highlighted) {
 			addNoteHighlight(note.harmonic, note.x, y);
@@ -225,7 +225,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			final int y0 = y - noteHeight / 2;
 			final int y1 = y + noteHeight / 2;
 			final Color color = getStringBasedColor(StringColorLabelType.LANE, note.string, data.strings).brighter();
-			data.notes.add(new Line(new Position2D(x0, y0), new Position2D(x0, y1), color, 3));
+			data.notes.add(new Line(new Position2D(x0, y0), new Position2D(x0, y1), color, 3), note.ignored);
 		}
 	}
 
@@ -240,7 +240,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			return;
 		}
 
-		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon));
+		data.notes.add(new CenteredImage(new Position2D(note.x, y), icon), note.ignored);
 	}
 
 	private void addFretNumber(final EditorNoteDrawingData note, final int y) {
@@ -250,7 +250,7 @@ public class ModernThemeNotes implements ThemeNotes {
 			data.notes.add(new CenteredTextWithBackgroundAndBorder(new Position2D(note.x, y), font,
 					note.fretNumber + "", Color.WHITE, Color.GRAY, Color.LIGHT_GRAY));
 		} else {
-			data.notes.add(new CenteredText(new Position2D(note.x, y), font, note.fretNumber + "", Color.WHITE));
+			data.notes.add(new CenteredText(new Position2D(note.x, y), font, note.fretNumber + "", Color.WHITE), note.ignored);
 		}
 	}
 
@@ -313,6 +313,6 @@ public class ModernThemeNotes implements ThemeNotes {
 
 	@Override
 	public void addNoteAdditionLine(final Position2D from, final Position2D to) {
-		data.notes.add(new Line(from, to, ColorLabel.NOTE_ADD_LINE));
+		data.notes.add(new Line(from, to, ColorLabel.NOTE_ADD_LINE), note.ignored);
 	}
 }
