@@ -225,8 +225,32 @@ public class MidiNotePlayer {
 		}
 
 		final int strings = chartData.currentStrings();
-		final int midiNote = getMidiNote(string, fret, strings)
+		int midiNote = getMidiNote(string, fret, strings)
 				+ chartData.currentArrangement().tuning.getTuning()[string];
+
+		if (harmonic) {
+			switch (fret) {
+				case 3:
+					midiNote += 28;
+					break;
+				case 4:
+					midiNote += 24;
+					break;
+				case 5:
+				case 9:
+					midiNote += 19;
+					break;
+				case 7:
+				case 16:
+					midiNote += 12;
+					break;
+				case 12:
+				case 19:
+				case 24:
+				default:
+					break;
+			}
+		}
 
 		double bendValue = 0;
 		if (!bendValues.isEmpty()) {
