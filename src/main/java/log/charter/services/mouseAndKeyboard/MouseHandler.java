@@ -340,8 +340,25 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 
 		final List<FHP> fhpsToMove = new ArrayList<>();
 		for (final ChordOrNote sound : positions) {
+			boolean hasSlide = false;
+			boolean hasLinkNext = false;
+			if (sound.isNote()) {
+				hasSlide = sound.note().slideTo != null || sound.note().unpitchedSlide;
+				hasLinkNext = sound.note().linkNext;
+			} else {
+				hasSlide = sound.chord().chordNotes.values().stream()
+						.anyMatch(cn -> cn.slideTo != null || cn.unpitchedSlide);
+				hasLinkNext = sound.chord().chordNotes.values().stream()
+						.anyMatch(cn -> cn.linkNext);
+			}
+
 			for (final FHP fhp : chartData.currentFHPs()) {
 				if (fhp.position().equals(sound.position())) {
+					if (!fhpsToMove.contains(fhp)) {
+						fhpsToMove.add(fhp);
+					}
+				}
+				if (hasSlide && !hasLinkNext && fhp.position().equals(sound.endPosition())) {
 					if (!fhpsToMove.contains(fhp)) {
 						fhpsToMove.add(fhp);
 					}
@@ -353,6 +370,17 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		if (!fhpsToMove.isEmpty()) {
 			chartData.beats().movePositions(fhpsToMove, dragFrom.movementTo(dragTo));
 			chartData.currentFHPs().sort(IVirtualConstantPosition.comparator(chartData.beats()));
+			
+			final List<FHP> fhps = chartData.currentFHPs();
+			for (int i = fhps.size() - 1; i > 0; i--) {
+				if (fhps.get(i).position().equals(fhps.get(i - 1).position())) {
+					if (fhpsToMove.contains(fhps.get(i))) {
+						fhps.remove(i - 1);
+					} else {
+						fhps.remove(i);
+					}
+				}
+			}
 		}
 
 		allPositions.sort(IConstantFractionalPosition::compareTo);

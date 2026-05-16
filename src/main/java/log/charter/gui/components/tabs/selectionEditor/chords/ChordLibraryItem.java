@@ -201,7 +201,7 @@ public class ChordLibraryItem extends JComponent {
 		g2.setFont(NAME_FONT);
 		String name = template.chordName;
 		if (name == null || name.isEmpty()) {
-			name = "(unnamed)";
+			name = "";
 		}
 		if (template.arpeggio) {
 			name += " (arp)";

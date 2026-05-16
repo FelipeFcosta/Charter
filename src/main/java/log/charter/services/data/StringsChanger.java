@@ -242,10 +242,37 @@ public class StringsChanger {
 				}
 
 				for (final ChordOrNote sound : group) {
+					int stringDiffForRelative = 0;
+					boolean hasSlide = false;
+					boolean hasLinkNext = false;
 					if (sound.isNote()) {
+						stringDiffForRelative = stringDifferences.get(sound.note().string);
+						hasSlide = sound.note().slideTo != null || sound.note().unpitchedSlide;
+						hasLinkNext = sound.note().linkNext;
 						moveNote(sound.note());
 					} else {
+						// For chords, use max string's difference or average.
+						// The simplest is to just get it from the lowest string in the chord or simply grab any string since they all usually move similarly
+						for (Integer str : chordTemplates.get(sound.chord().templateId()).frets.keySet()) {
+							stringDiffForRelative = stringDifferences.get(str);
+							break;
+						}
+						hasSlide = sound.chord().chordNotes.values().stream()
+								.anyMatch(cn -> cn.slideTo != null || cn.unpitchedSlide);
+						hasLinkNext = sound.chord().chordNotes.values().stream()
+								.anyMatch(cn -> cn.linkNext);
 						moveChord(sound.chord());
+					}
+
+					for (final log.charter.data.song.FHP fhp : chartData.currentFHPs()) {
+						if (fhp.position().equals(sound.position())) {
+							int newFret = fhp.fret + stringDiffForRelative;
+							fhp.fret = newFret < 1 ? 1 : newFret;
+						}
+						if (hasSlide && !hasLinkNext && fhp.position().equals(sound.endPosition())) {
+							int newFret = fhp.fret + stringDiffForRelative;
+							fhp.fret = newFret < 1 ? 1 : newFret;
+						}
 					}
 				}
 			}

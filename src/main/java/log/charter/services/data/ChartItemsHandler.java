@@ -81,8 +81,21 @@ public class ChartItemsHandler {
 			
 			for (final int id : deletedNoteIds) {
 				final ChordOrNote sound = sounds.get(id);
+				boolean hasSlide = false;
+				if (sound.isNote()) {
+					hasSlide = sound.note().slideTo != null || sound.note().unpitchedSlide;
+				} else {
+					hasSlide = sound.chord().chordNotes.values().stream()
+							.anyMatch(cn -> cn.slideTo != null || cn.unpitchedSlide);
+				}
+
 				for (int i = 0; i < fhps.size(); i++) {
 					if (fhps.get(i).position().equals(sound.position())) {
+						if (!extraFhpIdsToDelete.contains(i)) {
+							extraFhpIdsToDelete.add(i);
+						}
+					}
+					if (hasSlide && fhps.get(i).position().equals(sound.endPosition())) {
 						if (!extraFhpIdsToDelete.contains(i)) {
 							extraFhpIdsToDelete.add(i);
 						}
@@ -152,7 +165,7 @@ public class ChartItemsHandler {
 		final Comparator<IVirtualConstantPosition> comparator = IVirtualConstantPosition.comparator(chartData.beats());
 		for (int i = positions.size() - 1; i > 0; i--) {
 			if (comparator.compare(positions.get(i), positions.get(i - 1)) == 0) {
-				positions.remove(i);
+				positions.remove(i - 1);
 			}
 		}
 	}

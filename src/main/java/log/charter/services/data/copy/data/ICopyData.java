@@ -76,6 +76,17 @@ public interface ICopyData {
 		});
 
 		positions.sort(IConstantFractionalPosition::compareTo);
+		
+		for (int i = positions.size() - 1; i > 0; i--) {
+			if (positions.get(i).position().compareTo(positions.get(i - 1).position()) == 0) {
+				if (positionsToSelect.contains(positions.get(i))) {
+					positions.remove(i - 1);
+				} else {
+					positions.remove(i);
+				}
+			}
+		}
+		
 		selectionManager.addSelectionForPositions(type, positionsToSelect);
 	}
 

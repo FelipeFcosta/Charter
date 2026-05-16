@@ -191,8 +191,21 @@ public class CopyManager {
 		final ICopyData copyData = new SoundsCopyData(copiedChordTemplates, copiedSounds);
 		
 		FullGuitarCopyData fullData = (FullGuitarCopyData) getFullCopyData(from, to);
-		final java.util.Set<FractionalPosition> selectedNotePos = selected.stream()
-				.map(s -> s.position()).collect(Collectors.toSet());
+		final java.util.Set<FractionalPosition> selectedNotePos = new java.util.HashSet<>();
+		for (final ChordOrNote sound : selected) {
+			selectedNotePos.add(sound.position());
+			boolean hasSlide = false;
+			if (sound.isNote()) {
+				hasSlide = sound.note().slideTo != null || sound.note().unpitchedSlide;
+			} else {
+				hasSlide = sound.chord().chordNotes.values().stream()
+						.anyMatch(cn -> cn.slideTo != null || cn.unpitchedSlide);
+			}
+			if (hasSlide) {
+				selectedNotePos.add(sound.endPosition());
+			}
+		}
+
 		final FractionalPosition finalFrom = from;
 		fullData.fhps.fhps.removeIf(copiedFHP -> !selectedNotePos.contains(copiedFHP.fp.add(finalFrom)));
 

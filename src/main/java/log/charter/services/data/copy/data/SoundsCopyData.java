@@ -93,6 +93,17 @@ public class SoundsCopyData implements ICopyData {
 		}
 
 		sounds.sort(IConstantFractionalPosition::compareTo);
+		
+		for (int i = sounds.size() - 1; i > 0; i--) {
+			if (sounds.get(i).position().compareTo(sounds.get(i - 1).position()) == 0) {
+				if (positionsToSelect.contains(sounds.get(i))) {
+					sounds.remove(i - 1);
+				} else {
+					sounds.remove(i);
+				}
+			}
+		}
+		
 		selectionManager.addSelectionForPositions(PositionType.GUITAR_NOTE, positionsToSelect);
 	}
 }

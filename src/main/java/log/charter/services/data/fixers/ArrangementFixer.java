@@ -67,9 +67,9 @@ public class ArrangementFixer {
 
 	private void removeDuplicatesFractional(final List<? extends IConstantFractionalPosition> positions) {
 		final List<IConstantFractionalPosition> positionsToRemove = new ArrayList<>();
-		for (int i = 1; i < positions.size(); i++) {
+		for (int i = positions.size() - 1; i > 0; i--) {
 			if (positions.get(i).position().equals(positions.get(i - 1).position())) {
-				positionsToRemove.add(positions.get(i));
+				positionsToRemove.add(positions.get(i - 1));
 			}
 		}
 
