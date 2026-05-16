@@ -10,9 +10,11 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.List;
+import java.util.ArrayList;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.ZoomUtils;
+import log.charter.data.song.FHP;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.data.song.position.time.Position;
@@ -336,7 +338,22 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		final IConstantFractionalPosition dragTo = findGridPositionClosestToX(clickData.releasePosition.x)
 				.toFraction(chartData.beats());
 
+		final List<FHP> fhpsToMove = new ArrayList<>();
+		for (final ChordOrNote sound : positions) {
+			for (final FHP fhp : chartData.currentFHPs()) {
+				if (fhp.position().equals(sound.position())) {
+					if (!fhpsToMove.contains(fhp)) {
+						fhpsToMove.add(fhp);
+					}
+				}
+			}
+		}
+
 		chartData.beats().moveSounds(positions, dragFrom.movementTo(dragTo));
+		if (!fhpsToMove.isEmpty()) {
+			chartData.beats().movePositions(fhpsToMove, dragFrom.movementTo(dragTo));
+			chartData.currentFHPs().sort(IVirtualConstantPosition.comparator(chartData.beats()));
+		}
 
 		allPositions.sort(IConstantFractionalPosition::compareTo);
 

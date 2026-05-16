@@ -14,6 +14,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import java.util.ArrayList;
+
 import log.charter.data.ChartData;
 import log.charter.data.song.Arrangement;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
@@ -69,6 +71,37 @@ public class ChartItemsHandler {
 
 		if (selectionsToDelete.isEmpty()) {
 			return;
+		}
+
+		if (selectionsToDelete.containsKey(PositionType.GUITAR_NOTE)) {
+			final List<Integer> deletedNoteIds = selectionsToDelete.get(PositionType.GUITAR_NOTE);
+			final List<ChordOrNote> sounds = chartData.currentSounds();
+			final List<FHP> fhps = chartData.currentFHPs();
+			final List<Integer> extraFhpIdsToDelete = new ArrayList<>();
+			
+			for (final int id : deletedNoteIds) {
+				final ChordOrNote sound = sounds.get(id);
+				for (int i = 0; i < fhps.size(); i++) {
+					if (fhps.get(i).position().equals(sound.position())) {
+						if (!extraFhpIdsToDelete.contains(i)) {
+							extraFhpIdsToDelete.add(i);
+						}
+					}
+				}
+			}
+			
+			if (!extraFhpIdsToDelete.isEmpty()) {
+				List<Integer> fhpIds = selectionsToDelete.get(PositionType.FHP);
+				if (fhpIds == null) {
+					fhpIds = new ArrayList<>();
+					selectionsToDelete.put(PositionType.FHP, fhpIds);
+				}
+				for (final int fhpId : extraFhpIdsToDelete) {
+					if (!fhpIds.contains(fhpId)) {
+						fhpIds.add(fhpId);
+					}
+				}
+			}
 		}
 
 		// Now clear selections and add undo

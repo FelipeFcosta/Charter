@@ -189,7 +189,14 @@ public class CopyManager {
 		final List<CopiedSound> copiedSounds = makeCopy(selected, from, CopiedSound::copy);
 
 		final ICopyData copyData = new SoundsCopyData(copiedChordTemplates, copiedSounds);
-		return new CopyData(copyData, getFullCopyData(from, to));
+		
+		FullGuitarCopyData fullData = (FullGuitarCopyData) getFullCopyData(from, to);
+		final java.util.Set<FractionalPosition> selectedNotePos = selected.stream()
+				.map(s -> s.position()).collect(Collectors.toSet());
+		final FractionalPosition finalFrom = from;
+		fullData.fhps.fhps.removeIf(copiedFHP -> !selectedNotePos.contains(copiedFHP.fp.add(finalFrom)));
+
+		return new CopyData(copyData, fullData);
 	}
 
 	private CopyData getGuitarCopyDataHandShapes() {
