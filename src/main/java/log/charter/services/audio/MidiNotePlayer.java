@@ -64,6 +64,7 @@ public class MidiNotePlayer {
 	private int[] lastNotes;
 	private int[] lastActualNotes;
 	private boolean[] lastHarmonic;
+	private boolean[] ringingHarmonics;
 
 	public void init(final ChartData chartData) {
 		this.chartData = chartData;
@@ -83,6 +84,7 @@ public class MidiNotePlayer {
 		lastNotes = new int[channels.length];
 		lastActualNotes = new int[channels.length];
 		lastHarmonic = new boolean[channels.length];
+		ringingHarmonics = new boolean[channels.length];
 			for (int i = 0; i < channels.length; i++) {
 				// Set volume to maximum
 				channels[i].controlChange(7, 127);
@@ -98,6 +100,8 @@ public class MidiNotePlayer {
 				
 				lastNotes[i] = -1;
 				lastActualNotes[i] = -1;
+				lastHarmonic[i] = false;
+				ringingHarmonics[i] = false;
 			}
 
 			available = true;
@@ -159,6 +163,7 @@ public class MidiNotePlayer {
 
 		final MidiChannel channel = channels[string];
 		channel.allNotesOff();
+		ringingHarmonics[string] = false;
 		channel.programChange(soundType.midiProgram);
 
 		// Play the note at the initial bend position
@@ -322,6 +327,14 @@ public class MidiNotePlayer {
 			return;
 		}
 
+		// Cut off any harmonics that were left ringing from a previous note/preview
+		for (int i = 0; i < channels.length; i++) {
+			if (ringingHarmonics[i]) {
+				channels[i].allNotesOff();
+				ringingHarmonics[i] = false;
+			}
+		}
+
 		if (sound.isNote()) {
 			playNote(sound.note());
 		} else {
@@ -336,6 +349,8 @@ public class MidiNotePlayer {
 
 		if (!lastHarmonic[string]) {
 			channels[string].allNotesOff();
+		} else {
+			ringingHarmonics[string] = true;
 		}
 		lastNotes[string] = -1;
 		lastActualNotes[string] = -1;
