@@ -63,6 +63,7 @@ public class MidiNotePlayer {
 	private MidiChannel[] channels;
 	private int[] lastNotes;
 	private int[] lastActualNotes;
+	private boolean[] lastHarmonic;
 
 	public void init(final ChartData chartData) {
 		this.chartData = chartData;
@@ -81,6 +82,7 @@ public class MidiNotePlayer {
 		channels = synthesizer.getChannels();
 		lastNotes = new int[channels.length];
 		lastActualNotes = new int[channels.length];
+		lastHarmonic = new boolean[channels.length];
 			for (int i = 0; i < channels.length; i++) {
 				// Set volume to maximum
 				channels[i].controlChange(7, 127);
@@ -121,7 +123,31 @@ public class MidiNotePlayer {
 		return pitchBendBaseValue + (int) (bendStep * pitchBendRange / PITCH_BEND_SEMITONE_RANGE);
 	}
 
-	private void playMidiNote(final GuitarSoundType soundType, final int string, final int note, double bendValue) {
+	private int getHarmonicShift(final int fret) {
+		// The mathematical physical pitch difference for harmonics.
+		// However, standard MIDI "Guitar Harmonics" patches (Program 31) are naturally very bright
+		// and often sound an octave higher than standard guitar patches. We subtract 12 semitones
+		// to avoid dog-whistle frequencies while maintaining the correct harmonic interval relationships.
+		switch (fret) {
+			case 3:
+				return 28 - 12;
+			case 4:
+				return 24 - 12;
+			case 5:
+			case 9:
+				return 19 - 12;
+			case 7:
+			case 16:
+				return 12 - 12; // 0
+			case 12:
+			case 19:
+			case 24:
+			default:
+				return 0 - 12; // -12
+		}
+	}
+
+	private void playMidiNote(final GuitarSoundType soundType, final int string, final int note, double bendValue, final boolean harmonic) {
 		if (lastNotes[string] != -1) {
 			return;
 		}
@@ -140,6 +166,7 @@ public class MidiNotePlayer {
 		channel.noteOn(note, 127);
 		lastNotes[string] = note;
 		lastActualNotes[string] = note;
+		lastHarmonic[string] = harmonic;
 	}
 
 	private void ensureSynthesizerAvailable() {
@@ -165,8 +192,13 @@ public class MidiNotePlayer {
 		final MidiChannel channel = channels[string];
 
 		int actualNote = lastNotes[string];
-		bendValue += getMidiNote(string, fret, chartData.currentStrings())
-				+ chartData.currentArrangement().tuning.getTuning()[string] - actualNote;
+		int baseNote = getMidiNote(string, fret, chartData.currentStrings())
+				+ chartData.currentArrangement().tuning.getTuning()[string];
+		if (lastHarmonic[string]) {
+			baseNote += getHarmonicShift(fret);
+		}
+		
+		bendValue += baseNote - actualNote;
 		bendValue += chartData.currentArrangement().centOffset.multiply(new BigDecimal("0.01")).doubleValue();
 
 		// Clamp to configured pitch bend range (see PITCH_BEND_SEMITONE_RANGE)
@@ -229,27 +261,7 @@ public class MidiNotePlayer {
 				+ chartData.currentArrangement().tuning.getTuning()[string];
 
 		if (harmonic) {
-			switch (fret) {
-				case 3:
-					midiNote += 28;
-					break;
-				case 4:
-					midiNote += 24;
-					break;
-				case 5:
-				case 9:
-					midiNote += 19;
-					break;
-				case 7:
-				case 16:
-					midiNote += 12;
-					break;
-				case 12:
-				case 19:
-				case 24:
-				default:
-					break;
-			}
+			midiNote += getHarmonicShift(fret);
 		}
 
 		double bendValue = 0;
@@ -261,7 +273,7 @@ public class MidiNotePlayer {
 		}
 		bendValue += chartData.currentArrangement().centOffset.multiply(new BigDecimal("0.01")).doubleValue();
 
-		playMidiNote(soundType, string, midiNote, bendValue);
+		playMidiNote(soundType, string, midiNote, bendValue, harmonic);
 	}
 
 	private String getToneName(final double position) {
@@ -322,9 +334,12 @@ public class MidiNotePlayer {
 			return;
 		}
 
-		channels[string].allNotesOff();
+		if (!lastHarmonic[string]) {
+			channels[string].allNotesOff();
+		}
 		lastNotes[string] = -1;
 		lastActualNotes[string] = -1;
+		lastHarmonic[string] = false;
 	}
 
 	public void stopSound() {
