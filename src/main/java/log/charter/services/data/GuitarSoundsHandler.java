@@ -20,6 +20,7 @@ import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.util.collections.HashMap2;
 import log.charter.data.types.PositionType;
 import log.charter.data.undoSystem.UndoSystem;
+import log.charter.gui.ChartPanel;
 import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
 import log.charter.gui.components.tabs.selectionEditor.CurrentSelectionEditor;
 import log.charter.services.data.selection.Selection;
@@ -29,6 +30,8 @@ import log.charter.util.data.IntRange;
 
 public class GuitarSoundsHandler {
 	private ChartData chartData;
+	private ChartPanel chartPanel;
+	private ChartTimeHandler chartTimeHandler;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
 	private CurrentSelectionEditor currentSelectionEditor;
 	private GuitarSoundsStatusesHandler guitarSoundsStatusesHandler;
@@ -52,6 +55,21 @@ public class GuitarSoundsHandler {
 		return selected;
 	}
 
+	private void centerSelectedIfOut(final List<Selection<ChordOrNote>> selected) {
+		if (selected.isEmpty()) {
+			return;
+		}
+
+		for (final Selection<ChordOrNote> selection : selected) {
+			final int x = chartTimeHandler.positionToX(selection.selectable.position(chartData.beats()));
+			if (x >= 0 && x <= chartPanel.getWidth()) {
+				return;
+			}
+		}
+
+		chartTimeHandler.nextTime(selected.get(0).selectable.position(chartData.beats()));
+	}
+
 	public void moveStringsWithoutFretChange(final int stringChange) {
 		final int strings = chartData.currentStrings();
 		final IntRange stringRange = new IntRange(max(0, -stringChange), strings - 1 - max(0, stringChange));
@@ -62,6 +80,7 @@ public class GuitarSoundsHandler {
 
 		stringsChanger.new Action(chartData.currentArrangement().tuning, stringRange, stringChange, false)
 				.moveStrings(selected);
+		centerSelectedIfOut(selected);
 	}
 
 	public void moveStringsWithFretChange(final int stringChange) {
@@ -73,6 +92,7 @@ public class GuitarSoundsHandler {
 		}
 		stringsChanger.new Action(chartData.currentArrangement().tuning, stringRange, stringChange, true)
 				.moveStrings(selected);
+		centerSelectedIfOut(selected);
 	}
 
 	private void setChordName(final ChordTemplate template) {

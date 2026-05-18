@@ -92,6 +92,21 @@ public class GuitarSoundsStatusesHandler {
 				.orElse(defaultValue));
 	}
 
+	private void centerSelectedIfOut(final List<Selection<ChordOrNote>> selected) {
+		if (selected.isEmpty()) {
+			return;
+		}
+
+		for (final Selection<ChordOrNote> selection : selected) {
+			final int x = chartTimeHandler.positionToX(selection.selectable.position(chartData.beats()));
+			if (x >= 0 && x <= chartPanel.getWidth()) {
+				return;
+			}
+		}
+
+		chartTimeHandler.nextTime(selected.get(0).selectable.position(chartData.beats()));
+	}
+
 	public <T> void cyclicalToggleNotes(final Map<T, T> cycleMap, final Function<CommonNote, T> getter,
 			final BiConsumer<CommonNote, T> setter, final T defaultValue) {
 		final ISelectionAccessor<ChordOrNote> selectedAccessor = selectionManager.accessor(PositionType.GUITAR_NOTE);
@@ -106,6 +121,7 @@ public class GuitarSoundsStatusesHandler {
 		selected.forEach(selectedValue -> selectedValue.selectable.notes()//
 				.forEach(note -> setter.accept(note, valueToSet)));
 		currentSelectionEditor.selectionChanged(false);
+		centerSelectedIfOut(selected);
 	}
 
 	public <T> void independentCyclicalToggleNotes(final Map<T, T> cycleMap, final Function<CommonNote, T> getter,
@@ -122,6 +138,7 @@ public class GuitarSoundsStatusesHandler {
 		selected.forEach(selectedValue -> selectedValue.selectable.notes()//
 				.forEach(note -> setter.accept(note, cycleMap.get(getter.apply(note)))));
 		currentSelectionEditor.selectionChanged(false);
+		centerSelectedIfOut(selected);
 	}
 
 	public <T> void cyclicalToggleSound(final Map<T, T> cycleMap, final Function<GuitarSound, T> getter,
@@ -137,6 +154,7 @@ public class GuitarSoundsStatusesHandler {
 		undoSystem.addUndo();
 		selected.forEach(selectedValue -> setter.accept(selectedValue.selectable.asGuitarSound(), valueToSet));
 		currentSelectionEditor.selectionChanged(false);
+		centerSelectedIfOut(selected);
 	}
 
 	public <T> void independentCyclicalToggleSound(final Map<T, T> cycleMap, final Function<GuitarSound, T> getter,
@@ -154,6 +172,7 @@ public class GuitarSoundsStatusesHandler {
 			setter.accept(sound, cycleMap.get(getter.apply(sound)));
 		});
 		currentSelectionEditor.selectionChanged(false);
+		centerSelectedIfOut(selected);
 	}
 
 	public void toggleMute() {
