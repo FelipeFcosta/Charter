@@ -167,7 +167,11 @@ public class ChordTemplateInfo extends JComponent implements MouseListener {
 
 	@Override
 	public void mousePressed(final MouseEvent e) {
-		parent.selectChordTemplate(chordTemplateId);
+		if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1) {
+			parent.searchForChordTemplate(chordTemplateId);
+		} else {
+			parent.selectChordTemplate(chordTemplateId);
+		}
 	}
 
 	@Override

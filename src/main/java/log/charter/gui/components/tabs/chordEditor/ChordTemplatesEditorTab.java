@@ -1,6 +1,7 @@
 package log.charter.gui.components.tabs.chordEditor;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -14,8 +15,10 @@ import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.config.values.InstrumentConfig;
 import log.charter.data.song.ChordTemplate;
+import log.charter.data.song.HandShape;
 import log.charter.data.song.Level;
 import log.charter.data.song.notes.ChordOrNote;
+import log.charter.data.types.PositionType;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.containers.RowedPanel;
@@ -24,7 +27,10 @@ import log.charter.gui.components.tabs.selectionEditor.chords.ChordTemplateEdito
 import log.charter.gui.components.utils.PaneSizes;
 import log.charter.gui.components.utils.PaneSizesBuilder;
 import log.charter.services.CharterContext.Initiable;
+import log.charter.services.data.ChartTimeHandler;
+import log.charter.services.data.selection.SelectionManager;
 import log.charter.services.mouseAndKeyboard.KeyboardHandler;
+import log.charter.util.collections.Pair;
 
 public class ChordTemplatesEditorTab extends RowedPanel implements Initiable {
 	static final int listWidth = 450;
@@ -40,10 +46,13 @@ public class ChordTemplatesEditorTab extends RowedPanel implements Initiable {
 
 	private ChartData chartData;
 	private CharterFrame charterFrame;
+	private ChartTimeHandler chartTimeHandler;
 	private KeyboardHandler keyboardHandler;
+	private SelectionManager selectionManager;
 	private UndoSystem undoSystem;
 
 	private Integer currentChordTemplateId = null;
+	private int searchPositionIndex = -1;
 	private ChordTemplate chordTemplate = new ChordTemplate();
 
 	public ChordTemplatesEditorTab() {
@@ -171,6 +180,98 @@ public class ChordTemplatesEditorTab extends RowedPanel implements Initiable {
 	public void selectChordTemplate(final int id) {
 		currentChordTemplateId = id;
 		setTemplate();
+	}
+
+	private double getPosition(final Pair<PositionType, Integer> item) {
+		if (item.a == PositionType.GUITAR_NOTE) {
+			return chartData.currentSounds().get(item.b).position().getPosition(chartData.beats());
+		} else {
+			return chartData.currentHandShapes().get(item.b).position().getPosition(chartData.beats());
+		}
+	}
+
+	private int findCurrentSelectionIndexInList(final List<Pair<PositionType, Integer>> foundItems) {
+		final List<Integer> selectedNotes = selectionManager.getSelectedIds(PositionType.GUITAR_NOTE);
+		if (selectedNotes.size() == 1) {
+			final int noteId = selectedNotes.get(0);
+			for (int i = 0; i < foundItems.size(); i++) {
+				final Pair<PositionType, Integer> item = foundItems.get(i);
+				if (item.a == PositionType.GUITAR_NOTE && item.b == noteId) {
+					return i;
+				}
+			}
+		}
+
+		final List<Integer> selectedHandShapes = selectionManager.getSelectedIds(PositionType.HAND_SHAPE);
+		if (selectedHandShapes.size() == 1) {
+			final int handShapeId = selectedHandShapes.get(0);
+			for (int i = 0; i < foundItems.size(); i++) {
+				final Pair<PositionType, Integer> item = foundItems.get(i);
+				if (item.a == PositionType.HAND_SHAPE && item.b == handShapeId) {
+					return i;
+				}
+			}
+		}
+
+		return -1;
+	}
+
+	private boolean chordNeedsSelection(final ChordOrNote sound, final int templateId) {
+		final HandShape handShape = chartData.findContainingHandShapeWithTemplate(sound.position());
+		if (handShape == null) {
+			return true;
+		}
+		return handShape.templateId == null || handShape.templateId != templateId;
+	}
+
+	public void searchForChordTemplate(final int id) {
+		if (currentChordTemplateId == null || currentChordTemplateId != id) {
+			searchPositionIndex = -1;
+		}
+
+		selectChordTemplate(id);
+
+		final List<Pair<PositionType, Integer>> foundItems = new ArrayList<>();
+
+		int i = 0;
+		for (final HandShape hs : chartData.currentHandShapes()) {
+			if (hs.templateId != null && hs.templateId == id) {
+				foundItems.add(new Pair<>(PositionType.HAND_SHAPE, i));
+			}
+			i++;
+		}
+
+		i = 0;
+		for (final ChordOrNote sound : chartData.currentSounds()) {
+			if (sound.isChord() && sound.chord().templateId() == id && chordNeedsSelection(sound, id)) {
+				foundItems.add(new Pair<>(PositionType.GUITAR_NOTE, i));
+			}
+			i++;
+		}
+
+		if (foundItems.isEmpty()) {
+			return;
+		}
+
+		foundItems.sort((a, b) -> Double.compare(getPosition(a), getPosition(b)));
+
+		final int currentSelectionIndex = findCurrentSelectionIndexInList(foundItems);
+		if (currentSelectionIndex >= 0) {
+			searchPositionIndex = currentSelectionIndex;
+		}
+
+		searchPositionIndex++;
+		if (searchPositionIndex >= foundItems.size()) {
+			searchPositionIndex = 0;
+		}
+
+		final Pair<PositionType, Integer> target = foundItems.get(searchPositionIndex);
+
+		final double time = getPosition(target);
+		chartTimeHandler.nextTime(time);
+
+		selectionManager.clear();
+		selectionManager.addSelection(target.a, target.b);
 	}
 
 	public Integer getSelectedChordTemplateId() {

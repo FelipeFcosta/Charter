@@ -1,0 +1,1 @@
+import javax.swing.*; import java.awt.event.*; public class test { public static void main(String[] args) { JCheckBox cb = new JCheckBox(); cb.addActionListener(e -> System.out.println("Action performed")); cb.addItemListener(e -> System.out.println("Item state changed")); System.out.println("Calling setSelected..."); cb.setSelected(true); cb.setSelected(false); } }
