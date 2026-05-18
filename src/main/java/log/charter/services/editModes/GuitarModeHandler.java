@@ -6,8 +6,13 @@ import static log.charter.gui.chartPanelDrawers.common.DrawerUtils.yToString;
 import static log.charter.util.CollectionUtils.lastBefore;
 import static log.charter.util.Utils.nvl;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import log.charter.data.song.BendValue;
+import log.charter.data.song.notes.NoteInterface;
 import java.util.Objects;
 
 import log.charter.data.ChartData;
@@ -575,6 +580,86 @@ public class GuitarModeHandler implements ModeHandler {
 						}
 						changed = true;
 					}
+				}
+			}
+		}
+
+		if (changed) {
+			currentSelectionEditor.selectionChanged(false);
+			lastScrollTime = System.currentTimeMillis();
+		}
+	}
+
+	private boolean changeNoteInterfaceBend(final NoteInterface note, final BigDecimal delta) {
+		boolean changed = false;
+		List<BendValue> bendValues = note.bendValues();
+		if (bendValues == null) {
+			bendValues = new ArrayList<>();
+			note.bendValues(bendValues);
+		}
+
+		if (bendValues.isEmpty()) {
+			bendValues.add(new BendValue(note.position(), BigDecimal.ZERO));
+			changed = true;
+		}
+
+		final FractionalPosition targetPos = note.endPosition();
+		BendValue targetBend = null;
+		BendValue lastBend = null;
+
+		for (final BendValue bv : bendValues) {
+			if (bv.position().equals(targetPos)) {
+				targetBend = bv;
+			}
+			if (bv.position().compareTo(targetPos) <= 0) {
+				if (lastBend == null || bv.position().compareTo(lastBend.position()) > 0) {
+					lastBend = bv;
+				}
+			}
+		}
+
+		if (targetBend != null) {
+			BigDecimal newVal = targetBend.bendValue.add(delta);
+			if (newVal.compareTo(BigDecimal.ZERO) < 0) {
+				newVal = BigDecimal.ZERO;
+			}
+			if (!targetBend.bendValue.equals(newVal)) {
+				targetBend.bendValue = newVal;
+				changed = true;
+			}
+		} else {
+			BigDecimal newVal = (lastBend != null ? lastBend.bendValue : BigDecimal.ZERO).add(delta);
+			if (newVal.compareTo(BigDecimal.ZERO) < 0) {
+				newVal = BigDecimal.ZERO;
+			}
+			bendValues.add(new BendValue(targetPos, newVal));
+			bendValues.sort((a, b) -> a.position().compareTo(b.position()));
+			changed = true;
+		}
+
+		return changed;
+	}
+
+	@Override
+	public void changeBendValue(final int change) {
+		if (System.currentTimeMillis() - lastScrollTime > scrollTimeoutForUndo) {
+			undoSystem.addUndo();
+		}
+
+		boolean changed = false;
+		// A bendValue of 1.0 represents a half step (2 quarter steps).
+		// To increment by a quarter step (1/4 bend), bendValue needs to change by 0.5.
+		final BigDecimal delta = new BigDecimal("0.5").multiply(new BigDecimal(change));
+
+		final List<Selection<ChordOrNote>> selected = selectionManager.getSelected(PositionType.GUITAR_NOTE);
+		for (final Selection<ChordOrNote> selection : selected) {
+			final ChordOrNote sound = selection.selectable;
+			if (sound.isNote()) {
+				changed |= changeNoteInterfaceBend(sound.note(), delta);
+			} else if (sound.isChord()) {
+				final Chord chord = sound.chord();
+				for (final ChordNote chordNote : chord.chordNotes.values()) {
+					changed |= changeNoteInterfaceBend(chordNote, delta);
 				}
 			}
 		}

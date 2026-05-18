@@ -438,7 +438,11 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 			}
 
 			if (keyboardHandler.alt()) {
-				modeManager.getHandler().changeSlideFret(change);
+				if (keyboardHandler.shift()) {
+					modeManager.getHandler().changeBendValue(change);
+				} else {
+					modeManager.getHandler().changeSlideFret(change);
+				}
 				return;
 			}
 

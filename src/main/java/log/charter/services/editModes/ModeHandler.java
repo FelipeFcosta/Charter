@@ -9,6 +9,8 @@ public interface ModeHandler {
 
 	public default void changeSlideFret(int change) {}
 
+	public default void changeBendValue(int change) {}
+
 	public void handleNumber(int number);
 
 	public void clearNumbers();

@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import log.charter.data.ChartData;
 import log.charter.data.song.BendValue;
 import log.charter.data.song.ChordTemplate;
+import log.charter.gui.ChartPanel;
 import log.charter.data.song.enums.HOPO;
 import log.charter.data.song.enums.Harmonic;
 import log.charter.data.song.enums.Mute;
@@ -60,6 +61,8 @@ public class GuitarSoundsStatusesHandler {
 
 	private ArrangementFixer arrangementFixer;
 	private ChartData chartData;
+	private ChartPanel chartPanel;
+	private ChartTimeHandler chartTimeHandler;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
 	private CurrentSelectionEditor currentSelectionEditor;
 	private SelectionManager selectionManager;
