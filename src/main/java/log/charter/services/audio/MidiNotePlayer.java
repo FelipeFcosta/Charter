@@ -3,7 +3,6 @@ package log.charter.services.audio;
 import static log.charter.data.song.configs.Tuning.getStringDistanceFromC0;
 import static log.charter.util.CollectionUtils.lastBeforeEqual;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +36,7 @@ public class MidiNotePlayer {
 		OVERDRIVE(29),    // Overdriven Guitar - GM program 30
 		DISTORTION(30),   // Distortion Guitar - GM program 31
 		MUTE(28),         // Electric Guitar (muted) - GM program 29
-		HARMONIC(31);     // Guitar Harmonics - GM program 32
+		HARMONIC(31);     // Guitar Harmonics - GM program 32 (sample-based; in the default Java softsynth it transposes the played note up by one octave, compensated for at noteOn time — see HARMONIC_PATCH_OCTAVE_OFFSET)
 
 		public final int midiProgram;
 
@@ -53,6 +52,13 @@ public class MidiNotePlayer {
 	 */
 	private static final int PITCH_BEND_SEMITONE_RANGE = 48;
 
+	/**
+	 * The GM "Guitar Harmonics" patch in the default Java softsynth plays one octave higher than the
+	 * requested MIDI note. We subtract this at noteOn time so the audible pitch matches what the rest
+	 * of the code computes (and what real natural harmonics produce on the guitar).
+	 */
+	private static final int HARMONIC_PATCH_OCTAVE_OFFSET = -12;
+
 	private static final int midiZeroDistanceFromC0 = -12;
 	private static final int pitchBendBaseValue = 8192;
 	private static final int pitchBendRange = 8191;
@@ -66,6 +72,7 @@ public class MidiNotePlayer {
 	private int[] lastActualNotes;
 	private boolean[] lastHarmonic;
 	private boolean[] ringingHarmonics;
+	private double appliedCentOffset = Double.NaN;
 
 	public void init(final ChartData chartData) {
 		this.chartData = chartData;
@@ -105,6 +112,7 @@ public class MidiNotePlayer {
 				ringingHarmonics[i] = false;
 			}
 
+			appliedCentOffset = Double.NaN;
 			available = true;
 		} catch (final MidiUnavailableException e) {
 			available = false;
@@ -126,6 +134,55 @@ public class MidiNotePlayer {
 		}
 
 		return pitchBendBaseValue + (int) (bendStep * pitchBendRange / PITCH_BEND_SEMITONE_RANGE);
+	}
+
+	/**
+	 * Applies the arrangement's cent offset as a persistent channel detune via RPN 1 (Channel Fine Tuning)
+	 * instead of riding pitch bend. Pitch bend on the Guitar Harmonics patch is unreliable in many synths;
+	 * channel fine tuning is honored consistently across patches. Range is ±100 cents (14-bit resolution).
+	 */
+	private void applyChannelFineTuning(final MidiChannel channel, final double cents) {
+		double clamped = cents;
+		if (clamped > 100.0) {
+			clamped = 100.0;
+		}
+		if (clamped < -100.0) {
+			clamped = -100.0;
+		}
+
+		int value = 8192 + (int) Math.round(clamped / 100.0 * 8192.0);
+		if (value < 0) {
+			value = 0;
+		}
+		if (value > 16383) {
+			value = 16383;
+		}
+
+		final int msb = (value >> 7) & 0x7F;
+		final int lsb = value & 0x7F;
+
+		channel.controlChange(101, 0);   // RPN MSB
+		channel.controlChange(100, 1);   // RPN LSB = Channel Fine Tuning
+		channel.controlChange(6, msb);   // Data Entry MSB
+		channel.controlChange(38, lsb);  // Data Entry LSB
+		channel.controlChange(101, 127); // null RPN
+		channel.controlChange(100, 127);
+	}
+
+	private void updateFineTuning() {
+		if (channels == null || chartData == null || chartData.currentArrangement() == null) {
+			return;
+		}
+
+		final double currentOffset = chartData.currentArrangement().centOffset.doubleValue();
+		if (currentOffset == appliedCentOffset) {
+			return;
+		}
+
+		for (final MidiChannel channel : channels) {
+			applyChannelFineTuning(channel, currentOffset);
+		}
+		appliedCentOffset = currentOffset;
 	}
 
 	private int getHarmonicShift(final int fret, final Harmonic harmonicValue) {
@@ -166,8 +223,9 @@ public class MidiNotePlayer {
 
 		// Play the note at the initial bend position
 		channel.setPitchBend(getPitchBend(bendValue));
+		final int patchOffset = (soundType == GuitarSoundType.HARMONIC) ? HARMONIC_PATCH_OCTAVE_OFFSET : 0;
 		for (int i = 0; i < notes.length; i++) {
-			channel.noteOn(notes[i], velocities[i]);
+			channel.noteOn(notes[i] + patchOffset, velocities[i]);
 		}
 		lastNotes[string] = notes[0];
 		lastActualNotes[string] = notes[0];
@@ -204,7 +262,6 @@ public class MidiNotePlayer {
 		}
 		
 		bendValue += baseNote - actualNote;
-		bendValue += chartData.currentArrangement().centOffset.multiply(new BigDecimal("0.01")).doubleValue();
 
 		// Clamp to configured pitch bend range (see PITCH_BEND_SEMITONE_RANGE)
 		if (bendValue > PITCH_BEND_SEMITONE_RANGE) {
@@ -269,9 +326,7 @@ public class MidiNotePlayer {
 		int[] velocities;
 
 		if (harmonicValue == Harmonic.PINCH) {
-			// Because pinch harmonics use the base patch (Clean/Distortion) instead of "Guitar Harmonics"
-			// which naturally plays +12, we must add 12 to the harmonic voice to align it properly!
-			notesToPlay = new int[] { baseMidiNote, baseMidiNote + getHarmonicShift(fret, harmonicValue) + 12 };
+			notesToPlay = new int[] { baseMidiNote, baseMidiNote + getHarmonicShift(fret, harmonicValue) };
 			velocities = new int[] { (int) (127 * 0.5), (int) (127 * 1.0) };
 		} else if (harmonicValue == Harmonic.NORMAL) {
 			notesToPlay = new int[] { baseMidiNote + getHarmonicShift(fret, harmonicValue) };
@@ -288,7 +343,6 @@ public class MidiNotePlayer {
 				bendValue = noteBendValue.bendValue.doubleValue();
 			}
 		}
-		bendValue += chartData.currentArrangement().centOffset.multiply(new BigDecimal("0.01")).doubleValue();
 
 		playMidiNotes(soundType, string, notesToPlay, velocities, bendValue, harmonicValue == Harmonic.NORMAL);
 	}
@@ -338,6 +392,8 @@ public class MidiNotePlayer {
 		if (!available) {
 			return;
 		}
+
+		updateFineTuning();
 
 		// Cut off any harmonics that were left ringing from a previous note/preview
 		for (int i = 0; i < channels.length; i++) {
