@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import log.charter.data.config.ChartPanelColors.ColorLabel;
+import log.charter.io.Logger;
 import log.charter.data.song.BeatsMap.ImmutableBeatsMap;
 import log.charter.data.song.vocals.Vocal;
 import log.charter.data.song.vocals.Vocal.VocalFlag;
@@ -170,7 +171,11 @@ public class VocalsDrawer {
 	public void draw(final FrameData frameData) {
 		waveFormDrawer.draw(frameData);
 		beatsDrawer.draw(frameData);
-		drawVocals(frameData);
+		try {
+			drawVocals(frameData);
+		} catch (final Exception e) {
+			Logger.error("Exception in VocalsDrawer.drawVocals()", e);
+		}
 		lyricLinesDrawer.draw(frameData);
 	}
 

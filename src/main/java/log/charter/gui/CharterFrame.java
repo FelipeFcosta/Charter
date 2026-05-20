@@ -6,6 +6,8 @@ import static log.charter.data.config.SystemType.MAC;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.dnd.DropTarget;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,6 +43,7 @@ import log.charter.gui.components.tabs.selectionEditor.CurrentSelectionEditor;
 import log.charter.gui.components.toolbar.ChartToolbar;
 import log.charter.gui.components.utils.ComponentUtils;
 import log.charter.gui.lookAndFeel.CharterTheme;
+import log.charter.gui.lookAndFeel.WindowsTitleBarUtil;
 import log.charter.gui.menuHandlers.CharterMenuBar;
 import log.charter.io.Logger;
 import log.charter.services.CharterContext;
@@ -135,6 +138,17 @@ public class CharterFrame extends JFrame implements Initiable {
 		setLocation(WindowStateConfig.x, WindowStateConfig.y);
 		setExtendedState(WindowStateConfig.extendedState);
 
+		if (SystemType.is(SystemType.WINDOWS)) {
+			final java.awt.GraphicsConfiguration gc = getGraphicsConfiguration();
+			final Rectangle screenBounds = gc.getBounds();
+			final Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(gc);
+			setMaximizedBounds(new Rectangle(
+					screenBounds.x + screenInsets.left,
+					screenBounds.y + screenInsets.top,
+					screenBounds.width - screenInsets.left - screenInsets.right,
+					screenBounds.height - screenInsets.top - screenInsets.bottom));
+		}
+
 		final Tab errorsParentTab = new Tab(Label.TAB_ERRORS, errorsTab);
 
 		final List<TabType> tabsOrder = getTabsOrder();
@@ -167,6 +181,7 @@ public class CharterFrame extends JFrame implements Initiable {
 		validate();
 		chartingTimerPanel.refresh();
 		setVisible(true);
+		WindowsTitleBarUtil.init(this);
 		setFocusable(true);
 	}
 

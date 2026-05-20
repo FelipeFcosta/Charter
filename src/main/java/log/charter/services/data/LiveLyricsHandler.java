@@ -9,6 +9,7 @@ import java.util.Objects;
 import javax.swing.SwingUtilities;
 
 import log.charter.data.ChartData;
+import log.charter.io.Logger;
 import log.charter.data.song.position.FractionalPosition;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.data.song.vocals.Vocal;
@@ -403,16 +404,24 @@ public class LiveLyricsHandler implements Initiable {
 	}
 
 	public void handleSpacePressed() {
-		if (!shouldCaptureSpace() || hasCurrentPlacement()) {
-			return;
-		}
+		try {
+			if (!shouldCaptureSpace() || hasCurrentPlacement()) {
+				return;
+			}
 
-		startPlacement();
-		refreshPanel();
+			startPlacement();
+			refreshPanel();
+		} catch (final Exception e) {
+			Logger.error("Exception in LiveLyricsHandler.handleSpacePressed()", e);
+		}
 	}
 
 	public void handleSpaceReleased() {
-		finishPlacement();
+		try {
+			finishPlacement();
+		} catch (final Exception e) {
+			Logger.error("Exception in LiveLyricsHandler.handleSpaceReleased()", e);
+		}
 	}
 
 	private String buildSyncedText() {
@@ -566,29 +575,41 @@ public class LiveLyricsHandler implements Initiable {
 	}
 
 	public void frame() {
-		final ActiveDraft draft = activeDraft; // single volatile read — stable reference for this frame
-		if (draft != null) {
-			final FractionalPosition current = currentTapPosition();
-			final FractionalPosition end = current.compareTo(draft.minimumEnd) < 0 ? draft.minimumEnd : current;
-			draft.vocal.endPosition(end);
-			if (!syncScheduled) {
+		try {
+			final ActiveDraft draft = activeDraft; // single volatile read — stable reference for this frame
+			if (draft != null) {
+				final FractionalPosition current = currentTapPosition();
+				final FractionalPosition end = current.compareTo(draft.minimumEnd) < 0 ? draft.minimumEnd : current;
+				draft.vocal.endPosition(end);
+				if (!syncScheduled) {
+					syncScheduled = true;
+					SwingUtilities.invokeLater(() -> {
+						try {
+							syncScheduled = false;
+							if (activeDraft == draft) {
+								removeVocalsInGrowingRange(draft, end);
+							}
+						} catch (final Exception e) {
+							Logger.error("Exception in LiveLyricsHandler growing-range sync", e);
+						}
+					});
+				}
+			} else if (!syncScheduled) {
 				syncScheduled = true;
 				SwingUtilities.invokeLater(() -> {
-					syncScheduled = false;
-					if (activeDraft == draft) {
-						removeVocalsInGrowingRange(draft, end);
+					try {
+						syncScheduled = false;
+						syncVocalsToText();
+						if (enabled) {
+							updateCurrentIndexFromCursor();
+						}
+					} catch (final Exception e) {
+						Logger.error("Exception in LiveLyricsHandler vocals sync", e);
 					}
 				});
 			}
-		} else if (!syncScheduled) {
-			syncScheduled = true;
-			SwingUtilities.invokeLater(() -> {
-				syncScheduled = false;
-				syncVocalsToText();
-				if (enabled) {
-					updateCurrentIndexFromCursor();
-				}
-			});
+		} catch (final Exception e) {
+			Logger.error("Exception in LiveLyricsHandler.frame()", e);
 		}
 	}
 

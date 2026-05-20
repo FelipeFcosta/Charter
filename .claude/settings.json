@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-Object -Last 80)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-Object -Index \\(40..70\\))",
+      "PowerShell($content = Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\"; $lines = $content.Count; Write-Host \"Total lines: $lines\"; $content | Select-Object -Index \\(\\(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-String -Pattern \"Charter started\" | Select-Object -Last 3\\).LineNumber | ForEach-Object { $_ - 2 }\\))",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:LOCALAPPDATA\\\\Charter\" -ErrorAction SilentlyContinue; Get-ChildItem \"$env:APPDATA\\\\log\" -ErrorAction SilentlyContinue)",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter\\\\logs\" | Sort-Object LastWriteTime -Descending | Select-Object -First 5)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" -Tail 100)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-String -Pattern \"vocal|arrangement|crash|Exception|NullPointer|IndexOutOfBound|ERROR\" | Select-Object -Last 50)",
+      "Bash(grep -v \"import\\\\|//\")"
+    ]
+  }
+}

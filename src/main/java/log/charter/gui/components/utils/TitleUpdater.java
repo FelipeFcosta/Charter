@@ -7,6 +7,9 @@ import log.charter.data.song.Arrangement;
 import log.charter.data.song.vocals.VocalPath;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.CharterFrame;
+import log.charter.gui.lookAndFeel.WindowsTitleBarUtil;
+import log.charter.io.rs.xml.song.ArrangementType;
+import log.charter.services.editModes.EditMode;
 import log.charter.services.editModes.ModeManager;
 
 public class TitleUpdater {
@@ -53,6 +56,10 @@ public class TitleUpdater {
 	public void updateTitle() {
 		String title = "%s : %s".formatted(CharterMain.TITLE, modeInfo());
 		title = addUnsavedStatus(title);
+
+		final EditMode mode = modeManager.getMode();
+		final ArrangementType type = mode == EditMode.GUITAR ? chartData.currentArrangement().arrangementType : null;
+		WindowsTitleBarUtil.updateColor(mode, type);
 
 		if (title.equals(charterFrame.getTitle())) {
 			return;

@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>log.program</groupId>
 	<artifactId>Charter</artifactId>
-	<version>0.23</version>
+	<version>0.23.1</version>
 	<packaging>jar</packaging>
 	<name>Charter</name>
 	<description>Charting program for guitar</description>
@@ -36,6 +36,11 @@
 	</dependencyManagement>
 	
 	<dependencies>
+		<dependency>
+			<groupId>net.java.dev.jna</groupId>
+			<artifactId>jna</artifactId>
+			<version>5.14.0</version>
+		</dependency>
 		<dependency>
 		    <groupId>jasiohost</groupId>
 		    <artifactId>jasiohost</artifactId>

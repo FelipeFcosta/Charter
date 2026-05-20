@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(mvn clean package -Plwjgl-natives-windows-amd64 -DskipTests -q 2>&1)"
+      "PowerShell(mvn clean package -Plwjgl-natives-windows-amd64 -DskipTests -q 2>&1)",
+      "PowerShell(ls \"$env:APPDATA\\\\Charter\" -ErrorAction SilentlyContinue; ls \"$env:LOCALAPPDATA\\\\Charter\" -ErrorAction SilentlyContinue; ls \"$env:APPDATA\\\\charter\" -ErrorAction SilentlyContinue; ls \"$env:LOCALAPPDATA\\\\charter\" -ErrorAction SilentlyContinue)"
     ]
   }
 }
