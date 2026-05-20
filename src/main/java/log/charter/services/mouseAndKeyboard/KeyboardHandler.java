@@ -18,6 +18,7 @@ import log.charter.io.Logger;
 import log.charter.services.Action;
 import log.charter.services.ActionHandler;
 import log.charter.services.editModes.ModeManager;
+import log.charter.services.data.LiveLyricsHandler;
 
 public class KeyboardHandler implements KeyListener {
 	private static final int[] secretOptionsUnlockSequence = { //
@@ -37,6 +38,7 @@ public class KeyboardHandler implements KeyListener {
 	private ActionHandler actionHandler;
 	private ChartToolbar chartToolbar;
 	private ModeManager modeManager;
+	private LiveLyricsHandler liveLyricsHandler;
 
 	private Shortcut shortcut = new Shortcut();
 
@@ -115,6 +117,12 @@ public class KeyboardHandler implements KeyListener {
 				return;
 			}
 
+			if (keyCode == KeyEvent.VK_N && liveLyricsHandler.shouldCaptureSpace()) {
+				liveLyricsHandler.handleSpacePressed();
+				e.consume();
+				return;
+			}
+
 			if (keyCode == VK_CONTROL) {
 				shortcut.ctrl = true;
 				replaceHeldAction();
@@ -174,6 +182,12 @@ public class KeyboardHandler implements KeyListener {
 
 		try {
 			final int keyCode = e.getKeyCode();
+			if (keyCode == KeyEvent.VK_N && liveLyricsHandler.hasCurrentPlacementActive()) {
+				liveLyricsHandler.handleSpaceReleased();
+				e.consume();
+				return;
+			}
+
 			switch (keyCode) {
 				case VK_CONTROL:
 					shortcut.ctrl = false;

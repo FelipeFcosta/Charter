@@ -18,7 +18,9 @@ import log.charter.gui.ChartPanel;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.chartPanelDrawers.common.BeatsDrawer;
 import log.charter.gui.chartPanelDrawers.common.waveform.WaveFormDrawer;
+import log.charter.services.data.LiveLyricsHandler;
 import log.charter.gui.components.simple.ChartingTimerPanel;
+import log.charter.gui.components.liveLyrics.LiveLyricsPanel;
 import log.charter.gui.components.simple.ChartMap;
 import log.charter.gui.components.tabs.HelpTab;
 import log.charter.gui.components.tabs.TextTab;
@@ -110,6 +112,7 @@ public class CharterContext {
 	private final GuitarSoundsStatusesHandler guitarSoundsStatusesHandler = new GuitarSoundsStatusesHandler();
 	private final HandShapesHandler handShapesHandler = new HandShapesHandler();
 	private final HighlightManager highlightManager = new HighlightManager();
+	private final LiveLyricsHandler liveLyricsHandler = new LiveLyricsHandler();
 	private final KeyboardHandler keyboardHandler = new KeyboardHandler();
 	private final LRCImporter lrcImporter = new LRCImporter();
 	private final MetronomeHandler metronomeHandler = new MetronomeHandler();
@@ -150,6 +153,7 @@ public class CharterContext {
 	private final CurrentSelectionEditor currentSelectionEditor = new CurrentSelectionEditor();
 	private final ErrorsTab errorsTab = new ErrorsTab();
 	private final HelpTab helpTab = new HelpTab();
+	private final LiveLyricsPanel liveLyricsPanel = new LiveLyricsPanel();
 	private final TextTab textTab = new TextTab();
 
 	private final AudioFramer audioFramer = new AudioFramer();
@@ -245,6 +249,7 @@ public class CharterContext {
 			repeatManager.frame();
 
 			chartTimeHandler.frame(frameTime);
+			liveLyricsHandler.frame();
 
 			chartingTimerHandler.applyAutoSyncFromWindowFocus(charterFrame.isActive());
 			applyChartingTimerMouseInactivityRule();

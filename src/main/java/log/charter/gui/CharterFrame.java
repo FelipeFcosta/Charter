@@ -29,6 +29,7 @@ import log.charter.gui.components.containers.CharterScrollPane;
 import log.charter.gui.components.containers.CharterTabArea;
 import log.charter.gui.components.containers.CharterTabbedPane;
 import log.charter.gui.components.containers.CharterTabbedPane.Tab;
+import log.charter.gui.components.liveLyrics.LiveLyricsPanel;
 import log.charter.gui.components.simple.ChartingTimerPanel;
 import log.charter.gui.components.preview3D.Preview3DPanel;
 import log.charter.gui.components.simple.ChartMap;
@@ -68,6 +69,7 @@ public class CharterFrame extends JFrame implements Initiable {
 	private ErrorsTab errorsTab;
 	private FileDropHandler fileDropHandler;
 	private HelpTab helpTab;
+	private LiveLyricsPanel liveLyricsPanel;
 	private KeyboardHandler keyboardHandler;
 	private ModeManager modeManager;
 	private TextTab textTab;
@@ -147,6 +149,7 @@ public class CharterFrame extends JFrame implements Initiable {
 		add(chartToolbar);
 		add(chartPanel);
 		add(chartMap);
+		add(liveLyricsPanel);
 		add(tabArea);
 
 		addComponentListener(new CharterFrameComponentListener(this));
@@ -171,13 +174,16 @@ public class CharterFrame extends JFrame implements Initiable {
 		final Insets insets = getInsets();
 		final int width = WindowStateConfig.width - insets.left - insets.right;
 		final int height = WindowStateConfig.height - insets.top - insets.bottom - charterMenuBar.getHeight();
+		final int liveLyricsHeight = liveLyricsPanel.isVisible() ? liveLyricsPanel.getPreferredSize().height : 0;
 
 		final List<Pair<Component, Integer>> componentHeights = asList(//
 				new Pair<>(chartToolbar, chartToolbar.getHeight()), //
 				new Pair<>(chartPanel, DrawerUtils.editAreaHeight), //
 				new Pair<>(chartMap, DrawerUtils.chartMapHeight), //
+				new Pair<>(liveLyricsPanel, liveLyricsHeight), //
 				new Pair<>(tabArea,
-						height - chartToolbar.getHeight() - DrawerUtils.editAreaHeight - DrawerUtils.chartMapHeight));
+						height - chartToolbar.getHeight() - DrawerUtils.editAreaHeight - DrawerUtils.chartMapHeight
+							- liveLyricsHeight));
 
 		int y = 0;
 		for (final Pair<Component, Integer> componentHeight : componentHeights) {
@@ -201,6 +207,7 @@ public class CharterFrame extends JFrame implements Initiable {
 		final Arrangement arrangement = chartData.currentArrangement();
 		final boolean bass = arrangement.isBass();
 		final int strings = arrangement.tuning.strings();
+		liveLyricsPanel.setVisible(editMode == EditMode.VOCALS);
 
 		DrawerUtils.updateEditAreaSizes(editMode, bass, strings);
 		resize();

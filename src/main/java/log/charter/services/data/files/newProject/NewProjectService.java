@@ -17,6 +17,7 @@ import log.charter.gui.components.tabs.chordEditor.ChordTemplatesEditorTab;
 import log.charter.services.audio.AudioHandler;
 import log.charter.services.data.ChartTimeHandler;
 import log.charter.services.data.ChartingTimerHandler;
+import log.charter.services.data.LiveLyricsHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.services.data.files.SongFileHandler;
 import log.charter.sound.audioFormats.AudioFileMetadata;
@@ -29,6 +30,7 @@ public class NewProjectService {
 	private ChartingTimerHandler chartingTimerHandler;
 	private CharterFrame charterFrame;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
+	private LiveLyricsHandler liveLyricsHandler;
 	private ProjectAudioHandler projectAudioHandler;
 	private SongFileHandler songFileHandler;
 	private TextTab textTab;
@@ -111,6 +113,7 @@ public class NewProjectService {
 
 		chartData.setNewSong(projectFolder, songChart, "project.rscp");
 		textTab.setText("");
+		liveLyricsHandler.resetQueue();
 
 		projectAudioHandler.changeAudio(musicData);
 		projectAudioHandler.readStems();

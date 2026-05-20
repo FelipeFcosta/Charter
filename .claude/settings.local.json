@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(mvn clean package -Plwjgl-natives-windows-amd64 -DskipTests -q 2>&1)"
+    ]
+  }
+}

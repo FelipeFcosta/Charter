@@ -32,6 +32,7 @@ import log.charter.util.RW;
 import log.charter.services.audio.AudioHandler;
 import log.charter.services.data.ChartingTimerHandler;
 import log.charter.services.data.ChartTimeHandler;
+import log.charter.services.data.LiveLyricsHandler;
 import log.charter.services.data.ProjectAudioHandler;
 import log.charter.sound.data.AudioData;
 import log.charter.sound.utils.AudioGenerator;
@@ -43,6 +44,7 @@ public class ExistingProjectImporter {
 	private CharterFrame charterFrame;
 	private ChartTimeHandler chartTimeHandler;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
+	private LiveLyricsHandler liveLyricsHandler;
 	private ProjectAudioHandler projectAudioHandler;
 	private TextTab textTab;
 	private ChartingTimerPanel chartingTimerPanel;
@@ -209,6 +211,7 @@ public class ExistingProjectImporter {
 		projectAudioHandler.readStems();
 		projectAudioHandler.selectStem(project.selectedStem);
 		textTab.setText(project.text);
+		liveLyricsHandler.resetQueue();
 
 		chartingTimerHandler.loadFromProject(project.chartingTimeMs, project.chartingTimerSyncWithAudio);
 		chartingTimerPanel.refresh();
