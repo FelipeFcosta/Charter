@@ -2,6 +2,8 @@ package log.charter.gui.components.simple;
 
 import static java.util.Arrays.asList;
 
+import java.awt.Color;
+import java.awt.Component;
 import java.util.List;
 import java.util.Objects;
 import java.util.Vector;
@@ -10,7 +12,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JComboBox;
+import javax.swing.JList;
 
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 
@@ -60,6 +64,24 @@ public class CharterSelect<T> extends JComboBox<CharterSelect.ItemHolder<T>> {
 		}
 
 		setBackground(ColorLabel.BASE_BUTTON.color());
+		setRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(final JList<?> list, final Object value, final int index,
+					final boolean isSelected, final boolean cellHasFocus) {
+				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				if (isSelected) {
+					final Color accent = ColorLabel.BASE_HIGHLIGHT.color();
+					setBackground(accent);
+					final double lum = (0.299 * accent.getRed() + 0.587 * accent.getGreen()
+							+ 0.114 * accent.getBlue()) / 255;
+					setForeground(lum > 0.5 ? new Color(20, 20, 20) : Color.WHITE);
+				} else {
+					setBackground(ColorLabel.BASE_BG_2.color());
+					setForeground(ColorLabel.BASE_TEXT.color());
+				}
+				return this;
+			}
+		});
 	}
 
 	public CharterSelect(final List<T> items, final T item) {

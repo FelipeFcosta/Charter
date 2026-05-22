@@ -92,7 +92,13 @@ public class LoadingDialog extends JDialog {
 		text.setBounds(0, 30, 300, 60);
 		add(text);
 
-		progressBar = new JProgressBar(0, steps);
+		progressBar = new JProgressBar(0, steps) {
+			@Override
+			protected void paintComponent(final java.awt.Graphics g) {
+				setForeground(ColorLabel.BASE_HIGHLIGHT.color());
+				super.paintComponent(g);
+			}
+		};
 		progressBar.setBackground(ColorLabel.BASE_BG_2.color());
 		progressBar.setBounds(50, 100, getWidth() - 100, 30);
 		add(progressBar);

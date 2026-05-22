@@ -88,7 +88,7 @@ public class CharterRadioButton {
 	public static Color selectColor = ColorLabel.BASE_HIGHLIGHT.color();
 	public static Color iconColor = ColorLabel.BASE_TEXT.color();
 
-	static void install() {
+	public static void install() {
 		UIManager.put("RadioButton.icon",
 				new RadioIcon(backgroundColor, disabledBackgroundColor, borderColor, selectColor, iconColor));
 	}

@@ -264,7 +264,16 @@ public class ChartingTimerPanel extends JPanel {
 			g2.setColor(fill);
 			g2.fill(rounded);
 
-			final Color textColor = isEnabled() ? ColorLabel.BASE_TEXT.color() : ColorLabel.BASE_DARK_TEXT.color();
+			final Color textColor;
+			if (!isEnabled()) {
+				textColor = ColorLabel.BASE_DARK_TEXT.color();
+			} else if (pressed || selected) {
+				final Color accent = ColorLabel.BASE_HIGHLIGHT.color();
+				final double lum = (0.299 * accent.getRed() + 0.587 * accent.getGreen() + 0.114 * accent.getBlue()) / 255;
+				textColor = lum > 0.75 ? new Color(20, 20, 20) : Color.WHITE;
+			} else {
+				textColor = ColorLabel.BASE_TEXT.color();
+			}
 			g2.setColor(textColor);
 			final FontMetrics fm = g2.getFontMetrics();
 			final int tx = (int) ((w - fm.getStringBounds(text, g2).getWidth()) / 2);

@@ -105,7 +105,9 @@ public class CharterCheckBox {
 		}
 	}
 
-	static void install() {
-		UIManager.put("CheckBox.icon", new CheckBoxIcon());
+	public static Color iconColor = null;
+
+	public static void install() {
+		UIManager.put("CheckBox.icon", new CheckBoxIcon(null, null, null, null, iconColor));
 	}
 }

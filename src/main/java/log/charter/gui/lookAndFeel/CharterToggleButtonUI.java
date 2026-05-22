@@ -1,10 +1,13 @@
 package log.charter.gui.lookAndFeel;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
+import java.awt.image.BufferedImage;
 
 import javax.swing.AbstractButton;
 import javax.swing.Icon;
@@ -51,20 +54,45 @@ public class CharterToggleButtonUI extends BasicToggleButtonUI {
 		}
 		g2d.fill(roundedRectangle);
 
+		final boolean selectedOnLightAccent;
+		if (button.getModel().isSelected()) {
+			final Color accent = ColorLabel.BASE_HIGHLIGHT.color();
+			final double lum = (0.299 * accent.getRed() + 0.587 * accent.getGreen() + 0.114 * accent.getBlue()) / 255;
+			selectedOnLightAccent = lum > 0.75;
+		} else {
+			selectedOnLightAccent = false;
+		}
+
 		// button icon
 		if (button.getIcon() != null) {
 			final Icon icon = button.getIcon();
 			final int iconX = (c.getWidth() - icon.getIconWidth()) / 2;
 			final int iconY = (c.getHeight() - icon.getIconHeight()) / 2;
-			icon.paintIcon(c, g2d, iconX, iconY);
+			if (selectedOnLightAccent) {
+				final BufferedImage tmp = new BufferedImage(icon.getIconWidth(), icon.getIconHeight(),
+						BufferedImage.TYPE_INT_ARGB);
+				final Graphics2D tg = tmp.createGraphics();
+				icon.paintIcon(c, tg, 0, 0);
+				tg.setComposite(AlphaComposite.SrcAtop);
+				tg.setColor(new Color(20, 20, 20));
+				tg.fillRect(0, 0, icon.getIconWidth(), icon.getIconHeight());
+				tg.dispose();
+				g2d.drawImage(tmp, iconX, iconY, null);
+			} else {
+				icon.paintIcon(c, g2d, iconX, iconY);
+			}
 		}
 
 		// button text
 		if (button.getText() != null && !button.getText().isEmpty()) {
-			if (button.isEnabled()) {
-				g2d.setColor(button.getForeground());
-			} else {
+			if (!button.isEnabled()) {
 				g2d.setColor(button.getForeground().darker());
+			} else if (selectedOnLightAccent) {
+				g2d.setColor(new Color(20, 20, 20));
+			} else if (button.getModel().isSelected()) {
+				g2d.setColor(Color.WHITE);
+			} else {
+				g2d.setColor(button.getForeground());
 			}
 			g2d.drawString(button.getText(),
 					(int) (c.getWidth() - g2d.getFontMetrics().getStringBounds(button.getText(), g2d).getWidth()) / 2,
