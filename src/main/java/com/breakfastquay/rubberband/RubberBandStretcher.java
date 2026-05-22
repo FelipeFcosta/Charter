@@ -163,6 +163,21 @@ public class RubberBandStretcher {
 			System.loadLibrary("rubberband-jni");
 			return true;
 		} catch (final Throwable t) {
+			final String libName = System.mapLibraryName("rubberband-jni");
+			for (final java.io.File dir : new java.io.File[] {
+					log.charter.util.RW.getJarDirectory(),
+					new java.io.File("resources").getAbsoluteFile()
+			}) {
+				try {
+					final java.io.File lib = new java.io.File(dir, libName);
+					if (lib.exists()) {
+						System.load(lib.getAbsolutePath());
+						return true;
+					}
+				} catch (final Throwable t2) {
+					Logger.error("Couldn't load rubberband library from " + dir, t2);
+				}
+			}
 			Logger.error("Couldn't load rubberband library", t);
 			return false;
 		}
