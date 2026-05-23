@@ -55,6 +55,9 @@ public class CharterMain {
 	}
 
 	public static void main(final String[] args) throws InterruptedException, IOException {
+		Thread.setDefaultUncaughtExceptionHandler(
+				(thread, t) -> Logger.error("Uncaught exception on thread [" + thread.getName() + "]", t));
+
 		try {
 			deleteTempUpdateFile();
 			initConfigs();

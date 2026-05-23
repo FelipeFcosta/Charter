@@ -24,7 +24,7 @@ public class Logger {
 				dir.mkdir();
 			}
 
-			out = new PrintStream(new FileOutputStream(new File(dir, name), true));
+			out = new PrintStream(new FileOutputStream(new File(dir, name), true), true);
 		} catch (final Exception e) {
 			e.printStackTrace();
 		}
