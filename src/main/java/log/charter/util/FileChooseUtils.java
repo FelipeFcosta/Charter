@@ -17,6 +17,7 @@ import org.lwjgl.util.nfd.NativeFileDialog;
 
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.Localization.Label;
+import log.charter.data.config.values.PathsConfig;
 import log.charter.sound.SoundFileType;
 
 public class FileChooseUtils {
@@ -28,6 +29,29 @@ public class FileChooseUtils {
 	/** Strips the leading dot that the codebase uses, e.g. ".xml" → "xml". */
 	private static String nfdExt(final String extension) {
 		return extension.startsWith(".") ? extension.substring(1) : extension;
+	}
+
+	/**
+	 * Strips trailing path separators, validates the directory exists, and falls
+	 * back to the configured songs path if the given path is unusable. Prevents NFD
+	 * from silently falling back to the OS MRU folder when passed an empty or
+	 * trailing-separator path (e.g. chartData.path set by ExistingProjectImporter).
+	 */
+	private static String resolveStartingDir(final String startingDir) {
+		if (startingDir != null && !startingDir.isEmpty()) {
+			String dir = startingDir;
+			while (dir.endsWith("/") || dir.endsWith("\\")) {
+				dir = dir.substring(0, dir.length() - 1);
+			}
+			if (!dir.isEmpty() && new File(dir).isDirectory()) {
+				return dir;
+			}
+		}
+		final String songsDir = PathsConfig.songsPath;
+		if (songsDir != null && !songsDir.isEmpty()) {
+			return songsDir;
+		}
+		return null;
 	}
 
 	private static volatile boolean nfdReady = false;
@@ -53,7 +77,7 @@ public class FileChooseUtils {
 			final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(1, stack);
 			filters.get(0).name(stack.UTF8(filterName)).spec(stack.UTF8(filterSpec));
 
-			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, startingDir);
+			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, resolveStartingDir(startingDir));
 			if (result == NativeFileDialog.NFD_OKAY) {
 				final String path = outPath.getStringUTF8(0);
 				NativeFileDialog.NFD_FreePath(outPath.get(0));
@@ -75,7 +99,7 @@ public class FileChooseUtils {
 				filters.get(i).name(stack.UTF8(filterNames[i])).spec(stack.UTF8(filterSpecs[i]));
 			}
 
-			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, startingDir);
+			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, resolveStartingDir(startingDir));
 			if (result == NativeFileDialog.NFD_OKAY) {
 				final String path = outPath.getStringUTF8(0);
 				NativeFileDialog.NFD_FreePath(outPath.get(0));
@@ -88,7 +112,7 @@ public class FileChooseUtils {
 	private static File nfdPickFolder(final String startingDir) {
 		try (final MemoryStack stack = MemoryStack.stackPush()) {
 			final PointerBuffer outPath = stack.mallocPointer(1);
-			final int result = NativeFileDialog.NFD_PickFolder(outPath, startingDir);
+			final int result = NativeFileDialog.NFD_PickFolder(outPath, resolveStartingDir(startingDir));
 			if (result == NativeFileDialog.NFD_OKAY) {
 				final String path = outPath.getStringUTF8(0);
 				NativeFileDialog.NFD_FreePath(outPath.get(0));
@@ -129,7 +153,8 @@ public class FileChooseUtils {
 		}
 
 		// JFileChooser fallback (non-Windows or NFD unavailable)
-		final JFileChooser chooser = new JFileChooser(new File(startingDir));
+		final String resolvedDir = resolveStartingDir(startingDir);
+		final JFileChooser chooser = new JFileChooser(resolvedDir != null ? new File(resolvedDir) : null);
 		chooser.setFileFilter(new FileFilter() {
 			@Override
 			public boolean accept(final File f) {
@@ -169,7 +194,8 @@ public class FileChooseUtils {
 			return nfdOpenFile(startingDir, description, spec.toString());
 		}
 
-		final JFileChooser chooser = new JFileChooser(new File(startingDir));
+		final String resolvedDir0 = resolveStartingDir(startingDir);
+		final JFileChooser chooser = new JFileChooser(resolvedDir0 != null ? new File(resolvedDir0) : null);
 		chooser.setAcceptAllFileFilterUsed(false);
 		chooser.addChoosableFileFilter(new FileFilter() {
 			@Override
@@ -204,7 +230,8 @@ public class FileChooseUtils {
 			return nfdOpenFile(startingDir, descriptions, specs);
 		}
 
-		final JFileChooser chooser = new JFileChooser(new File(startingDir));
+		final String resolvedDir1 = resolveStartingDir(startingDir);
+		final JFileChooser chooser = new JFileChooser(resolvedDir1 != null ? new File(resolvedDir1) : null);
 		chooser.setAcceptAllFileFilterUsed(false);
 
 		for (int i = 0; i < extensions.length; i++) {
@@ -245,7 +272,8 @@ public class FileChooseUtils {
 			return nfdPickFolder(startingPath);
 		}
 
-		final JFileChooser chooser = new JFileChooser(new File(startingPath));
+		final String resolvedPath = resolveStartingDir(startingPath);
+		final JFileChooser chooser = new JFileChooser(resolvedPath != null ? new File(resolvedPath) : null);
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		chooser.setApproveButtonText(Label.SAVE_AS.label());
 

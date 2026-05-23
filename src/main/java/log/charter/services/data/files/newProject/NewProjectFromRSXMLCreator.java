@@ -46,7 +46,8 @@ public class NewProjectFromRSXMLCreator {
 	}
 
 	private SongChart readSongArrangement(final File songFile) {
-		final File arrangementFile = FileChooseUtils.chooseFile(charterFrame, songFile.getParent(),
+		final String fileChooseDir = modeManager.getMode() == EditMode.EMPTY ? PathsConfig.songsPath : chartData.path;
+		final File arrangementFile = FileChooseUtils.chooseFile(charterFrame, fileChooseDir,
 				new String[] { ".xml" }, new String[] { Label.RS_ARRANGEMENT_FILE.label() });
 		if (arrangementFile == null) {
 			return null;
