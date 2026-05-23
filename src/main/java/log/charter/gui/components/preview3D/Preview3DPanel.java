@@ -306,6 +306,8 @@ public class Preview3DPanel extends AWTGLCanvas implements Initiable {
 			drawNoteboard(timer, drawData);
 			if (modeManager.getMode() == EditMode.GUITAR) {
 				drawGuitarNotes(timer, drawData);
+			} else {
+				guitarSoundsDrawer.clearExplosions();
 			}
 			drawFretboard(timer, drawData);
 			if (modeManager.getMode() == EditMode.GUITAR) {

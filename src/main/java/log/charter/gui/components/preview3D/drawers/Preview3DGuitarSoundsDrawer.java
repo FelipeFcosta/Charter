@@ -575,7 +575,7 @@ public class Preview3DGuitarSoundsDrawer {
 		final BaseShaderDrawData shaderDrawData = shadersHolder.new BaseShaderDrawData();
 
 		final double explosionLifetime = 500_000_000;
-		final double explosionTime = (System.nanoTime() - startTime) / explosionLifetime;
+		final double explosionTime = Math.min(1.0, (System.nanoTime() - startTime) / explosionLifetime);
 
 		final int r = (int) (255 * (1 - explosionTime));
 		final int g = (int) (255 * (1 - Math.min(1, explosionTime * 2)));
@@ -689,6 +689,10 @@ public class Preview3DGuitarSoundsDrawer {
 
 		explosions.removeIf(o -> o.startTime < System.nanoTime() - 500_000_000);
 		objectsToDraw.addAll(explosions);
+	}
+
+	public void clearExplosions() {
+		explosions.clear();
 	}
 
 	public void draw(final ShadersHolder shadersHolder, final Preview3DDrawData drawData) {
