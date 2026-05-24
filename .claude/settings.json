@@ -8,7 +8,11 @@
       "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter\\\\logs\" | Sort-Object LastWriteTime -Descending | Select-Object -First 5)",
       "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" -Tail 100)",
       "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-String -Pattern \"vocal|arrangement|crash|Exception|NullPointer|IndexOutOfBound|ERROR\" | Select-Object -Last 50)",
-      "Bash(grep -v \"import\\\\|//\")"
+      "Bash(grep -v \"import\\\\|//\")",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter\\\\logs\" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 10)",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter_dev\\\\logs\" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 10)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 100)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-Object -Last 100)"
     ]
   }
 }

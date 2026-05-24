@@ -25,16 +25,21 @@ public class UpdateChecker {
 	private static final URI latestVersionLink = URI.create("https://github.com/Lordszynencja/Charter/releases/latest");
 
 	private static HttpResponse<String> getLatestVersionRedirect() {
-		final HttpClient client = HttpClient.newHttpClient();
-		final HttpRequest request = HttpRequest.newBuilder(latestVersionLink).build();
-		final HttpResponse<String> response = client.sendAsync(request, BodyHandlers.ofString())//
-				.join();
-		if (response.statusCode() != 302) {
-			Logger.error("Couldn't check latest version, GitHub response: " + response.statusCode());
+		try {
+			final HttpClient client = HttpClient.newHttpClient();
+			final HttpRequest request = HttpRequest.newBuilder(latestVersionLink).build();
+			final HttpResponse<String> response = client.sendAsync(request, BodyHandlers.ofString())//
+					.join();
+			if (response.statusCode() != 302) {
+				Logger.error("Couldn't check latest version, GitHub response: " + response.statusCode());
+				return null;
+			}
+
+			return response;
+		} catch (final Throwable e) {
+			Logger.error("Couldn't check for updates", e);
 			return null;
 		}
-
-		return response;
 	}
 
 	private static String getVersion(final HttpResponse<String> response) {
