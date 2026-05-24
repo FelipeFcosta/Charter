@@ -14,7 +14,10 @@
       "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 100)",
       "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-Object -Last 100)",
       "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 80)",
-      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 50)"
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 50)",
+      "Bash(find ~/.m2/repository/org/lwjgl/lwjgl-nfd -type f 2>/dev/null | head -20)",
+      "Read(//c/Users/felip/.m2/repository/org/lwjgl/lwjgl-nfd/**)",
+      "PowerShell(Get-ChildItem -Path \"$env:USERPROFILE\\\\.m2\\\\repository\\\\org\\\\lwjgl\\\\lwjgl-nfd\" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName)"
     ]
   }
 }

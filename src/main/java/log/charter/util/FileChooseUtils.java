@@ -10,138 +10,96 @@ import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.plaf.metal.MetalComboBoxButton;
 
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.system.MemoryStack;
-import org.lwjgl.util.nfd.NFDFilterItem;
-import org.lwjgl.util.nfd.NativeFileDialog;
-
 import log.charter.data.config.ChartPanelColors.ColorLabel;
 import log.charter.data.config.Localization.Label;
 import log.charter.data.config.values.PathsConfig;
 import log.charter.sound.SoundFileType;
 
 public class FileChooseUtils {
+
+	private static final boolean IS_WINDOWS = System.getProperty("os.name", "").toLowerCase().contains("win");
+
 	private static String extension(final String fileName) {
 		final int dotIndex = fileName.lastIndexOf('.');
 		return fileName.substring(dotIndex + 1).toLowerCase();
 	}
 
-	/** Strips the leading dot that the codebase uses, e.g. ".xml" → "xml". */
-	private static String nfdExt(final String extension) {
-		return extension.startsWith(".") ? extension.substring(1) : extension;
-	}
-
 	/**
-	 * Strips trailing path separators, validates the directory exists, and falls
-	 * back to the configured songs path if the given path is unusable. Prevents NFD
-	 * from silently falling back to the OS MRU folder when passed an empty or
-	 * trailing-separator path (e.g. chartData.path set by ExistingProjectImporter).
+	 * Strips trailing separators, validates the directory exists, and falls back to
+	 * the configured songs path when the requested directory is unusable.
 	 */
-	private static String resolveStartingDir(final String startingDir) {
+	private static File resolveStartingDir(final String startingDir) {
 		if (startingDir != null && !startingDir.isEmpty()) {
 			String dir = startingDir;
 			while (dir.endsWith("/") || dir.endsWith("\\")) {
 				dir = dir.substring(0, dir.length() - 1);
 			}
-			if (!dir.isEmpty() && new File(dir).isDirectory()) {
-				return dir;
+			if (!dir.isEmpty()) {
+				final File f = new File(dir);
+				if (f.isDirectory()) {
+					return f;
+				}
 			}
 		}
 		final String songsDir = PathsConfig.songsPath;
 		if (songsDir != null && !songsDir.isEmpty()) {
-			return songsDir;
-		}
-		return null;
-	}
-
-	private static volatile boolean nfdReady = false;
-
-	private static synchronized boolean initNFD() {
-		if (nfdReady) {
-			return true;
-		}
-		if (NativeFileDialog.NFD_Init() == NativeFileDialog.NFD_OKAY) {
-			Runtime.getRuntime().addShutdownHook(new Thread(NativeFileDialog::NFD_Quit));
-			nfdReady = true;
-		}
-		return nfdReady;
-	}
-
-	/**
-	 * Opens the native file dialog with a single filter group (all extensions
-	 * lumped together under one description).
-	 */
-	private static File nfdOpenFile(final String startingDir, final String filterName, final String filterSpec) {
-		try (final MemoryStack stack = MemoryStack.stackPush()) {
-			final PointerBuffer outPath = stack.mallocPointer(1);
-			final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(1, stack);
-			filters.get(0).name(stack.UTF8(filterName)).spec(stack.UTF8(filterSpec));
-
-			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, resolveStartingDir(startingDir));
-			if (result == NativeFileDialog.NFD_OKAY) {
-				final String path = outPath.getStringUTF8(0);
-				NativeFileDialog.NFD_FreePath(outPath.get(0));
-				return new File(path);
+			final File f = new File(songsDir);
+			if (f.isDirectory()) {
+				return f;
 			}
 		}
 		return null;
 	}
 
-	/**
-	 * Opens the native file dialog with one filter entry per name/spec pair.
-	 */
-	private static File nfdOpenFile(final String startingDir, final String[] filterNames,
-			final String[] filterSpecs) {
-		try (final MemoryStack stack = MemoryStack.stackPush()) {
-			final PointerBuffer outPath = stack.mallocPointer(1);
-			final NFDFilterItem.Buffer filters = NFDFilterItem.malloc(filterNames.length, stack);
-			for (int i = 0; i < filterNames.length; i++) {
-				filters.get(i).name(stack.UTF8(filterNames[i])).spec(stack.UTF8(filterSpecs[i]));
-			}
+	// -----------------------------------------------------------------------
+	// Windows native picker (IFileOpenDialog via JNA)
+	// Falls back to JFileChooser if COM fails for any reason.
+	// -----------------------------------------------------------------------
 
-			final int result = NativeFileDialog.NFD_OpenDialog(outPath, filters, resolveStartingDir(startingDir));
-			if (result == NativeFileDialog.NFD_OKAY) {
-				final String path = outPath.getStringUTF8(0);
-				NativeFileDialog.NFD_FreePath(outPath.get(0));
-				return new File(path);
-			}
-		}
-		return null;
+	private static File winOpen(final String startingDir, final String[][] filters) {
+		final File dir = resolveStartingDir(startingDir);
+		final File result = WinFileDialog.open(dir, filters, false);
+		return result;
 	}
 
-	private static File nfdPickFolder(final String startingDir) {
-		try (final MemoryStack stack = MemoryStack.stackPush()) {
-			final PointerBuffer outPath = stack.mallocPointer(1);
-			final int result = NativeFileDialog.NFD_PickFolder(outPath, resolveStartingDir(startingDir));
-			if (result == NativeFileDialog.NFD_OKAY) {
-				final String path = outPath.getStringUTF8(0);
-				NativeFileDialog.NFD_FreePath(outPath.get(0));
-				return new File(path);
-			}
+	private static File winOpenFolder(final String startingDir) {
+		final File dir = resolveStartingDir(startingDir);
+		return WinFileDialog.open(dir, null, true);
+	}
+
+	// -----------------------------------------------------------------------
+	// JFileChooser fallback (non-Windows or COM failure)
+	// -----------------------------------------------------------------------
+
+	private static JFileChooser newChooser(final String startingDir) {
+		final File dir = resolveStartingDir(startingDir);
+		final JFileChooser chooser = new JFileChooser(dir);
+		if (dir != null) {
+			chooser.setCurrentDirectory(dir);
 		}
-		return null;
+		return chooser;
 	}
 
 	private static File showDialog(final Component parent, final JFileChooser chooser) {
-		final int chosenOption = chooser.showOpenDialog(parent);
-		if (chosenOption != JFileChooser.APPROVE_OPTION) {
-			return null;
-		}
-		return chooser.getSelectedFile();
+		return chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION ? chooser.getSelectedFile() : null;
 	}
 
+	// -----------------------------------------------------------------------
+	// Public API
+	// -----------------------------------------------------------------------
+
 	public static File chooseMusicFile(final Component parent, final String startingDir) {
-		if (initNFD()) {
+		if (IS_WINDOWS) {
 			final SoundFileType[] types = SoundFileType.values();
 			final StringBuilder spec = new StringBuilder();
 			for (final SoundFileType type : types) {
 				if (spec.length() > 0) {
-					spec.append(',');
+					spec.append(';');
 				}
-				spec.append(type.extension);
+				spec.append("*.").append(type.extension);
 			}
-
-			final File file = nfdOpenFile(startingDir, Label.SUPPORTED_MUSIC_FILE.label(), spec.toString());
+			final File file = winOpen(startingDir,
+					new String[][] { { Label.SUPPORTED_MUSIC_FILE.label(), spec.toString() } });
 			if (file == null) {
 				return null;
 			}
@@ -152,16 +110,11 @@ public class FileChooseUtils {
 			return file;
 		}
 
-		// JFileChooser fallback (non-Windows or NFD unavailable)
-		final String resolvedDir = resolveStartingDir(startingDir);
-		final JFileChooser chooser = new JFileChooser(resolvedDir != null ? new File(resolvedDir) : null);
+		final JFileChooser chooser = newChooser(startingDir);
 		chooser.setFileFilter(new FileFilter() {
 			@Override
 			public boolean accept(final File f) {
-				if (SoundFileType.fromExtension(extension(f.getName())) != null) {
-					return true;
-				}
-				return f.isDirectory();
+				return f.isDirectory() || SoundFileType.fromExtension(extension(f.getName())) != null;
 			}
 
 			@Override
@@ -169,7 +122,6 @@ public class FileChooseUtils {
 				return Label.SUPPORTED_MUSIC_FILE.label();
 			}
 		});
-
 		final File file = showDialog(parent, chooser);
 		if (file == null) {
 			return null;
@@ -183,19 +135,19 @@ public class FileChooseUtils {
 
 	public static File chooseFile(final Component parent, final String startingDir, final String[] extensions,
 			final String description) {
-		if (initNFD()) {
+		if (IS_WINDOWS) {
 			final StringBuilder spec = new StringBuilder();
 			for (final String ext : extensions) {
 				if (spec.length() > 0) {
-					spec.append(',');
+					spec.append(';');
 				}
-				spec.append(nfdExt(ext));
+				final String e = ext.startsWith(".") ? ext.substring(1) : ext;
+				spec.append("*.").append(e);
 			}
-			return nfdOpenFile(startingDir, description, spec.toString());
+			return winOpen(startingDir, new String[][] { { description, spec.toString() } });
 		}
 
-		final String resolvedDir0 = resolveStartingDir(startingDir);
-		final JFileChooser chooser = new JFileChooser(resolvedDir0 != null ? new File(resolvedDir0) : null);
+		final JFileChooser chooser = newChooser(startingDir);
 		chooser.setAcceptAllFileFilterUsed(false);
 		chooser.addChoosableFileFilter(new FileFilter() {
 			@Override
@@ -203,8 +155,8 @@ public class FileChooseUtils {
 				if (f.isDirectory()) {
 					return true;
 				}
-				for (final String extension : extensions) {
-					if (f.getName().toLowerCase().endsWith(extension)) {
+				for (final String ext : extensions) {
+					if (f.getName().toLowerCase().endsWith(ext)) {
 						return true;
 					}
 				}
@@ -216,34 +168,30 @@ public class FileChooseUtils {
 				return description;
 			}
 		});
-
 		return showDialog(parent, chooser);
 	}
 
 	public static File chooseFile(final Component parent, final String startingDir, final String[] extensions,
 			final String[] descriptions) {
-		if (initNFD()) {
-			final String[] specs = new String[extensions.length];
+		if (IS_WINDOWS) {
+			final String[][] filters = new String[extensions.length][2];
 			for (int i = 0; i < extensions.length; i++) {
-				specs[i] = nfdExt(extensions[i]);
+				final String e = extensions[i].startsWith(".") ? extensions[i].substring(1) : extensions[i];
+				filters[i][0] = descriptions[i];
+				filters[i][1] = "*." + e;
 			}
-			return nfdOpenFile(startingDir, descriptions, specs);
+			return winOpen(startingDir, filters);
 		}
 
-		final String resolvedDir1 = resolveStartingDir(startingDir);
-		final JFileChooser chooser = new JFileChooser(resolvedDir1 != null ? new File(resolvedDir1) : null);
+		final JFileChooser chooser = newChooser(startingDir);
 		chooser.setAcceptAllFileFilterUsed(false);
-
 		for (int i = 0; i < extensions.length; i++) {
 			final String extension = extensions[i];
 			final String description = descriptions[i];
 			chooser.addChoosableFileFilter(new FileFilter() {
 				@Override
 				public boolean accept(final File f) {
-					if (f.isDirectory()) {
-						return true;
-					}
-					return f.getName().toLowerCase().endsWith(extension);
+					return f.isDirectory() || f.getName().toLowerCase().endsWith(extension);
 				}
 
 				@Override
@@ -252,15 +200,13 @@ public class FileChooseUtils {
 				}
 			});
 		}
-
 		return showDialog(parent, chooser);
 	}
 
 	private static void setComboBoxesBackgrounds(final Container container) {
-		for (final Component component : container.getComponents()) {
+		for (final java.awt.Component component : container.getComponents()) {
 			if (MetalComboBoxButton.class.isAssignableFrom(component.getClass())) {
-				final MetalComboBoxButton button = (MetalComboBoxButton) component;
-				button.setBackground(ColorLabel.BASE_BG_3.color());
+				((MetalComboBoxButton) component).setBackground(ColorLabel.BASE_BG_3.color());
 			} else if (Container.class.isAssignableFrom(component.getClass())) {
 				setComboBoxesBackgrounds((Container) component);
 			}
@@ -268,21 +214,15 @@ public class FileChooseUtils {
 	}
 
 	public static File chooseDirectory(final Component parent, final String startingPath) {
-		if (initNFD()) {
-			return nfdPickFolder(startingPath);
+		if (IS_WINDOWS) {
+			return winOpenFolder(startingPath);
 		}
 
-		final String resolvedPath = resolveStartingDir(startingPath);
-		final JFileChooser chooser = new JFileChooser(resolvedPath != null ? new File(resolvedPath) : null);
+		final JFileChooser chooser = newChooser(startingPath);
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		chooser.setApproveButtonText(Label.SAVE_AS.label());
-
 		setComboBoxesBackgrounds(chooser);
 
-		final int chosenOption = chooser.showOpenDialog(parent);
-		if (chosenOption != JFileChooser.APPROVE_OPTION) {
-			return null;
-		}
-		return chooser.getSelectedFile();
+		return chooser.showOpenDialog(parent) == JFileChooser.APPROVE_OPTION ? chooser.getSelectedFile() : null;
 	}
 }
