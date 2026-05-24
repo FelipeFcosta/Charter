@@ -246,12 +246,16 @@ public class GuitarDrawer {
 				highlightedString = frameData.selectedChordNoteString;
 				editingChordNote = true;
 			}
+			// Ctrl+hover on a chord: highlight all strings (-2 sentinel) instead of just the hovered string
+			if (frameData.ctrlPressed && i == highlightId && sound.isChord() && !editingChordNote) {
+				highlightedString = -2;
+			}
 			addChordOrNote(frameData, highwayDrawer, panelWidth, i, sound, selected, highlightedString,
 					editingChordNote, lastWasLinkNext, wrongLinkNext);
 
 			lastWasLinkNext = sound.chord() != null ? sound.chord().linkNext() : sound.note().linkNext;
 
-			if (i == highlightId && !frameData.highlightData.hasStringOf(sound)) {
+			if (i == highlightId && highlightedString != -2 && !frameData.highlightData.hasStringOf(sound)) {
 				final int x = positionToX(sound.position(frameData.beats), frameData.time);
 				final int length = positionToX(sound.endPosition(frameData.beats), frameData.time) - x;
 				final Optional<ChordTemplate> template = sound.isChord()//

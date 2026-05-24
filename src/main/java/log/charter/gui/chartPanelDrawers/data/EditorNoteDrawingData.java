@@ -80,8 +80,9 @@ public class EditorNoteDrawingData {
 				noteHighlighted = false;
 			} else {
 				// Normal selection or hover highlight - all notes show selection, with hover highlight on specific note
+				// highlightedString < -1 means highlight all strings (Ctrl+hover whole chord)
 				noteSelected = selected;
-				noteHighlighted = (highlightedString == string);
+				noteHighlighted = highlightedString < -1 || highlightedString == string;
 			}
 			notes.add(fromChordNote(beats, time, noteId, chord, chordTemplate, x, string, chordNoteEntry.getValue(),
 					noteSelected, noteHighlighted, lastWasLinkNext, wrongLinkNext, ctrl));

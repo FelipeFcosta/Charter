@@ -376,6 +376,13 @@ public class GuitarModeHandler implements ModeHandler {
 	}
 
 	private void rightClickGuitarNote(final MouseButtonPressReleaseData clickData) {
+		if (keyboardHandler.ctrl() && !clickData.isXDrag() && clickData.pressHighlight.chordOrNote != null) {
+			selectionManager.addSoundSelection(clickData.pressHighlight.id);
+			chartItemsHandler.delete();
+			chordTemplatesEditorTab.refreshTemplates();
+			return;
+		}
+
 		selectionManager.clear();
 		undoSystem.addUndo();
 
