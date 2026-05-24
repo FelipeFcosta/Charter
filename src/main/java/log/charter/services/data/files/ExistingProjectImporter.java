@@ -134,6 +134,7 @@ public class ExistingProjectImporter {
 	private void reimportVocalsFromRSXML(final SongChart songChart, final String dir) {
 		final File[] xmlFiles = rsXmlFiles(dir);
 		if (xmlFiles == null) {
+			Logger.info("reimportVocalsFromRSXML: no RS XML dir or no files found");
 			return;
 		}
 
@@ -144,27 +145,35 @@ public class ExistingProjectImporter {
 				continue;
 			}
 
+			Logger.info("reimportVocalsFromRSXML: reading " + xmlFile.getName());
 			try {
+				Logger.info("reimportVocalsFromRSXML: parsing XML for " + xmlFile.getName());
 				final ArrangementVocals arrangementVocals = VocalsXStreamHandler
 						.readVocals(RW.read(xmlFile, "UTF-8"));
+				Logger.info("reimportVocalsFromRSXML: building VocalPath for " + xmlFile.getName() + " (" + arrangementVocals.vocals.size() + " vocals)");
 				vocalPaths.add(new VocalPath(songChart.beatsMap.immutable, arrangementVocals));
+				Logger.info("reimportVocalsFromRSXML: done with " + xmlFile.getName());
 			} catch (final Exception e) {
 				Logger.error("Couldn't reimport vocals RS XML file: " + xmlFile.getName(), e);
 			}
 		}
 
 		if (!vocalPaths.isEmpty()) {
+			Logger.info("reimportVocalsFromRSXML: setting " + vocalPaths.size() + " vocal path(s)");
 			songChart.vocalPaths = vocalPaths;
 		}
 	}
 
 	private void openInternal(final LoadingDialog loadingDialog, final String path) {
+		Logger.info("openInternal: start loading " + path);
 		loadingDialog.setProgress(0, Label.LOADING_PROJECT_FILE.label());
 
 		final List<String> filesToBackup = new ArrayList<>();
 		final File projectFileChosen = new File(path);
+		Logger.info("openInternal: reading project file");
 		final ChartProject project = loadProjectFile(projectFileChosen);
 		if (project == null) {
+			Logger.info("openInternal: project file was null, aborting");
 			return;
 		}
 		loadingDialog.addProgress(Label.LOADING_MUSIC_FILE);
@@ -174,24 +183,32 @@ public class ExistingProjectImporter {
 		filesToBackup.add(SongFileHandler.vocalsFileName);
 
 		final String dir = projectFileChosen.getParent() + File.separator;
+		Logger.info("openInternal: loading music data from " + dir);
 		final AudioData musicData = loadMusicData(project, dir);
 		if (musicData == null) {
+			Logger.info("openInternal: music data was null, aborting");
 			return;
 		}
 		loadingDialog.addProgress(Label.LOADING_ARRANGEMENTS);
 
+		Logger.info("openInternal: creating SongChart");
 		final SongChart songChart;
 		try {
 			songChart = new SongChart(project, dir);
 		} catch (final Exception e) {
+			Logger.error("openInternal: failed creating SongChart", e);
 			showPopup(charterFrame, Label.COULDNT_LOAD_PROJECT, e.getMessage());
 			return;
 		}
+		Logger.info("openInternal: SongChart created, arrangements=" + songChart.arrangements.size() + " vocalPaths=" + songChart.vocalPaths.size());
 
 		if (songChart.arrangements.isEmpty()) {
+			Logger.info("openInternal: reimporting arrangements from RS XML");
 			reimportArrangementsFromRSXML(songChart, dir);
 		}
+		Logger.info("openInternal: reimporting vocals from RS XML");
 		reimportVocalsFromRSXML(songChart, dir);
+		Logger.info("openInternal: vocals reimport done, vocalPaths=" + songChart.vocalPaths.size());
 
 		final List<String> rsXmlFilesToBackup = new ArrayList<>();
 		final File rsXmlDir = new File(dir, "RS XML");
@@ -202,12 +219,16 @@ public class ExistingProjectImporter {
 			}
 		}
 
+		Logger.info("openInternal: making backups");
 		makeBackups(dir, filesToBackup, rsXmlFilesToBackup);
 
+		Logger.info("openInternal: setting song data");
 		chartData.setSong(dir, songChart, projectFileChosen.getName(), project.editMode, project.arrangement,
 				project.level);
 		chartTimeHandler.nextTime(project.time);
+		Logger.info("openInternal: setting audio");
 		projectAudioHandler.setAudio(musicData);
+		Logger.info("openInternal: reading stems");
 		projectAudioHandler.readStems();
 		projectAudioHandler.selectStem(project.selectedStem);
 		textTab.setText(project.text);
@@ -219,6 +240,7 @@ public class ExistingProjectImporter {
 		audioHandler.clear();
 		chordTemplatesEditorTab.refreshTemplates();
 
+		Logger.info("openInternal: done");
 		loadingDialog.addProgress(Label.LOADING_DONE);
 	}
 

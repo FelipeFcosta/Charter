@@ -12,7 +12,9 @@
       "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter\\\\logs\" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 10)",
       "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter_dev\\\\logs\" -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 10)",
       "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 100)",
-      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-Object -Last 100)"
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-22.txt\" | Select-Object -Last 100)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 80)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-23.txt\" | Select-Object -Last 50)"
     ]
   }
 }
