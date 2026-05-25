@@ -22,6 +22,7 @@ import log.charter.data.song.Phrase;
 import log.charter.data.song.ToneChange;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.FractionalPosition;
+import log.charter.data.song.vocals.Vocal;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.data.song.position.fractional.IConstantFractionalPositionWithEnd;
 import log.charter.data.song.position.virtual.IVirtualConstantPosition;
@@ -34,6 +35,7 @@ import log.charter.io.ClipboardHandler;
 import log.charter.io.Logger;
 import log.charter.io.rsc.xml.ChartProjectXStreamHandler;
 import log.charter.services.data.ChartTimeHandler;
+import log.charter.services.data.LiveLyricsHandler;
 import log.charter.services.data.copy.data.CopyData;
 import log.charter.services.data.copy.data.EventPointsCopyData;
 import log.charter.services.data.copy.data.FHPsCopyData;
@@ -65,6 +67,7 @@ public class CopyManager {
 	private CharterFrame charterFrame;
 	private ChartTimeHandler chartTimeHandler;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
+	private LiveLyricsHandler liveLyricsHandler;
 	private ModeManager modeManager;
 	private SelectionManager selectionManager;
 	private UndoSystem undoSystem;
@@ -348,6 +351,12 @@ public class CopyManager {
 		undoSystem.addUndo();
 		selectionManager.clear();
 		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.displayTimeFractional(), true);
+
+		if (liveLyricsHandler != null) {
+			for (final Vocal vocal : selectionManager.<Vocal>getSelectedElements(PositionType.VOCAL)) {
+				liveLyricsHandler.insertSyllable(vocal);
+			}
+		}
 	}
 
 	private void pasteGuitar(final CopyData copyData, final String clipboardXml) {

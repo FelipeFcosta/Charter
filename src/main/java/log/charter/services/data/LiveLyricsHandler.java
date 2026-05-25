@@ -491,6 +491,64 @@ public class LiveLyricsHandler implements Initiable {
 		return result;
 	}
 
+	public void insertSyllable(final Vocal vocal) {
+		if (!isVocalsMode()) {
+			return;
+		}
+		final var cv = chartData.currentVocals();
+		if (cv == null) {
+			return;
+		}
+
+		final int vocalIdx = cv.vocals.indexOf(vocal);
+		if (vocalIdx < 0) {
+			return;
+		}
+
+		// Find the token index of the first already-mapped vocal that comes after this one
+		int insertTokenIdx = tokens.size();
+		outer:
+		for (int i = vocalIdx + 1; i < cv.vocals.size(); i++) {
+			final Vocal next = cv.vocals.get(i);
+			for (final Map.Entry<Integer, Vocal> e : tokenIndexToVocal.entrySet()) {
+				if (e.getValue() == next) {
+					insertTokenIdx = e.getKey();
+					break outer;
+				}
+			}
+		}
+
+		tokens.add(insertTokenIdx, new LyricToken(vocal.text(), vocal.flag()));
+
+		final Map<Integer, Vocal> newMap = new HashMap<>();
+		for (final Map.Entry<Integer, Vocal> e : tokenIndexToVocal.entrySet()) {
+			final int idx = e.getKey();
+			newMap.put(idx >= insertTokenIdx ? idx + 1 : idx, e.getValue());
+		}
+		tokenIndexToVocal.clear();
+		tokenIndexToVocal.putAll(newMap);
+		tokenIndexToVocal.put(insertTokenIdx, vocal);
+
+		if (currentTokenIndex > insertTokenIdx) {
+			currentTokenIndex++;
+		}
+
+		sourceText = buildSourceTextFromTokens();
+
+		if (textTab != null) {
+			updatingTextFromVocals = true;
+			try {
+				textTab.setText(sourceText);
+			} finally {
+				updatingTextFromVocals = false;
+			}
+		}
+
+		pendingText = null;
+		updateTextTabStatus();
+		refreshPanel();
+	}
+
 	public void updateSyllable(final Vocal vocal, final String newText, final VocalFlag newFlag) {
 		Integer tokenIndex = null;
 		for (final Map.Entry<Integer, Vocal> entry : tokenIndexToVocal.entrySet()) {

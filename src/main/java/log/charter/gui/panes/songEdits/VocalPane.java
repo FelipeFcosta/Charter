@@ -41,8 +41,10 @@ public class VocalPane extends ParamsPane {
 	}
 
 	public VocalPane(final IConstantFractionalPositionWithEnd position, final ChartData data, final CharterFrame frame,
-			final SelectionManager selectionManager, final UndoSystem undoSystem) {
+			final SelectionManager selectionManager, final UndoSystem undoSystem,
+			final LiveLyricsHandler liveLyricsHandler) {
 		this(Label.VOCAL_PANE_CREATION, data, frame, selectionManager, undoSystem);
+		this.liveLyricsHandler = liveLyricsHandler;
 
 		text = "";
 		wordPart = false;
@@ -129,6 +131,10 @@ public class VocalPane extends ParamsPane {
 
 		final int vocalId = data.currentVocals().insertVocal(position, text, flag());
 		selectionManager.addSelection(PositionType.VOCAL, vocalId);
+
+		if (liveLyricsHandler != null) {
+			liveLyricsHandler.insertSyllable(data.currentVocals().vocals.get(vocalId));
+		}
 	}
 
 	private void changeValues(final Vocal vocal) {
