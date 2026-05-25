@@ -471,6 +471,106 @@ public class LiveLyricsHandler implements Initiable {
 		return result;
 	}
 
+	private String buildSourceTextFromTokens() {
+		final StringBuilder sb = new StringBuilder();
+		boolean prevWasWordPart = false;
+		for (final LyricToken token : tokens) {
+			if (!prevWasWordPart && sb.length() > 0 && sb.charAt(sb.length() - 1) != '\n') {
+				sb.append(' ');
+			}
+			sb.append(formatToken(token));
+			if (token.flag == VocalFlag.PHRASE_END) {
+				sb.append('\n');
+			}
+			prevWasWordPart = token.flag == VocalFlag.WORD_PART;
+		}
+		String result = sb.toString();
+		while (result.endsWith("\n")) {
+			result = result.substring(0, result.length() - 1);
+		}
+		return result;
+	}
+
+	public void updateSyllable(final Vocal vocal, final String newText, final VocalFlag newFlag) {
+		Integer tokenIndex = null;
+		for (final Map.Entry<Integer, Vocal> entry : tokenIndexToVocal.entrySet()) {
+			if (entry.getValue() == vocal) {
+				tokenIndex = entry.getKey();
+				break;
+			}
+		}
+		if (tokenIndex == null || tokenIndex >= tokens.size()) {
+			return;
+		}
+
+		final LyricToken old = tokens.get(tokenIndex);
+		final LyricToken updated = new LyricToken(newText, newFlag);
+		updated.lineBreakAfter = old.lineBreakAfter;
+		tokens.set(tokenIndex, updated);
+
+		sourceText = buildSourceTextFromTokens();
+
+		if (textTab != null) {
+			updatingTextFromVocals = true;
+			try {
+				textTab.setText(sourceText);
+			} finally {
+				updatingTextFromVocals = false;
+			}
+		}
+
+		pendingText = null;
+		updateTextTabStatus();
+		refreshPanel();
+	}
+
+	public void removeSyllable(final Vocal vocal) {
+		Integer tokenIndex = null;
+		for (final Map.Entry<Integer, Vocal> entry : tokenIndexToVocal.entrySet()) {
+			if (entry.getValue() == vocal) {
+				tokenIndex = entry.getKey();
+				break;
+			}
+		}
+		if (tokenIndex == null || tokenIndex >= tokens.size()) {
+			return;
+		}
+
+		tokens.remove((int) tokenIndex);
+
+		final Map<Integer, Vocal> newMap = new HashMap<>();
+		for (final Map.Entry<Integer, Vocal> entry : tokenIndexToVocal.entrySet()) {
+			if (entry.getValue() == vocal) {
+				continue;
+			}
+			final int idx = entry.getKey();
+			newMap.put(idx > tokenIndex ? idx - 1 : idx, entry.getValue());
+		}
+		tokenIndexToVocal.clear();
+		tokenIndexToVocal.putAll(newMap);
+
+		if (currentTokenIndex > tokenIndex) {
+			currentTokenIndex--;
+		} else if (currentTokenIndex >= tokens.size()) {
+			currentTokenIndex = tokens.size();
+		}
+
+		sourceText = buildSourceTextFromTokens();
+
+		if (textTab != null) {
+			updatingTextFromVocals = true;
+			try {
+				textTab.setText(sourceText);
+			} finally {
+				updatingTextFromVocals = false;
+			}
+		}
+
+		pendingText = null;
+		updateTextTabStatus();
+		refreshPanel();
+	}
+
 	private void syncVocalsToText() {
 		if (!isVocalsMode()) {
 			return;

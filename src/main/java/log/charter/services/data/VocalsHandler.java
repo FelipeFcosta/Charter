@@ -26,6 +26,7 @@ public class VocalsHandler {
 	private CharterFrame charterFrame;
 	private ChartTimeHandler chartTimeHandler;
 	private CurrentSelectionEditor currentSelectionEditor;
+	private LiveLyricsHandler liveLyricsHandler;
 	private SelectionManager selectionManager;
 	private TextTab textTab;
 	private UndoSystem undoSystem;
@@ -38,7 +39,7 @@ public class VocalsHandler {
 
 		final Selection<Vocal> firstSelectedVocal = selected.remove(0);
 		new VocalPane(firstSelectedVocal.id, firstSelectedVocal.selectable, chartData, charterFrame, selectionManager,
-				undoSystem, selected);
+				undoSystem, liveLyricsHandler, selected);
 	}
 
 	private void toggle(final VocalFlag flag) {

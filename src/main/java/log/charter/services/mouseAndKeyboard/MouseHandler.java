@@ -32,6 +32,7 @@ import log.charter.io.Logger;
 import log.charter.services.ActionHandler;
 import log.charter.services.data.BeatsService;
 import log.charter.services.data.ChartTimeHandler;
+import log.charter.services.data.LiveLyricsHandler;
 import log.charter.services.data.fixers.ArrangementFixer;
 import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
@@ -48,6 +49,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 	private ChartTimeHandler chartTimeHandler;
 	private ChordTemplatesEditorTab chordTemplatesEditorTab;
 	private KeyboardHandler keyboardHandler;
+	private LiveLyricsHandler liveLyricsHandler;
 	private ModeManager modeManager;
 	private MouseButtonPressReleaseHandler mouseButtonPressReleaseHandler;
 	private SelectionManager selectionManager;
@@ -174,7 +176,7 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 
 		if (isDoubleClick && clickData.pressHighlight.vocal != null) {
 			new VocalPane(clickData.pressHighlight.id, clickData.pressHighlight.vocal, chartData, charterFrame,
-					selectionManager, undoSystem);
+					selectionManager, undoSystem, liveLyricsHandler);
 		}
 	}
 

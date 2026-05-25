@@ -2,6 +2,7 @@ package log.charter.gui.panes.songEdits;
 
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
 
 import log.charter.data.ChartData;
@@ -13,6 +14,7 @@ import log.charter.data.types.PositionType;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.containers.ParamsPane;
+import log.charter.services.data.LiveLyricsHandler;
 import log.charter.services.data.selection.Selection;
 import log.charter.services.data.selection.SelectionManager;
 
@@ -27,6 +29,7 @@ public class VocalPane extends ParamsPane {
 	private final CharterFrame frame;
 	private final SelectionManager selectionManager;
 	private final UndoSystem undoSystem;
+	private LiveLyricsHandler liveLyricsHandler;
 
 	private VocalPane(final Label label, final ChartData data, final CharterFrame frame,
 			final SelectionManager selectionManager, final UndoSystem undoSystem) {
@@ -45,33 +48,36 @@ public class VocalPane extends ParamsPane {
 		wordPart = false;
 		phraseEnd = false;
 
-		createElementsAndShow(() -> createAndExit(position));
-	}
-
-	public VocalPane(final int id, final Vocal vocal, final ChartData data, final CharterFrame frame,
-			final SelectionManager selectionManager, final UndoSystem undoSystem) {
-		this(Label.VOCAL_PANE_EDIT, data, frame, selectionManager, undoSystem);
-
-		text = vocal.text();
-		wordPart = vocal.flag() == VocalFlag.WORD_PART;
-		phraseEnd = vocal.flag() == VocalFlag.PHRASE_END;
-
-		createElementsAndShow(() -> saveAndExit(id, vocal));
+		createElementsAndShow(() -> createAndExit(position), null);
 	}
 
 	public VocalPane(final int id, final Vocal vocal, final ChartData data, final CharterFrame frame,
 			final SelectionManager selectionManager, final UndoSystem undoSystem,
-			final List<Selection<Vocal>> remainingVocals) {
+			final LiveLyricsHandler liveLyricsHandler) {
 		this(Label.VOCAL_PANE_EDIT, data, frame, selectionManager, undoSystem);
+		this.liveLyricsHandler = liveLyricsHandler;
 
 		text = vocal.text();
 		wordPart = vocal.flag() == VocalFlag.WORD_PART;
 		phraseEnd = vocal.flag() == VocalFlag.PHRASE_END;
 
-		createElementsAndShow(() -> saveAndExit(id, vocal, remainingVocals));
+		createElementsAndShow(() -> saveAndExit(id, vocal), () -> removeAndExit(id, vocal));
 	}
 
-	private void createElementsAndShow(final Runnable onSave) {
+	public VocalPane(final int id, final Vocal vocal, final ChartData data, final CharterFrame frame,
+			final SelectionManager selectionManager, final UndoSystem undoSystem,
+			final LiveLyricsHandler liveLyricsHandler, final List<Selection<Vocal>> remainingVocals) {
+		this(Label.VOCAL_PANE_EDIT, data, frame, selectionManager, undoSystem);
+		this.liveLyricsHandler = liveLyricsHandler;
+
+		text = vocal.text();
+		wordPart = vocal.flag() == VocalFlag.WORD_PART;
+		phraseEnd = vocal.flag() == VocalFlag.PHRASE_END;
+
+		createElementsAndShow(() -> saveAndExit(id, vocal, remainingVocals), () -> removeAndExit(id, vocal));
+	}
+
+	private void createElementsAndShow(final Runnable onSave, final Runnable onRemove) {
 		addStringConfigValue(0, 20, 70, Label.VOCAL_PANE_LYRIC, text, 200, null, val -> text = val, true);
 		addConfigCheckbox(1, 20, 70, Label.VOCAL_PANE_WORD_PART, wordPart, val -> {
 			wordPart = val;
@@ -90,8 +96,23 @@ public class VocalPane extends ParamsPane {
 			wordPartCheckbox.setEnabled(!val);
 		});
 
+		if (onRemove != null) {
+			final JButton removeButton = new JButton("Remove syllable");
+			removeButton.addActionListener(e -> { onRemove.run(); dispose(); });
+			add(removeButton, (sizes.width - 200) / 2, getY(3), 200, 20);
+		}
+
 		this.setOnFinish(onSave, null);
 		addDefaultFinish(4);
+	}
+
+	private void removeAndExit(final int id, final Vocal vocal) {
+		undoSystem.addUndo();
+		selectionManager.clear();
+		if (liveLyricsHandler != null) {
+			liveLyricsHandler.removeSyllable(vocal);
+		}
+		data.currentVocals().removeNote(id);
 	}
 
 	private VocalFlag flag() {
@@ -118,6 +139,9 @@ public class VocalPane extends ParamsPane {
 		undoSystem.addUndo();
 		vocal.flag(flag());
 		vocal.text(text);
+		if (liveLyricsHandler != null) {
+			liveLyricsHandler.updateSyllable(vocal, text, flag());
+		}
 	}
 
 	private void saveAndExit(final int id, final Vocal vocal) {
@@ -133,7 +157,7 @@ public class VocalPane extends ParamsPane {
 	private void showNewWindow(final List<Selection<Vocal>> remainingVocals) {
 		final Selection<Vocal> nextSelectedVocal = remainingVocals.remove(0);
 		new VocalPane(nextSelectedVocal.id, nextSelectedVocal.selectable, data, frame, selectionManager, undoSystem,
-				remainingVocals);
+				liveLyricsHandler, remainingVocals);
 	}
 
 	private void saveAndExit(final int id, final Vocal vocal, final List<Selection<Vocal>> remainingVocals) {
