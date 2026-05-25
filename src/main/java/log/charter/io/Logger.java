@@ -12,7 +12,7 @@ import log.charter.util.Utils;
 public class Logger {
 	private static final SimpleDateFormat timeFormat = new SimpleDateFormat("<yyyy-MM-dd HH:mm:ss>");
 
-	private static PrintStream out = System.out;
+	private static PrintStream out = System.err;
 
 	static {
 		try {
@@ -25,13 +25,34 @@ public class Logger {
 			}
 
 			out = new PrintStream(new FileOutputStream(new File(dir, name), true), true);
-		} catch (final Exception e) {
-			e.printStackTrace();
+		} catch (final Throwable e) {
+			System.err.println("[LOGGER INIT FAILED] " + e);
+			e.printStackTrace(System.err);
 		}
+	}
+
+	private static final boolean loggingToFile() {
+		return out != System.err;
 	}
 
 	private static String getLine(final String type, final String msg) {
 		return "[" + type + "]" + timeFormat.format(new Date()) + " " + msg;
+	}
+
+	private static void write(final String msg) {
+		out.println(msg);
+		if (loggingToFile()) {
+			System.err.println(msg);
+		}
+	}
+
+	private static void write(final String msg, final Throwable t) {
+		out.println(msg);
+		t.printStackTrace(out);
+		if (loggingToFile()) {
+			System.err.println(msg);
+			t.printStackTrace(System.err);
+		}
 	}
 
 	public static void debug(String msg) {
@@ -39,89 +60,34 @@ public class Logger {
 			return;
 		}
 
-		msg = getLine("DEBUG", msg);
-		out.println(msg);
-
-		if (out != System.out) {
-			System.out.println(msg);
-		}
+		write(getLine("DEBUG", msg));
 	}
 
 	public static void debug(String msg, final Throwable t) {
-		msg = getLine("DEBUG", msg);
-
-		out.println(msg);
-		t.printStackTrace(out);
-
-		if (out != System.out) {
-			System.out.println(msg);
-			t.printStackTrace(System.out);
-		}
+		write(getLine("DEBUG", msg), t);
 	}
 
 	public static void info(String msg) {
-		msg = getLine("INFO", msg);
-
-		out.println(msg);
-
-		if (out != System.out) {
-			System.out.println(msg);
-		}
+		write(getLine("INFO", msg));
 	}
 
 	public static void info(String msg, final Exception e) {
-		msg = getLine("INFO", msg);
-
-		out.println(msg);
-		e.printStackTrace(out);
-
-		if (out != System.out) {
-			System.out.println(msg);
-			e.printStackTrace(System.out);
-		}
+		write(getLine("INFO", msg), e);
 	}
 
 	public static void warning(String msg) {
-		msg = getLine("WARNING", msg);
-
-		out.println(msg);
-
-		if (out != System.out) {
-			System.out.println(msg);
-		}
+		write(getLine("WARNING", msg));
 	}
 
 	public static void warning(String msg, final Throwable e) {
-		msg = getLine("WARNING", msg);
-
-		out.println(msg);
-		e.printStackTrace(out);
-
-		if (out != System.out) {
-			System.out.println(msg);
-			e.printStackTrace(System.out);
-		}
+		write(getLine("WARNING", msg), e);
 	}
 
 	public static void error(String msg) {
-		msg = getLine("ERROR", msg);
-
-		out.println(msg);
-
-		if (out != System.out) {
-			System.out.println(msg);
-		}
+		write(getLine("ERROR", msg));
 	}
 
 	public static void error(String msg, final Throwable e) {
-		msg = getLine("ERROR", msg);
-
-		out.println(msg);
-		e.printStackTrace(out);
-
-		if (out != System.out) {
-			System.out.println(msg);
-			e.printStackTrace(System.out);
-		}
+		write(getLine("ERROR", msg), e);
 	}
 }

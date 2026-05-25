@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import javax.swing.SwingUtilities;
 
@@ -73,7 +72,6 @@ public class LiveLyricsHandler implements Initiable {
 	private boolean enabled = false;
 	private volatile ActiveDraft activeDraft = null; // volatile: read by frame thread, written by EDT
 	private volatile boolean syncScheduled = false;  // volatile: written by frame thread, cleared by EDT
-	private String lastVocalsText = null;
 	private boolean updatingTextFromVocals = false;
 
 	@Override
@@ -162,7 +160,6 @@ public class LiveLyricsHandler implements Initiable {
 		pendingText = null;
 		parseLyrics();
 		rebuildTokenIndexToVocal();
-		lastVocalsText = buildSyncedText();
 		updateTextTabStatus();
 		refreshPanel();
 	}
@@ -282,7 +279,7 @@ public class LiveLyricsHandler implements Initiable {
 		};
 	}
 
-	private static final int TAP_OFFSET_MS = 50;
+	private static final int TAP_OFFSET_MS = 0;
 
 	private FractionalPosition currentTapPosition() {
 		return FractionalPosition.fromTime(chartData.beats(), chartTimeHandler.displayTime() + TAP_OFFSET_MS);
@@ -440,9 +437,8 @@ public class LiveLyricsHandler implements Initiable {
 			final Vocal vocal = tokenIndexToVocal.get(i);
 			final boolean placed = vocal != null && currentVocals.vocals.contains(vocal);
 			if (vocal != null && !placed) {
-				// Explicitly deleted from timeline — remove stale entry and skip this token from text
+				// Vocal deleted from timeline — unplace the token but keep it in the output
 				tokenIndexToVocal.remove(i);
-				continue;
 			}
 
 			if (placed) {
@@ -475,85 +471,16 @@ public class LiveLyricsHandler implements Initiable {
 		return result;
 	}
 
-	private boolean hasUntrackedVocals() {
-		if (!isVocalsMode()) {
-			return false;
-		}
-		final var cv = chartData.currentVocals();
-		if (cv == null) {
-			return false;
-		}
-		for (final Vocal v : cv.vocals) {
-			if (!tokenIndexToVocal.containsValue(v)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private String buildTextFromVocals() {
-		final var cv = chartData.currentVocals();
-		if (cv == null || cv.vocals.isEmpty()) {
-			return "";
-		}
-		final StringBuilder sb = new StringBuilder();
-		boolean prevWasWordPart = false;
-		for (final Vocal vocal : cv.vocals) {
-			if (!prevWasWordPart && sb.length() > 0) {
-				final char last = sb.charAt(sb.length() - 1);
-				if (last != '\n') {
-					sb.append(' ');
-				}
-			}
-			sb.append(vocal.lyrics());
-			switch (vocal.flag()) {
-				case WORD_PART -> {
-					sb.append('-');
-					prevWasWordPart = true;
-				}
-				case PHRASE_END -> {
-					sb.append('\n');
-					prevWasWordPart = false;
-				}
-				default -> prevWasWordPart = false;
-			}
-		}
-		String result = sb.toString();
-		while (result.endsWith("\n")) {
-			result = result.substring(0, result.length() - 1);
-		}
-		return result;
-	}
-
 	private void syncVocalsToText() {
 		if (!isVocalsMode()) {
 			return;
 		}
 		if (pendingText != null) {
-			return; // preserve user's unsaved draft
-		}
-
-		final String currentText = hasUntrackedVocals() ? buildTextFromVocals() : buildSyncedText();
-		if (Objects.equals(currentText, lastVocalsText)) {
 			return;
 		}
-
-		lastVocalsText = currentText;
-
-		if (textTab == null) {
-			return;
-		}
-
-		updatingTextFromVocals = true;
-		try {
-			textTab.setText(currentText);
-		} finally {
-			updatingTextFromVocals = false;
-		}
-		sourceText = currentText;
-		parseLyrics();
-		rebuildTokenIndexToVocal();
-		updateTextTabStatus();
+		// Clean up stale token→vocal mappings (e.g. after timeline deletions).
+		// Never touch sourceText or the text tab — those are only changed by Apply.
+		buildSyncedText();
 		refreshPanel();
 	}
 
@@ -623,7 +550,6 @@ public class LiveLyricsHandler implements Initiable {
 		reloadFromTextTab(); // adopt whatever is currently in the text tab as the source
 		currentTokenIndex = 0;
 		activeDraft = null;
-		lastVocalsText = null;
 		rebuildTokenIndexToVocal();
 		updateTextTabStatus();
 		refreshPanel();
