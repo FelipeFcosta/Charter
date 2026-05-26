@@ -3,7 +3,11 @@
     "allow": [
       "PowerShell(mvn clean package -Plwjgl-natives-windows-amd64 -DskipTests -q 2>&1)",
       "PowerShell(ls \"$env:APPDATA\\\\Charter\" -ErrorAction SilentlyContinue; ls \"$env:LOCALAPPDATA\\\\Charter\" -ErrorAction SilentlyContinue; ls \"$env:APPDATA\\\\charter\" -ErrorAction SilentlyContinue; ls \"$env:LOCALAPPDATA\\\\charter\" -ErrorAction SilentlyContinue)",
-      "Read(//c/Users/felip/AppData/Roaming/Charter/logs/**)"
+      "Read(//c/Users/felip/AppData/Roaming/Charter/logs/**)",
+      "PowerShell(Get-ChildItem \"$env:APPDATA\\\\Charter\\\\logs\" | Sort-Object LastWriteTime -Descending | Select-Object -First 5)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-26.txt\" | Select-Object -Last 80)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-26.txt\" | Select-Object -Last 60)",
+      "PowerShell(Get-Content \"$env:APPDATA\\\\Charter\\\\logs\\\\log-2026-05-26.txt\" | Select-Object -Last 40)"
     ]
   }
 }

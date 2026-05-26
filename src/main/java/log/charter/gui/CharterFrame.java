@@ -257,12 +257,21 @@ public class CharterFrame extends JFrame implements Initiable {
 		}
 	}
 
+	private String lastPaintError = null;
+	private long lastPaintErrorTime = 0;
+
 	@Override
 	public void paint(final Graphics g) {
 		try {
 			super.paint(g);
 		} catch (final Exception e) {
-			Logger.error("Error in CharterFrame.paint", e);
+			final String key = e.getClass().getName() + ":" + e.getMessage();
+			final long now = System.currentTimeMillis();
+			if (!key.equals(lastPaintError) || now - lastPaintErrorTime > 5000) {
+				Logger.error("Error in CharterFrame.paint", e);
+				lastPaintError = key;
+				lastPaintErrorTime = now;
+			}
 		}
 	}
 }

@@ -30,6 +30,7 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import log.charter.data.config.Localization.Label;
+import log.charter.io.Logger;
 import log.charter.data.config.values.WindowStateConfig;
 import log.charter.gui.CharterFrame;
 import log.charter.gui.components.simple.TextInputWithValidation;
@@ -139,11 +140,21 @@ public class ParamsPane extends JDialog implements WindowListener {
 		this.onSave = onSave == null//
 				? () -> { dispose(); }//
 				: () -> {
-					if (onSave.save()) {
-						dispose();
+					try {
+						if (onSave.save()) {
+							dispose();
+						}
+					} catch (final Throwable t) {
+						Logger.error("Error in dialog save action", t);
 					}
 				};
-		this.onCancel = onCancel == null ? () -> {} : onCancel;
+		this.onCancel = onCancel == null ? () -> {} : () -> {
+			try {
+				onCancel.run();
+			} catch (final Throwable t) {
+				Logger.error("Error in dialog cancel action", t);
+			}
+		};
 	}
 
 	public Component getPart(int id) {

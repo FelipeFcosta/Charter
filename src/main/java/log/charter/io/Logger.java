@@ -25,14 +25,12 @@ public class Logger {
 			}
 
 			out = new PrintStream(new FileOutputStream(new File(dir, name), true), true);
+			System.setErr(out);
+			System.setOut(out);
 		} catch (final Throwable e) {
 			System.err.println("[LOGGER INIT FAILED] " + e);
 			e.printStackTrace(System.err);
 		}
-	}
-
-	private static final boolean loggingToFile() {
-		return out != System.err;
 	}
 
 	private static String getLine(final String type, final String msg) {
@@ -41,18 +39,11 @@ public class Logger {
 
 	private static void write(final String msg) {
 		out.println(msg);
-		if (loggingToFile()) {
-			System.err.println(msg);
-		}
 	}
 
 	private static void write(final String msg, final Throwable t) {
 		out.println(msg);
 		t.printStackTrace(out);
-		if (loggingToFile()) {
-			System.err.println(msg);
-			t.printStackTrace(System.err);
-		}
 	}
 
 	public static void debug(String msg) {

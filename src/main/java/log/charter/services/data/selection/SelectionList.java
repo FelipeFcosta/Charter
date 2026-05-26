@@ -118,6 +118,7 @@ class SelectionList<C extends IVirtualConstantPosition, P extends C, T extends P
 	public List<Selection<T>> getSelected() {
 		if (!selectedIds.isEmpty()) {
 			final List<T> items = positionTypeManager.getItems(chartData);
+			selectedIds.removeIf(id -> id >= items.size());
 			return map(selectedIds, id -> new Selection<>(id, items.get(id)));
 		}
 
@@ -136,6 +137,7 @@ class SelectionList<C extends IVirtualConstantPosition, P extends C, T extends P
 	public List<T> getSelectedElements() {
 		if (!selectedIds.isEmpty()) {
 			final List<T> items = positionTypeManager.getItems(chartData);
+			selectedIds.removeIf(id -> id >= items.size());
 			return map(selectedIds, id -> items.get(id));
 		}
 
