@@ -17,6 +17,7 @@ public class LinkedNotesFixer {
 	public static void fixLinkedNote(final CommonNote note, final int id, final List<ChordOrNote> sounds) {
 		final ChordOrNote nextSound = findNextSoundOnString(note.string(), id + 1, sounds);
 		if (nextSound == null) {
+			note.linkNext(false);
 			return;
 		}
 

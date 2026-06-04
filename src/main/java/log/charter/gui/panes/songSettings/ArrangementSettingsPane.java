@@ -174,9 +174,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 		final List<String> sortedTones = new ArrayList<>(arrangement.tones);
 		Collections.sort(sortedTones);
 		for (final String tone : sortedTones) {
-			if (!tone.equals(startingTone)) {
-				tonesRenameMap.put(tone, tone);
-			}
+			tonesRenameMap.put(tone, tone);
 		}
 		buildLocalTones();
 
@@ -605,17 +603,7 @@ public class ArrangementSettingsPane extends ParamsPane {
 		arrangement.pickedBass = pickedBass;
 		arrangement.chordNameMadnessCapoRelative = chordNameMadnessCapoRelative;
 
-		// Propagate starting tone rename to every toneChange that referenced the old name
-		final String oldStartingTone = arrangement.startingTone;
 		arrangement.startingTone = startingTone;
-		final boolean startingToneRenamed = !oldStartingTone.equals(startingTone);
-		if (startingToneRenamed) {
-			for (final ToneChange tc : arrangement.toneChanges) {
-				if (oldStartingTone.equals(tc.toneName)) {
-					tc.toneName = startingTone;
-				}
-			}
-		}
 
 		// Apply renames/removals for the other tones
 		final boolean hasTonesOps = tonesRenameMap != null && !tonesRenameMap.isEmpty();
@@ -634,8 +622,8 @@ public class ArrangementSettingsPane extends ParamsPane {
 			}
 		}
 
-		// Rebuild the tones set whenever anything changed
-		if (startingToneRenamed || hasTonesOps) {
+		// Rebuild the tones set when timeline tones changed
+		if (hasTonesOps) {
 			arrangement.tones = arrangement.toneChanges.stream()//
 					.map(tc -> tc.toneName)//
 					.collect(Collectors.toCollection(HashSet::new));

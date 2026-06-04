@@ -135,6 +135,22 @@ public class ChartItemsHandler {
 
 		idsToDelete.sort((a, b) -> -Integer.compare(a, b));
 		final List<?> items = type.manager().getItems(chartData);
+
+		if (type == PositionType.GUITAR_NOTE) {
+			@SuppressWarnings("unchecked")
+			final List<ChordOrNote> sounds = (List<ChordOrNote>) items;
+			for (final int id : idsToDelete) {
+				final ChordOrNote deleted = sounds.get(id);
+				if (deleted.isNote()) {
+					clearPredecessorLinkNext(deleted.note().string, id, sounds);
+				} else {
+					for (final int string : deleted.chord().chordNotes.keySet()) {
+						clearPredecessorLinkNext(string, id, sounds);
+					}
+				}
+			}
+		}
+
 		idsToDelete.forEach(id -> items.remove((int) id));
 
 		if (type == PositionType.TONE_CHANGE) {
@@ -149,6 +165,18 @@ public class ChartItemsHandler {
 				break;
 			default:
 				break;
+		}
+	}
+
+	private void clearPredecessorLinkNext(final int string, final int deletedId, final List<ChordOrNote> sounds) {
+		final ChordOrNote prev = ChordOrNote.findPreviousSoundOnString(string, deletedId - 1, sounds);
+		if (prev == null || !prev.linkNext(string)) {
+			return;
+		}
+		if (prev.isNote()) {
+			prev.note().linkNext(false);
+		} else {
+			prev.chord().chordNotes.get(string).linkNext(false);
 		}
 	}
 
