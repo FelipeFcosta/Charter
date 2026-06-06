@@ -558,6 +558,8 @@ public class LiveLyricsHandler implements Initiable {
 			}
 		}
 		if (tokenIndex == null || tokenIndex >= tokens.size()) {
+			syncVocalsToText();
+			refreshPanel();
 			return;
 		}
 
@@ -591,6 +593,8 @@ public class LiveLyricsHandler implements Initiable {
 			}
 		}
 		if (tokenIndex == null || tokenIndex >= tokens.size()) {
+			syncVocalsToText();
+			refreshPanel();
 			return;
 		}
 

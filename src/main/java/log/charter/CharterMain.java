@@ -89,7 +89,20 @@ public class CharterMain {
 					Logger.error("EDT frozen for " + elapsed + "ms — thread dump:");
 					final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 					for (final ThreadInfo info : bean.dumpAllThreads(true, true)) {
-						Logger.error(info.toString());
+						final StringBuilder sb = new StringBuilder();
+						sb.append('"').append(info.getThreadName()).append('"');
+						sb.append(" Id=").append(info.getThreadId());
+						sb.append(" ").append(info.getThreadState());
+						if (info.getLockName() != null) {
+							sb.append(" on ").append(info.getLockName());
+						}
+						if (info.getLockOwnerName() != null) {
+							sb.append(" owned by \"").append(info.getLockOwnerName()).append("\" Id=").append(info.getLockOwnerId());
+						}
+						for (final StackTraceElement e : info.getStackTrace()) {
+							sb.append("\n\tat ").append(e);
+						}
+						Logger.error(sb.toString());
 					}
 				}
 			}
