@@ -12,6 +12,8 @@ import java.util.Map;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.Localization.Label;
+import javax.swing.SwingUtilities;
+
 import log.charter.data.config.SystemType;
 import log.charter.data.undoSystem.UndoSystem;
 import log.charter.gui.ChartPanel;
@@ -259,11 +261,13 @@ public class CharterContext {
 			}
 
 			if (charterFrame.isShowing()) {
-				chartingTimerPanel.refresh();
-				helpTab.updateValues();
-				titleUpdater.updateTitle();
-				charterFrame.validate();
-				charterFrame.repaint();
+				SwingUtilities.invokeLater(() -> {
+					chartingTimerPanel.refresh();
+					helpTab.updateValues();
+					titleUpdater.updateTitle();
+					charterFrame.validate();
+					charterFrame.repaint();
+				});
 			}
 		} catch (final Exception e) {
 			Logger.error("Exception in frame()", e);
