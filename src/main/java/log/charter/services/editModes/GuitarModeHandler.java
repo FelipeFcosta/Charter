@@ -290,7 +290,16 @@ public class GuitarModeHandler implements ModeHandler {
 		}
 
 		if (chordOrNote.isNote() && chordOrNote.note().string == string) {
-			chartData.currentSounds().remove((int) id);
+			final List<ChordOrNote> soundsForRemoval = chartData.currentSounds();
+			final ChordOrNote predecessorToFix = ChordOrNote.findPreviousSoundOnString(string, id - 1, soundsForRemoval);
+			if (predecessorToFix != null && predecessorToFix.linkNext(string)) {
+				if (predecessorToFix.isNote()) {
+					predecessorToFix.note().linkNext(false);
+				} else {
+					predecessorToFix.chord().chordNotes.get(string).linkNext(false);
+				}
+			}
+			soundsForRemoval.remove((int) id);
 			final Pair<Integer, ChordOrNote> previousSound = ChordOrNote.findPreviousSoundWithIdOnString(string, id - 1,
 					chartData.currentSounds());
 			if (previousSound != null) {
