@@ -493,15 +493,18 @@ public class LiveLyricsHandler implements Initiable {
 
 	public void insertSyllable(final Vocal vocal) {
 		if (!isVocalsMode()) {
+			Logger.info("insertSyllable: skipped — not in vocals mode (mode=" + modeManager.getMode() + ", currentVocals=" + chartData.currentVocals() + ")");
 			return;
 		}
 		final var cv = chartData.currentVocals();
 		if (cv == null) {
+			Logger.info("insertSyllable: skipped — currentVocals is null");
 			return;
 		}
 
 		final int vocalIdx = cv.vocals.indexOf(vocal);
 		if (vocalIdx < 0) {
+			Logger.info("insertSyllable: skipped — vocal '" + vocal.text() + "' not found in list (size=" + cv.vocals.size() + ")");
 			return;
 		}
 
@@ -705,6 +708,46 @@ public class LiveLyricsHandler implements Initiable {
 	private void reloadFromTextTab() {
 		sourceText = textTab != null ? textTab.getText() : "";
 		parseLyrics();
+	}
+
+	public void pasteVocals(final List<Vocal> vocals) {
+		if (!isVocalsMode() || vocals.isEmpty()) {
+			return;
+		}
+		final var cv = chartData.currentVocals();
+		if (cv == null) {
+			return;
+		}
+
+		final int insertAt = currentTokenIndex;
+		for (int i = 0; i < vocals.size(); i++) {
+			final Vocal v = vocals.get(i);
+			tokens.add(insertAt + i, new LyricToken(v.text(), v.flag()));
+		}
+
+		final Map<Integer, Vocal> newMap = new HashMap<>();
+		for (final Map.Entry<Integer, Vocal> e : tokenIndexToVocal.entrySet()) {
+			final int idx = e.getKey();
+			newMap.put(idx >= insertAt ? idx + vocals.size() : idx, e.getValue());
+		}
+		tokenIndexToVocal.clear();
+		tokenIndexToVocal.putAll(newMap);
+		for (int i = 0; i < vocals.size(); i++) {
+			tokenIndexToVocal.put(insertAt + i, vocals.get(i));
+		}
+
+		sourceText = buildSourceTextFromTokens();
+		if (textTab != null) {
+			updatingTextFromVocals = true;
+			try {
+				textTab.setText(sourceText);
+			} finally {
+				updatingTextFromVocals = false;
+			}
+		}
+		pendingText = null;
+		updateTextTabStatus();
+		refreshPanel();
 	}
 
 	public void resetQueue() {

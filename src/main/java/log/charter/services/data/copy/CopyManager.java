@@ -353,9 +353,7 @@ public class CopyManager {
 		selectedCopy.paste(chartData, selectionManager, chartTimeHandler.displayTimeFractional(), true);
 
 		if (liveLyricsHandler != null) {
-			for (final Vocal vocal : selectionManager.<Vocal>getSelectedElements(PositionType.VOCAL)) {
-				liveLyricsHandler.insertSyllable(vocal);
-			}
+			liveLyricsHandler.pasteVocals(selectionManager.getSelectedElements(PositionType.VOCAL));
 		}
 	}
 
