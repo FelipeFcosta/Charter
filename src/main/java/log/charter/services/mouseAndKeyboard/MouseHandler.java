@@ -14,6 +14,7 @@ import java.util.ArrayList;
 
 import log.charter.data.ChartData;
 import log.charter.data.config.ZoomUtils;
+import log.charter.data.song.ChordTemplate;
 import log.charter.data.song.FHP;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
@@ -136,7 +137,37 @@ public class MouseHandler implements MouseListener, MouseMotionListener, MouseWh
 		}
 	}
 
+	private void createFHPFromNote(final ChordOrNote sound) {
+		final int fret;
+		if (sound.isNote()) {
+			if (sound.note().fret == 0) {
+				return;
+			}
+			fret = sound.note().fret;
+		} else {
+			final ChordTemplate template = chartData.currentChordTemplates().get(sound.chord().templateId());
+			fret = template.frets.values().stream().filter(f -> f > 0).min(Integer::compareTo).orElse(0);
+			if (fret == 0) {
+				return;
+			}
+		}
+
+		undoSystem.addUndo();
+
+		final List<FHP> fhps = chartData.currentFHPs();
+		fhps.removeIf(fhp -> fhp.position().equals(sound.position()));
+		fhps.add(new FHP(sound.position(), fret));
+		fhps.sort(IConstantFractionalPosition::compareTo);
+	}
+
 	private void leftClickGuitar(final MouseButtonPressReleaseData clickData, final boolean isDoubleClick) {
+		if (keyboardHandler.alt() && !clickData.isXDrag()
+				&& clickData.pressHighlight.type == PositionType.GUITAR_NOTE
+				&& clickData.pressHighlight.chordOrNote != null) {
+			createFHPFromNote(clickData.pressHighlight.chordOrNote);
+			return;
+		}
+
 		if (!clickData.isXDrag() || keyboardHandler.scrollLock()) {
 			selectionManager.click(clickData, keyboardHandler.ctrl(), keyboardHandler.shift());
 		} else {
