@@ -382,6 +382,7 @@ public class GuitarSoundsStatusesHandler {
 
 		undoSystem.addUndo();
 
+		final Integer selectedChordNoteString = selectionManager.getSelectedChordNoteString();
 		boolean changed = false;
 		for (final Selection<ChordOrNote> selection : selectedAccessor.getSelected()) {
 			final ChordOrNote sound = selection.selectable;
@@ -391,6 +392,12 @@ public class GuitarSoundsStatusesHandler {
 			if (sound.isNote()) {
 				if (sound.note().slideTo != null) {
 					sound.note().unpitchedSlide = !sound.note().unpitchedSlide;
+					changed = true;
+				}
+			} else if (selectedChordNoteString != null) {
+				final log.charter.data.song.notes.ChordNote chordNote = sound.chord().chordNotes.get(selectedChordNoteString);
+				if (chordNote != null && chordNote.slideTo != null) {
+					chordNote.unpitchedSlide = !chordNote.unpitchedSlide;
 					changed = true;
 				}
 			} else {

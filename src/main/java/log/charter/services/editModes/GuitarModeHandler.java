@@ -569,32 +569,58 @@ public class GuitarModeHandler implements ModeHandler {
 			} else if (sound.isChord()) {
 				final Chord chord = sound.chord();
 				final ChordTemplate template = chartData.currentChordTemplates().get(chord.templateId());
-				if (!allChordNotesAllowSlideScroll(chord, template, change)) {
-					continue;
-				}
-				for (final Map.Entry<Integer, ChordNote> entry : chord.chordNotes.entrySet()) {
-					final int string = entry.getKey();
-					final ChordNote chordNote = entry.getValue();
-					final Integer fret = template.frets.get(string);
-					if (fret == null) {
+				final Integer selectedString = selectionManager.getSelectedChordNoteString();
+				if (selectedString != null) {
+					final ChordNote chordNote = chord.chordNotes.get(selectedString);
+					if (chordNote != null) {
+						final Integer fret = template.frets.get(selectedString);
+						if (fret != null) {
+							if (chordNote.slideTo != null) {
+								final int newSlide = chordNote.slideTo + change;
+								if (newSlide == fret) {
+									chordNote.slideTo = null;
+								} else {
+									chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+								}
+								changed = true;
+							} else if (change != 0) {
+								final int newSlide = fret + change;
+								chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+								if (chordNote.slideTo.equals(fret)) {
+									chordNote.slideTo = null;
+								}
+								changed = true;
+							}
+						}
+					}
+				} else {
+					if (!allChordNotesAllowSlideScroll(chord, template, change)) {
 						continue;
 					}
+					for (final Map.Entry<Integer, ChordNote> entry : chord.chordNotes.entrySet()) {
+						final int string = entry.getKey();
+						final ChordNote chordNote = entry.getValue();
+						final Integer fret = template.frets.get(string);
+						if (fret == null) {
+							continue;
+						}
 
-					if (chordNote.slideTo != null) {
-						final int newSlide = chordNote.slideTo + change;
-						if (newSlide == fret) {
-							chordNote.slideTo = null;
-						} else {
+						if (chordNote.slideTo != null) {
+							final int newSlide = chordNote.slideTo + change;
+							if (newSlide == fret) {
+								chordNote.slideTo = null;
+							} else {
+								chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+							}
+							changed = true;
+						} else if (change != 0) {
+							final int newSlide = fret + change;
 							chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
+							if (chordNote.slideTo.equals(fret)) {
+								chordNote.slideTo = null;
+							}
+							changed = true;
 						}
-						changed = true;
-					} else if (change != 0) {
-						final int newSlide = fret + change;
-						chordNote.slideTo = Math.max(1, Math.min(InstrumentConfig.frets, newSlide));
-						if (chordNote.slideTo.equals(fret)) {
-							chordNote.slideTo = null;
-						}
-						changed = true;
 					}
 				}
 			}
@@ -674,8 +700,16 @@ public class GuitarModeHandler implements ModeHandler {
 				changed |= changeNoteInterfaceBend(sound.note(), delta);
 			} else if (sound.isChord()) {
 				final Chord chord = sound.chord();
-				for (final ChordNote chordNote : chord.chordNotes.values()) {
-					changed |= changeNoteInterfaceBend(chordNote, delta);
+				final Integer selectedString = selectionManager.getSelectedChordNoteString();
+				if (selectedString != null) {
+					final ChordNote chordNote = chord.chordNotes.get(selectedString);
+					if (chordNote != null) {
+						changed |= changeNoteInterfaceBend(chordNote, delta);
+					}
+				} else {
+					for (final ChordNote chordNote : chord.chordNotes.values()) {
+						changed |= changeNoteInterfaceBend(chordNote, delta);
+					}
 				}
 			}
 		}
