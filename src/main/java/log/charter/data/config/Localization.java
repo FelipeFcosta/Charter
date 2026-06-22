@@ -109,6 +109,7 @@ public class Localization {
 		DELETE_VOCAL_PATH("Delete vocal path"), //
 		DELETE_VOCAL_PATH_POPUP_MSG("Are you sure you want to delete vocal path %s?"), //
 		DELETE_VOCAL_PATH_POPUP_TITLE("Delete vocal path?"), //
+		DUPLICATE_ARRANGEMENT("Duplicate arrangement"), //
 		DIRECTORY_DOESNT_EXIST("Directory doesn't exist"), //
 		DISTANCE_TYPE_BEATS("1/x beat"), //
 		DISTANCE_TYPE_MILISECONDS("ms"), //

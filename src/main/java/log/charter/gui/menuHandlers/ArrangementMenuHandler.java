@@ -15,6 +15,7 @@ import log.charter.data.song.vocals.VocalPath;
 import log.charter.gui.panes.songSettings.ArrangementSettingsPane;
 import log.charter.gui.panes.songSettings.VocalPathSettingsPane;
 import log.charter.io.rs.xml.song.ArrangementType;
+import log.charter.io.rsc.xml.ChartProjectXStreamHandler;
 import log.charter.services.Action;
 import log.charter.services.data.LevelSquisher;
 import log.charter.services.data.selection.SelectionManager;
@@ -120,6 +121,7 @@ public class ArrangementMenuHandler extends CharterMenuHandler {
 		} else if (modeManager.getMode() == EditMode.GUITAR) {
 			menu.addSeparator();
 			menu.add(createItem(Label.ARRANGEMENT_OPTIONS, this::editArrangementSettings));
+			menu.add(createItem(Label.DUPLICATE_ARRANGEMENT, this::duplicateArrangement));
 
 			menu.addSeparator();
 			createLevelMenuItems(menu);
@@ -156,6 +158,15 @@ public class ArrangementMenuHandler extends CharterMenuHandler {
 
 			charterMenuBar.refreshMenus();
 		}, true);
+	}
+
+	private void duplicateArrangement() {
+		selectionManager.clear();
+
+		final Arrangement copy = ChartProjectXStreamHandler.deepCopyArrangement(chartData.currentArrangement());
+		chartData.songChart.arrangements.add(copy);
+		modeManager.setArrangement(chartData.songChart.arrangements.size() - 1);
+		charterMenuBar.refreshMenus();
 	}
 
 	private void addVocalPath() {

@@ -130,4 +130,9 @@ public class ChartProjectXStreamHandler {
 	public static String writeCopyData(final CopyData copyData) {
 		return XMLHandler.generateXML(xstream, copyData);
 	}
+
+	public static Arrangement deepCopyArrangement(final Arrangement arrangement) {
+		final String xml = XMLHandler.generateXML(xstream, arrangement);
+		return (Arrangement) xstream.fromXML(xml);
+	}
 }
