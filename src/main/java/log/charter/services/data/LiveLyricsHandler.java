@@ -782,6 +782,14 @@ public class LiveLyricsHandler implements Initiable {
 		return enabled;
 	}
 
+	public int getTappedCount() {
+		return Math.min(currentTokenIndex, tokens.size());
+	}
+
+	public int getTotalCount() {
+		return tokens.size();
+	}
+
 	public List<DisplaySyllable> getDisplaySyllables(final int maxCount) {
 		final List<DisplaySyllable> result = new ArrayList<>();
 

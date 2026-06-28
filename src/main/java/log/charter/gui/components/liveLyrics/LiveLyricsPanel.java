@@ -34,8 +34,9 @@ public class LiveLyricsPanel extends JPanel implements Initiable {
 	private static final Color COLOR_SAME_LINE_FG       = new Color(210, 210, 210);
 	private static final Color COLOR_DIVIDER            = new Color(60, 60, 60);
 
-	private static final int CHIP_WIDTH  = 130;
-	private static final int CHIP_HEIGHT = 26;
+	private static final int CHIP_WIDTH        = 130;
+	private static final int CHIP_HEIGHT       = 26;
+	private static final int PROGRESS_WIDTH    = 120;
 
 	private LiveLyricsHandler liveLyricsHandler;
 
@@ -43,6 +44,7 @@ public class LiveLyricsPanel extends JPanel implements Initiable {
 	private final JToggleButton liveToggle       = new JToggleButton("Tap");
 	private final JButton       backButton       = new JButton("↩");
 	private final JPanel        chipsPanel       = new JPanel();
+	private final JLabel        progressLabel    = new JLabel("", JLabel.CENTER);
 
 	private boolean chipBeingClicked = false;
 
@@ -84,6 +86,12 @@ public class LiveLyricsPanel extends JPanel implements Initiable {
 
 		chipsPanel.setOpaque(false);
 		controlRow.add(chipsPanel, BorderLayout.CENTER);
+
+		progressLabel.setFont(progressLabel.getFont().deriveFont(Font.PLAIN, 11f));
+		progressLabel.setForeground(new Color(130, 130, 130));
+		progressLabel.setPreferredSize(new Dimension(PROGRESS_WIDTH, CHIP_HEIGHT));
+		progressLabel.setVisible(false);
+		controlRow.add(progressLabel, BorderLayout.EAST);
 
 		add(controlRow, BorderLayout.CENTER);
 
@@ -186,12 +194,20 @@ public class LiveLyricsPanel extends JPanel implements Initiable {
 		liveToggle.setSelected(liveLyricsHandler.isEnabled());
 		instructionLabel.setText(liveLyricsHandler.statusText());
 
-		final int chipAreaWidth = chipsPanel.getWidth() > 0 ? chipsPanel.getWidth() : (getWidth() - 44);
-		final int maxChips = Math.max(1, chipAreaWidth / CHIP_WIDTH);
-		final List<DisplaySyllable> syllables = liveLyricsHandler.getDisplaySyllables(maxChips);
-		if (syllables.isEmpty()) {
+		final int tapped = liveLyricsHandler.getTappedCount();
+		final int total  = liveLyricsHandler.getTotalCount();
+
+		if (total == 0) {
+			progressLabel.setVisible(false);
 			buildEmptyRow();
 		} else {
+			final int pct = tapped * 100 / total;
+			progressLabel.setText(tapped + "/" + total + " (" + pct + "%)");
+			progressLabel.setVisible(true);
+
+			final int chipAreaWidth = chipsPanel.getWidth() > 0 ? chipsPanel.getWidth() : (getWidth() - 44 - PROGRESS_WIDTH);
+			final int maxChips = Math.max(1, chipAreaWidth / CHIP_WIDTH);
+			final List<DisplaySyllable> syllables = liveLyricsHandler.getDisplaySyllables(maxChips);
 			buildSyllableRow(syllables);
 		}
 
