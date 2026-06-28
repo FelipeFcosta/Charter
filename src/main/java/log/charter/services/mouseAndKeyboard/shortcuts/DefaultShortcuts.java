@@ -97,6 +97,7 @@ public class DefaultShortcuts extends ShortcutList {
 		super.set(Action.SLOW_FORWARD, new Shortcut(KeyEvent.VK_RIGHT).ctrl());
 		super.set(Action.SNAP_ALL, new Shortcut(KeyEvent.VK_G).ctrl().shift());
 		super.set(Action.SNAP_SELECTED, new Shortcut(KeyEvent.VK_G).ctrl());
+		super.set(Action.STRETCH_SELECTED, new Shortcut(KeyEvent.VK_ENTER).shift());
 		super.set(Action.SPECIAL_PASTE, new Shortcut(KeyEvent.VK_V).ctrl().shift());
 		super.set(Action.SPEED_DECREASE, new Shortcut(KeyEvent.VK_MINUS));
 		super.set(Action.SPEED_DECREASE_FAST, new Shortcut(KeyEvent.VK_MINUS).shift());

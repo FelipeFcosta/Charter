@@ -401,6 +401,7 @@ public class ActionHandler implements Initiable {
 		actionHandlers.put(Action.SELECT_ALL_EQUAL, selectionManager::selectAllEqual);
 		actionHandlers.put(Action.SNAP_ALL, chartItemsHandler::snapAll);
 		actionHandlers.put(Action.SNAP_SELECTED, chartItemsHandler::snapSelected);
+		actionHandlers.put(Action.STRETCH_SELECTED, mouseHandler::openStretchDialog);
 		actionHandlers.put(Action.SPECIAL_PASTE, copyManager::specialPaste);
 		actionHandlers.put(Action.SPEED_DECREASE, () -> changeSpeed(-5));
 		actionHandlers.put(Action.SPEED_DECREASE_FAST, () -> changeSpeed(-25));

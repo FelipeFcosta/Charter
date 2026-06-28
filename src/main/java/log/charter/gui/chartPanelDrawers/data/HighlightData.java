@@ -27,6 +27,7 @@ import log.charter.data.song.HandShape;
 import log.charter.data.song.ToneChange;
 import log.charter.data.song.notes.ChordOrNote;
 import log.charter.data.song.position.FractionalPosition;
+import log.charter.util.data.Fraction;
 import log.charter.data.song.position.fractional.IConstantFractionalPosition;
 import log.charter.data.song.position.fractional.IConstantFractionalPositionWithEnd;
 import log.charter.data.song.position.fractional.IFractionalPositionWithEnd;
@@ -335,6 +336,60 @@ public class HighlightData {
 		return new HighlightData(press.highlight.type, highlightedPositions);
 	}
 
+	private static HighlightData getStretchedSoundPositions(final double time, final ChartData chartData,
+			final SelectionManager selectionManager, final MouseButtonPressData press, final int x) {
+		List<Selection<IVirtualConstantPosition>> selectedPositions = selectionManager
+				.getSelected(press.highlight.type);
+
+		if (press.highlight.existingPosition
+				&& !contains(selectedPositions, selection -> selection.id == press.highlight.id)) {
+			selectionManager.clear();
+			selectionManager.addSelection(press.highlight.type, press.highlight.id);
+			selectedPositions = selectionManager.getSelected(press.highlight.type);
+		}
+		if (selectedPositions.size() < 2) {
+			return null;
+		}
+
+		final ImmutableBeatsMap beats = chartData.beats();
+		final List<Selection<IVirtualConstantPosition>> sorted = new ArrayList<>(selectedPositions);
+		sorted.sort((a, b) -> IVirtualConstantPosition.compare(beats, a.selectable, b.selectable));
+
+		final double anchorGrid = sorted.get(0).selectable.toFraction(beats).position().doubleValue() * 64;
+		final double originalLastGrid = sorted.get(sorted.size() - 1).selectable.toFraction(beats).position()
+				.doubleValue() * 64;
+
+		if (originalLastGrid <= anchorGrid) {
+			return null;
+		}
+
+		final FractionalPosition newLastFrac = beats
+				.getPositionFromGridClosestTo(new Position(xToPosition(x, time))).toFraction(beats).position();
+		final double newLastGrid = newLastFrac.doubleValue() * 64;
+		final double scale = (newLastGrid - anchorGrid) / (originalLastGrid - anchorGrid);
+
+		final int lastIndex = sorted.size() - 1;
+		final List<HighlightPosition> highlightedPositions = new ArrayList<>();
+		for (int i = 0; i <= lastIndex; i++) {
+			final ChordOrNote sound = (ChordOrNote) sorted.get(i).selectable;
+			final double originalGrid = sound.position().doubleValue() * 64;
+			final FractionalPosition newFrac;
+			if (i == 0) {
+				newFrac = sound.position();
+			} else if (i == lastIndex) {
+				newFrac = newLastFrac;
+			} else {
+				final double newGrid = anchorGrid + (originalGrid - anchorGrid) * scale;
+				newFrac = new FractionalPosition(new Fraction((int) Math.round(newGrid), 64));
+			}
+			final double newTime = newFrac.getPosition(beats);
+			final double originalLength = sound.endPosition().getPosition(beats) - sound.position().getPosition(beats);
+			highlightedPositions.add(new HighlightPosition(beats, newTime, originalLength, sound, 0, true));
+		}
+
+		return new HighlightData(PositionType.GUITAR_NOTE, highlightedPositions);
+	}
+
 	private static HighlightData getDraggedBeats(final ImmutableBeatsMap beats, final double time,
 			final MouseHandler mouseHandler) {
 		final double position = xToPosition(mouseHandler.getMouseX(), time);
@@ -360,6 +415,13 @@ public class HighlightData {
 		}
 
 		if (abs(leftPressPosition.position.x - mouseHandler.getMouseX()) > 5 && !keyboardHandler.scrollLock()) {
+			if (keyboardHandler.shift() && leftPressPosition.highlight.type == PositionType.GUITAR_NOTE) {
+				final HighlightData stretched = getStretchedSoundPositions(time, chartData, selectionManager,
+						leftPressPosition, mouseHandler.getMouseX());
+				if (stretched != null) {
+					return stretched;
+				}
+			}
 			return getDraggedPositions(time, chartData, selectionManager, leftPressPosition, mouseHandler.getMouseX());
 		}
 

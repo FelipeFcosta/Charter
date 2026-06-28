@@ -311,6 +311,8 @@ public class Localization {
 		SPEED_TOGGLE("Toggle speed 100%"), //
 		SQUASH_LEVELS("Squash levels"), //
 		STARTING_TONE("Starting tone"), //
+		STRETCH_SELECTED("Stretch selected notes"), //
+		STRETCH_SCALE_FACTOR("Scale factor:"), //
 		STUDYING_AUDIO("Studying audio: %s"), //
 		SUPPORTED_MUSIC_FILE("Flac, Mp3, Ogg or Wav file"), //
 		SWITCH_TS_TYPING_PART("Switch TS typing part"), //
